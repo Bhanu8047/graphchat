@@ -1,5 +1,7 @@
 # vector-graph
 
+Production VPS deployment is documented in [docs/deployment.md](docs/deployment.md).
+
 ## GitHub Web Login
 
 The web app can now sign users into GitHub and use that session to import public or private repositories without pasting a Personal Access Token into the form.

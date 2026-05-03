@@ -14,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { AppAuthGuard } from './common/auth/auth.guard';
 import { SessionTokenService } from './common/auth/session-token.service';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     UsersModule,
     AuthModule,
     DashboardModule,
+    HealthModule,
     ReposModule,
     NodesModule,
     SearchModule,

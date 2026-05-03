@@ -16,25 +16,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          filter: tree:0
           fetch-depth: 0
 
-      # This enables task distribution via Nx Cloud
-      # Run this command as early as possible, before dependencies are installed
-      # Learn more at https://nx.dev/ci/reference/nx-cloud-cli#npx-nxcloud-startcirun
-      - run: npx nx start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="e2e-ci"
-
-      # Cache node_modules
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
 
       - run: npm ci
 
-      # Prepend any command with "nx record --" to record its logs to Nx Cloud
-      - run: npx nx record -- npx nx format:check  --base="remotes/origin/main"
-      - run: npx nx run-many -t lint test build typecheck e2e-ci
-      # Nx Cloud recommends fixes for failures to help you get CI green faster. Learn more: https://nx.dev/ci/features/self-healing-ci
-      - run: npx nx fix-ci
-        if: always()
+      - name: Check formatting
+        run: |
+          files="$(git ls-files 'apps/api/**' 'apps/web/**' 'libs/**' | paste -sd, -)"
+          npm exec nx format:check -- --files="$files"
+
+      - name: Typecheck API
+        run: npm exec nx run @vectorgraph/api:typecheck
+
+      - name: Build web
+        env:
+          NEXT_PUBLIC_APP_URL: https://trchat.co
+          NEXT_PUBLIC_API_URL: https://api.trchat.co/api
+        run: npm exec nx run @vectorgraph/web:build

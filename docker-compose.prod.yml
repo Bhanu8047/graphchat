@@ -1,50 +1,109 @@
-name: Vector GraphQL API and Web App - Production
+name: trchat
+
 services:
   nginx:
-    image: nginx:alpine
-    ports: ["80:80", "443:443"]
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
-      - certbot_www:/var/www/certbot:ro
-    depends_on: [api, web]
-    restart: always
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    restart: unless-stopped
 
   api:
-    build: { context: ., dockerfile: docker/api.Dockerfile }
+    image: ${API_IMAGE:?API_IMAGE is required}
     env_file: .env.prod
-    depends_on: [redis, mongo]
-    restart: always
+    environment:
+      MONGODB_URI: mongodb://root:${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD is required}@mongo:27017/vectorgraph?authSource=admin
+      REDIS_URL: redis://redis:6379
+      WEB_URL: ${WEB_URL:-https://trchat.co}
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
 
   web:
-    build:
-      context: .
-      dockerfile: docker/web.Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: https://yourdomain.com/api
+    image: ${WEB_IMAGE:?WEB_IMAGE is required}
     env_file: .env.prod
-    restart: always
+    environment:
+      INTERNAL_API_URL: http://api:3001/api
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://trchat.co}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.trchat.co/api}
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
   redis:
-    image: redis/redis-stack-server:latest
-    volumes: [redis_data:/data]
-    restart: always
+    image: redis/redis-stack-server:7.4.0-v8
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   mongo:
     image: mongo:7
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-    volumes: [mongo_data:/data/db]
-    restart: always
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD is required}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
 
   certbot:
     image: certbot/certbot
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
+      - ./certbot/www:/var/www/certbot
+    profiles: ["certbot"]
 
 volumes:
   redis_data:
   mongo_data:
-  certbot_www:

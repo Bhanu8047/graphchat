@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log
+.git
+.github
+.nx
+dist
+apps/web/.next
+coverage
+.env
+.env.*
+!.env.example
+!.env.prod.example
