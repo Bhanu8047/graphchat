@@ -11,6 +11,7 @@
     "commitlint": "commitlint",
     "format": "prettier --write --ignore-unknown \"apps/api/**/*\" \"apps/web/**/*\" \"libs/**/*\"",
     "format:check": "prettier --check --ignore-unknown \"apps/api/**/*\" \"apps/web/**/*\" \"libs/**/*\"",
+    "format:staged": "lint-staged",
     "nx:serve:api": "npm run api:dev",
     "nx:serve:web": "npm run web:dev",
     "docker": "docker-compose up -d",
@@ -43,6 +44,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/uuid": "^10.0.0",
     "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
     "nx": "22.7.1",
     "postcss": "^8.5.13",
     "prettier": "^3.8.1",
@@ -50,6 +52,9 @@
     "ts-node": "^10.9.2",
     "tslib": "^2.3.0",
     "typescript": "~5.9.2"
+  },
+  "lint-staged": {
+    "{apps/api,apps/web,libs}/**/*": "prettier --write --ignore-unknown"
   },
   "workspaces": [
     "apps/*",
