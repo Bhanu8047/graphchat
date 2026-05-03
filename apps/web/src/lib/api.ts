@@ -18,10 +18,15 @@ export const api = {
   runtime: {
     config: () => fetch(`${BASE}/runtime/config`).then(json),
   },
+  graph: {
+    get: (repoId: string) => fetch(`${BASE}/graphs/${repoId}`).then(json),
+    syncGithub: (repoId: string, body?: any) => fetch(`${BASE}/graphs/${repoId}/sync/github`, { method: 'POST', headers: h, body: JSON.stringify(body ?? {}) }).then(json),
+  },
   repos: {
     list:    ()           => fetch(`${BASE}/repos`).then(json),
     get:     (id: string) => fetch(`${BASE}/repos/${id}`).then(json),
     create:  (body: any)  => fetch(`${BASE}/repos`, { method: 'POST', headers: h, body: JSON.stringify(body) }).then(json),
+    listGithubBranches: (url: string) => fetch('/api/github/branches', { method: 'POST', headers: h, body: JSON.stringify({ url }) }).then(json),
     importGithub: (body: any) => fetch('/api/github/import', { method: 'POST', headers: h, body: JSON.stringify(body) }).then(json),
     delete:  (id: string) => fetch(`${BASE}/repos/${id}`, { method: 'DELETE' }),
   },

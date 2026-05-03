@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit, BadRequestException, InternalServerErrorExcep
 import { ConfigService } from '@nestjs/config';
 import { getEmbeddings, EmbeddingConfig } from '@vectorgraph/ai';
 import { MongoVectorService, RedisVectorService } from '@vectorgraph/vector-client';
-import { ContextNode, CreateRepoDto, EmbeddingProvider, GithubRepoSource, ImportGithubRepoDto, NodeType, Repository } from '@vectorgraph/shared-types';
+import { ContextNode, CreateRepoDto, EmbeddingProvider, GithubBranchListResponse, GithubRepoSource, GraphEdge, GraphNode, GraphSyncDto, ImportGithubRepoDto, NodeType, Repository, RepositorySyncState } from '@vectorgraph/shared-types';
 import { v4 as uuid } from 'uuid';
 import { RuntimeConfigService } from '../runtime/runtime-config.service';
 
@@ -21,12 +21,17 @@ type GithubApiRepo = {
 type GithubTreeEntry = {
   path: string;
   type: 'blob' | 'tree';
+  sha?: string;
   size?: number;
 };
 
 type GithubTreeResponse = {
   tree?: GithubTreeEntry[];
   truncated?: boolean;
+};
+
+type GithubBranchResponse = {
+  name: string;
 };
 
 type GithubFileResponse = {
@@ -46,10 +51,15 @@ type GithubApiError = {
 type IngestCandidate = {
   label: string;
   sourcePath: string;
+  fileDigest?: string;
   type: NodeType;
   content: string;
   tags: string[];
+  chunkIndex?: number;
+  totalChunks?: number;
 };
+
+type SelectedGithubFile = GithubTreeEntry & { sha: string };
 
 const MAX_IMPORT_FILES = 24;
 const MAX_IMPORT_NODES = 64;
@@ -69,6 +79,7 @@ const IMPORTANT_FILENAMES = new Set([
 const INSTRUCTION_FILENAMES = new Set([
   'agents.md', 'claude.md', 'copilot-instructions.md', 'cursor.md', 'readme', 'readme.md',
 ]);
+const OVERVIEW_SOURCE_PATH = '__repo_overview__';
 
 @Injectable()
 export class ReposService implements OnModuleInit {
@@ -116,6 +127,19 @@ export class ReposService implements OnModuleInit {
     return repo;
   }
 
+  async listGithubBranches(input: string, accessToken?: string): Promise<GithubBranchListResponse> {
+    const parsed = this.parseGithubRepo(input);
+    const githubRepo = await this.fetchGithubRepo(parsed.owner, parsed.repo, accessToken);
+    const branches = await this.fetchGithubBranches(parsed.owner, parsed.repo, accessToken);
+    const defaultBranch = githubRepo.default_branch ?? branches[0] ?? 'main';
+
+    return {
+      fullName: githubRepo.full_name ?? `${parsed.owner}/${parsed.repo}`,
+      defaultBranch,
+      branches: Array.from(new Set([defaultBranch, ...branches])),
+    };
+  }
+
   async importGithub(dto: ImportGithubRepoDto): Promise<Repository> {
     const availableAgents = this.runtimeConfig.getAvailableAgents();
     const defaultAgent = this.runtimeConfig.getDefaultAgent(availableAgents) ?? 'all';
@@ -128,24 +152,24 @@ export class ReposService implements OnModuleInit {
     const parsed = this.parseGithubRepo(dto.url);
     const githubRepo = await this.fetchGithubRepo(parsed.owner, parsed.repo, dto.accessToken);
     const fullName = githubRepo.full_name ?? `${parsed.owner}/${parsed.repo}`;
-    const existing = await this.mongo.findRepoByGithubFullName(fullName);
+    const selectedBranch = dto.branch?.trim() || githubRepo.default_branch || 'main';
+    const existing = await this.mongo.findRepoByGithubFullNameAndBranch(fullName, selectedBranch);
     const source: GithubRepoSource = {
       provider: 'github',
       owner: githubRepo.owner?.login ?? parsed.owner,
       repo: githubRepo.name ?? parsed.repo,
       fullName,
       url: githubRepo.html_url ?? parsed.url,
+      branch: selectedBranch,
       defaultBranch: githubRepo.default_branch ?? 'main',
       isPrivate: githubRepo.private ?? false,
     };
 
     if (existing) {
-      const existingNodes = await this.mongo.getNodes(existing.id);
-      if (this.shouldReingest(existingNodes)) {
-        await this.ingestGithubRepository(existing.id, githubRepo, source, dto.accessToken);
-      }
-      return this.findOne(existing.id);
+      return this.syncGithub(existing.id, { accessToken: dto.accessToken });
     }
+
+    const seedRepo = await this.findSeedRepo(fullName, selectedBranch);
 
     const techStack = Array.from(new Set([
       githubRepo.language,
@@ -154,7 +178,7 @@ export class ReposService implements OnModuleInit {
 
     const repo: Repository = {
       id: uuid(),
-      name: source.fullName,
+      name: this.formatGithubGraphName(source),
       description: githubRepo.description ?? '',
       techStack,
       agent: selectedAgent,
@@ -165,8 +189,154 @@ export class ReposService implements OnModuleInit {
     };
 
     await this.mongo.saveRepo(repo);
-    await this.ingestGithubRepository(repo.id, githubRepo, source, dto.accessToken);
-    return this.findOne(repo.id);
+    return this.syncGithub(repo.id, { accessToken: dto.accessToken, force: true, seedRepoId: seedRepo?.id });
+  }
+
+  async syncGithub(repoId: string, dto: GraphSyncDto = {}): Promise<Repository> {
+    const repo = await this.findOne(repoId);
+    if (!repo.source || repo.source.provider !== 'github') {
+      throw new BadRequestException('Only GitHub-backed repositories support automatic graph sync.');
+    }
+
+    const source = {
+      ...repo.source,
+      branch: repo.source.branch ?? repo.source.defaultBranch,
+    };
+    const githubRepo = await this.fetchGithubRepo(source.owner, source.repo, dto.accessToken);
+    const files = await this.fetchGithubRepoFiles(source, this.resolveGithubToken(dto.accessToken));
+    const selectedFiles = this.selectGithubFiles(files);
+
+    if (!selectedFiles.length) {
+      throw new InternalServerErrorException('The repository tree is readable, but no supported source files were selected for graph sync.');
+    }
+
+    const previousDigests = await this.mongo.getGraphFileDigests(repoId);
+    const seedRepo = Object.keys(previousDigests).length === 0 && dto.seedRepoId
+      ? await this.mongo.getRepo(dto.seedRepoId)
+      : null;
+    const seedDigests = seedRepo ? await this.mongo.getGraphFileDigests(seedRepo.id) : {};
+    const baselineDigests = Object.keys(previousDigests).length > 0 ? previousDigests : seedDigests;
+    const currentDigests = Object.fromEntries(selectedFiles.map(file => [file.path, file.sha]));
+    const requiresFullReingest = dto.force || this.shouldReingest(repo.nodes);
+    const removedPaths = Object.keys(previousDigests).filter(path => !(path in currentDigests));
+    const changedPaths = requiresFullReingest
+      ? selectedFiles.map(file => file.path)
+      : selectedFiles.filter(file => baselineDigests[file.path] !== file.sha).map(file => file.path);
+    const shouldRefreshOverview = requiresFullReingest || changedPaths.length > 0 || removedPaths.length > 0;
+
+    const changedFiles = selectedFiles.filter(file => changedPaths.includes(file.path));
+    const changedCandidates = await this.buildChangedCandidates(repoId, githubRepo, source, changedFiles, dto.accessToken, shouldRefreshOverview);
+    const reusedPaths = Object.keys(previousDigests).length === 0 && seedRepo
+      ? selectedFiles.filter(file => !changedPaths.includes(file.path) && seedDigests[file.path] === file.sha).map(file => file.path)
+      : [];
+
+    const staleSourcePaths = Array.from(new Set([
+      ...removedPaths,
+      ...changedPaths,
+      ...(shouldRefreshOverview ? [OVERVIEW_SOURCE_PATH] : []),
+    ]));
+    const staleNodes = await this.mongo.getNodesBySourcePaths(repoId, staleSourcePaths);
+
+    await Promise.all([
+      this.mongo.deleteNodesBySourcePaths(repoId, staleSourcePaths),
+      ...staleNodes.map(node => this.redis.deleteNode(node.id)),
+    ]);
+
+    if (seedRepo && reusedPaths.length) {
+      const reusedNodes = await this.mongo.getStoredNodesBySourcePaths(seedRepo.id, reusedPaths);
+      await Promise.all(reusedNodes.map(node => {
+        const clonedNode: ContextNode = {
+          id: uuid(),
+          repoId,
+          type: node.type,
+          label: node.label,
+          content: node.content,
+          tags: node.tags,
+          sourcePath: node.sourcePath,
+          fileDigest: node.fileDigest,
+          chunkIndex: node.chunkIndex,
+          totalChunks: node.totalChunks,
+          updatedAt: new Date().toISOString(),
+        };
+
+        return Promise.all([
+          this.mongo.saveNode(clonedNode, node.embedding),
+          this.redis.storeNode(clonedNode, node.embedding),
+        ]);
+      }));
+    }
+
+    if (changedCandidates.length) {
+      const embeddings = await getEmbeddings(changedCandidates.map(candidate => candidate.content), this.embedCfg);
+      await Promise.all(changedCandidates.map((candidate, index) => {
+        const node: ContextNode = {
+          id: uuid(),
+          repoId,
+          type: candidate.type,
+          label: candidate.label,
+          content: candidate.content,
+          tags: candidate.tags,
+          sourcePath: candidate.sourcePath,
+          fileDigest: candidate.fileDigest,
+          chunkIndex: candidate.chunkIndex,
+          totalChunks: candidate.totalChunks,
+          updatedAt: new Date().toISOString(),
+        };
+
+        return Promise.all([
+          this.mongo.saveNode(node, embeddings[index]),
+          this.redis.storeNode(node, embeddings[index]),
+        ]);
+      }));
+    }
+
+    const contextNodes = await this.mongo.getNodes(repoId);
+    const graph = this.buildGraph(repoId, source, selectedFiles, contextNodes);
+    await this.mongo.replaceGraph(repoId, graph.nodes, graph.edges);
+
+    const sync: RepositorySyncState = {
+      strategy: 'github-tree-sha-diff',
+      autoUpdate: true,
+      lastSyncedAt: new Date().toISOString(),
+      lastSourceRef: source.branch,
+      lastSyncStatus: 'idle',
+      fileCount: selectedFiles.length,
+      nodeCount: contextNodes.length,
+      edgeCount: graph.edges.length,
+      reusedPaths: reusedPaths.length,
+      seededFromRepoId: seedRepo?.id,
+      changedPaths: Array.from(new Set([...changedPaths, ...removedPaths])).slice(0, 50),
+    };
+
+    const updatedRepo: Repository = {
+      ...repo,
+      name: this.formatGithubGraphName({
+        fullName: githubRepo.full_name ?? source.fullName,
+        branch: source.branch,
+      }),
+      description: githubRepo.description ?? repo.description,
+      techStack: Array.from(new Set([
+        githubRepo.language,
+        ...(githubRepo.topics ?? []),
+        ...repo.techStack,
+      ].filter((value): value is string => Boolean(value && value.trim())))),
+      source: {
+        ...source,
+        owner: githubRepo.owner?.login ?? source.owner,
+        repo: githubRepo.name ?? source.repo,
+        fullName: githubRepo.full_name ?? source.fullName,
+        url: githubRepo.html_url ?? source.url,
+        branch: source.branch,
+        defaultBranch: githubRepo.default_branch ?? source.defaultBranch,
+        isPrivate: githubRepo.private ?? source.isPrivate,
+      },
+      sync,
+      updatedAt: new Date().toISOString(),
+      nodes: contextNodes,
+    };
+
+    await this.mongo.saveRepo(updatedRepo);
+    return this.findOne(repoId);
   }
 
   async remove(id: string) {
@@ -175,6 +345,15 @@ export class ReposService implements OnModuleInit {
       this.mongo.deleteRepo(id),
       this.redis.deleteByRepo(id),
     ]);
+  }
+
+  private async findSeedRepo(fullName: string, branch: string): Promise<Repository | null> {
+    const candidates = await this.mongo.findReposByGithubFullName(fullName);
+    return candidates.find(candidate => candidate.source?.provider === 'github' && candidate.source.branch !== branch) ?? null;
+  }
+
+  private formatGithubGraphName(source: Pick<GithubRepoSource, 'fullName' | 'branch'>): string {
+    return `${source.fullName}@${source.branch}`;
   }
 
   private parseGithubRepo(input: string): { owner: string; repo: string; url: string } {
@@ -290,44 +469,8 @@ export class ReposService implements OnModuleInit {
     return response.json() as Promise<GithubApiRepo>;
   }
 
-  private async ingestGithubRepository(
-    repoId: string,
-    githubRepo: GithubApiRepo,
-    source: GithubRepoSource,
-    accessToken?: string,
-  ): Promise<void> {
-    const token = this.resolveGithubToken(accessToken);
-    const files = await this.fetchGithubRepoFiles(source, token);
-    const candidates = await this.buildIngestCandidates(repoId, githubRepo, source, files, token);
-
-    if (!candidates.length) {
-      throw new InternalServerErrorException('The repository was imported, but no readable source files were found to generate the graph.');
-    }
-
-    const embeddings = await getEmbeddings(candidates.map(candidate => candidate.content), this.embedCfg);
-    const nodes: ContextNode[] = candidates.map((candidate, index) => ({
-      id: uuid(),
-      repoId,
-      type: candidate.type,
-      label: candidate.label,
-      content: candidate.content,
-      tags: candidate.tags,
-      updatedAt: new Date().toISOString(),
-    }));
-
-    await Promise.all([
-      this.mongo.deleteNodesByRepo(repoId),
-      this.redis.deleteByRepo(repoId),
-    ]);
-
-    await Promise.all(nodes.map((node, index) => Promise.all([
-      this.mongo.saveNode(node, embeddings[index]),
-      this.redis.storeNode(node, embeddings[index]),
-    ])));
-  }
-
   private async fetchGithubRepoFiles(source: GithubRepoSource, token?: string): Promise<GithubTreeEntry[]> {
-    const encodedRef = encodeURIComponent(source.defaultBranch);
+    const encodedRef = encodeURIComponent(source.branch);
     const response = await fetch(
       `https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${encodedRef}?recursive=1`,
       { headers: this.githubHeaders(token) }
@@ -341,35 +484,52 @@ export class ReposService implements OnModuleInit {
     return payload.tree ?? [];
   }
 
-  private async buildIngestCandidates(
+  private async fetchGithubBranches(owner: string, repo: string, accessToken?: string): Promise<string[]> {
+    const token = this.resolveGithubToken(accessToken);
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches?per_page=100`, {
+      headers: this.githubHeaders(token),
+    });
+
+    if (!response.ok) {
+      throw new BadRequestException(`Unable to list repository branches from GitHub (status ${response.status}).`);
+    }
+
+    const payload = await response.json() as GithubBranchResponse[];
+    return payload.map(branch => branch.name).filter(Boolean);
+  }
+
+  private selectGithubFiles(files: GithubTreeEntry[]): SelectedGithubFile[] {
+    return files
+      .filter((file): file is SelectedGithubFile => file.type === 'blob' && Boolean(file.sha) && this.shouldReadFile(file.path, file.size))
+      .sort((left, right) => this.scoreFile(right.path) - this.scoreFile(left.path))
+      .slice(0, MAX_IMPORT_FILES);
+  }
+
+  private async buildChangedCandidates(
     repoId: string,
     githubRepo: GithubApiRepo,
     source: GithubRepoSource,
-    files: GithubTreeEntry[],
-    token?: string,
+    files: SelectedGithubFile[],
+    accessToken: string | undefined,
+    includeOverview: boolean,
   ): Promise<IngestCandidate[]> {
-    const selectedFiles = files
-      .filter(file => this.shouldReadFile(file.path, file.size))
-      .sort((left, right) => this.scoreFile(right.path) - this.scoreFile(left.path))
-      .slice(0, MAX_IMPORT_FILES);
-
-    const overviewNode = this.buildOverviewNode(repoId, githubRepo, source, selectedFiles);
-    const fileCandidates = await Promise.all(selectedFiles.map(async (file) => {
-      const rawContent = await this.fetchGithubFileContent(source, file.path, token);
+    const overviewNode = includeOverview ? [this.buildOverviewNode(repoId, githubRepo, source, files)] : [];
+    const fileCandidates = await Promise.all(files.map(async (file) => {
+      const rawContent = await this.fetchGithubFileContent(source, file.path, accessToken);
       if (!rawContent?.trim()) return [];
 
       const type = this.inferNodeType(file.path);
-      return this.buildFileCandidates(file.path, type, rawContent);
+      return this.buildFileCandidates(file.path, file.sha, type, rawContent);
     }));
 
-    return [overviewNode, ...fileCandidates.flat().slice(0, MAX_IMPORT_NODES - 1)];
+    return [...overviewNode, ...fileCandidates.flat().slice(0, MAX_IMPORT_NODES - overviewNode.length)];
   }
 
   private buildOverviewNode(
     repoId: string,
     githubRepo: GithubApiRepo,
     source: GithubRepoSource,
-    files: GithubTreeEntry[],
+    files: SelectedGithubFile[],
   ): IngestCandidate {
     const typeCounts = files.reduce<Record<NodeType, number>>((counts, file) => {
       const type = this.inferNodeType(file.path);
@@ -381,6 +541,7 @@ export class ReposService implements OnModuleInit {
     const content = [
       `Repository: ${source.fullName}`,
       githubRepo.description ? `Description: ${githubRepo.description}` : '',
+      `Graph branch: ${source.branch}`,
       `Default branch: ${source.defaultBranch}`,
       `Detected stack: ${[githubRepo.language, ...(githubRepo.topics ?? [])].filter(Boolean).join(', ') || 'unknown'}`,
       `Node counts: module=${typeCounts.module}, api=${typeCounts.api}, schema=${typeCounts.schema}, entry=${typeCounts.entry}, config=${typeCounts.config}, note=${typeCounts.note}`,
@@ -389,30 +550,123 @@ export class ReposService implements OnModuleInit {
     ].filter(Boolean).join('\n');
 
     return {
-      label: `${source.fullName} overview`,
-      sourcePath: `${source.fullName} overview`,
+      label: `${this.formatGithubGraphName(source)} overview`,
+      sourcePath: OVERVIEW_SOURCE_PATH,
       type: 'note',
       content,
-      tags: ['github', 'overview', 'repo', source.owner, source.repo],
+      tags: ['github', 'overview', 'repo', source.owner, source.repo, source.branch],
     };
   }
 
-  private buildFileCandidates(filePath: string, type: NodeType, rawContent: string): IngestCandidate[] {
+  private buildFileCandidates(filePath: string, fileDigest: string, type: NodeType, rawContent: string): IngestCandidate[] {
     const chunks = this.chunkContent(rawContent).slice(0, MAX_FILE_CHUNKS);
     const isInstruction = this.isInstructionFile(filePath);
 
     return chunks.map((chunk, index) => ({
       label: chunks.length === 1 ? filePath : `${filePath}#${index + 1}`,
       sourcePath: filePath,
+      fileDigest,
       type,
       content: this.buildNodeContent(filePath, type, chunk, index + 1, chunks.length),
       tags: this.buildTags(filePath, type, isInstruction),
+      chunkIndex: index + 1,
+      totalChunks: chunks.length,
     }));
+  }
+
+  private buildGraph(
+    repoId: string,
+    source: GithubRepoSource,
+    files: SelectedGithubFile[],
+    contextNodes: ContextNode[],
+  ): { nodes: GraphNode[]; edges: GraphEdge[] } {
+    const now = new Date().toISOString();
+    const nodes: GraphNode[] = [];
+    const edges: GraphEdge[] = [];
+    const seenNodeIds = new Set<string>();
+    const seenEdgeIds = new Set<string>();
+    const repoNodeId = this.makeGraphId(repoId, 'repo', this.formatGithubGraphName(source));
+
+    nodes.push({
+      id: repoNodeId,
+      repoId,
+      type: 'repo',
+      label: this.formatGithubGraphName(source),
+      path: `${source.fullName}/${source.branch}`,
+      depth: 0,
+      tags: ['repo', source.owner, source.repo, source.branch],
+      updatedAt: now,
+    });
+    seenNodeIds.add(repoNodeId);
+
+    const pushNode = (node: GraphNode) => {
+      if (seenNodeIds.has(node.id)) return;
+      nodes.push(node);
+      seenNodeIds.add(node.id);
+    };
+
+    const pushEdge = (edge: GraphEdge) => {
+      if (seenEdgeIds.has(edge.id)) return;
+      edges.push(edge);
+      seenEdgeIds.add(edge.id);
+    };
+
+    for (const file of files) {
+      const segments = file.path.split('/').filter(Boolean);
+      let parentId = repoNodeId;
+      let currentPath = '';
+
+      for (const segment of segments.slice(0, -1)) {
+        currentPath = currentPath ? `${currentPath}/${segment}` : segment;
+        const directoryId = this.makeGraphId(repoId, 'directory', currentPath);
+        pushNode({
+          id: directoryId,
+          repoId,
+          type: 'directory',
+          label: segment,
+          path: currentPath,
+          parentId,
+          depth: currentPath.split('/').length,
+          tags: ['directory', segment],
+          updatedAt: now,
+        });
+        pushEdge(this.makeGraphEdge(repoId, parentId, directoryId, 'contains', now));
+        parentId = directoryId;
+      }
+
+      const fileId = this.makeGraphId(repoId, 'file', file.path);
+      pushNode({
+        id: fileId,
+        repoId,
+        type: 'file',
+        label: segments[segments.length - 1] ?? file.path,
+        path: file.path,
+        parentId,
+        depth: segments.length,
+        digest: file.sha,
+        tags: [this.inferNodeType(file.path), 'file'],
+        updatedAt: now,
+      });
+      pushEdge(this.makeGraphEdge(repoId, parentId, fileId, 'contains', now));
+    }
+
+    for (const contextNode of contextNodes) {
+      if (contextNode.sourcePath === OVERVIEW_SOURCE_PATH) {
+        pushEdge(this.makeGraphEdge(repoId, repoNodeId, contextNode.id, 'summarizes', now));
+        continue;
+      }
+
+      if (!contextNode.sourcePath) continue;
+      const fileId = this.makeGraphId(repoId, 'file', contextNode.sourcePath);
+      pushEdge(this.makeGraphEdge(repoId, fileId, contextNode.id, 'contains', now));
+    }
+
+    return { nodes, edges };
   }
 
   private async fetchGithubFileContent(source: GithubRepoSource, filePath: string, token?: string): Promise<string | null> {
     const encodedPath = filePath.split('/').map(segment => encodeURIComponent(segment)).join('/');
-    const encodedRef = encodeURIComponent(source.defaultBranch);
+    const encodedRef = encodeURIComponent(source.branch);
     const response = await fetch(
       `https://api.github.com/repos/${source.owner}/${source.repo}/contents/${encodedPath}?ref=${encodedRef}`,
       { headers: this.githubHeaders(token) }
@@ -545,7 +799,16 @@ export class ReposService implements OnModuleInit {
 
   private shouldReingest(nodes: ContextNode[]): boolean {
     if (nodes.length === 0) return true;
-    return nodes.every(node => node.label.toLowerCase().endsWith(' overview'));
+    return nodes.every(node => !node.sourcePath || node.sourcePath === OVERVIEW_SOURCE_PATH || node.label.toLowerCase().endsWith(' overview'));
+  }
+
+  private makeGraphId(repoId: string, type: 'repo' | 'directory' | 'file', path: string): string {
+    return `graph:${repoId}:${type}:${Buffer.from(path).toString('base64url')}`;
+  }
+
+  private makeGraphEdge(repoId: string, sourceId: string, targetId: string, type: GraphEdge['type'], updatedAt: string): GraphEdge {
+    const edgeId = `edge:${repoId}:${type}:${Buffer.from(`${sourceId}:${targetId}`).toString('base64url')}`;
+    return { id: edgeId, repoId, sourceId, targetId, type, updatedAt };
   }
 
   private getExtension(fileName: string): string {

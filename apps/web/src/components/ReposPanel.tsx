@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { api } from '../lib/api';
-import { AgentType, RuntimeProviderConfig } from '@vectorgraph/shared-types';
+import { AgentType, GithubBranchListResponse, RuntimeProviderConfig } from '@vectorgraph/shared-types';
 
 type GithubSession = {
   authenticated: boolean;
@@ -20,11 +20,14 @@ type GithubSession = {
 export function ReposPanel() {
   const searchParams = useSearchParams();
   const [repos, setRepos] = useState<any[]>([]);
-  const [githubForm, setGithubForm] = useState<{ url: string; agent: AgentType }>({ url: '', agent: 'all' });
+  const [githubForm, setGithubForm] = useState<{ url: string; branch: string; agent: AgentType }>({ url: '', branch: '', agent: 'all' });
   const [error, setError] = useState('');
   const [importing, setImporting] = useState(false);
+  const [syncingRepoId, setSyncingRepoId] = useState('');
   const [githubSession, setGithubSession] = useState<GithubSession>({ authenticated: false, configured: false });
   const [runtimeConfig, setRuntimeConfig] = useState<RuntimeProviderConfig | null>(null);
+  const [githubBranches, setGithubBranches] = useState<GithubBranchListResponse | null>(null);
+  const [branchesLoading, setBranchesLoading] = useState(false);
 
   const load = () => api.repos.list().then(setRepos).catch(() => {});
 
@@ -80,6 +83,33 @@ export function ReposPanel() {
     }
   }, [searchParams]);
 
+  const loadGithubBranches = async (inputUrl = githubForm.url) => {
+    if (!inputUrl.trim()) {
+      setGithubBranches(null);
+      setGithubForm(current => ({ ...current, branch: '' }));
+      return;
+    }
+
+    setBranchesLoading(true);
+    setError('');
+
+    try {
+      const payload = await api.repos.listGithubBranches(inputUrl) as GithubBranchListResponse;
+      setGithubBranches(payload);
+      setGithubForm(current => ({
+        ...current,
+        url: inputUrl,
+        branch: payload.branches.includes(current.branch) ? current.branch : payload.defaultBranch,
+      }));
+    } catch (err: any) {
+      setGithubBranches(null);
+      setGithubForm(current => ({ ...current, branch: '' }));
+      setError(err.message ?? 'Unable to load branches for this repository');
+    } finally {
+      setBranchesLoading(false);
+    }
+  };
+
   const importGithubRepo = async (e: any) => {
     e.preventDefault();
     setError('');
@@ -88,9 +118,11 @@ export function ReposPanel() {
     try {
       await api.repos.importGithub({
         url: githubForm.url,
+        branch: githubForm.branch,
         agent: githubForm.agent,
       });
-      setGithubForm({ url: '', agent: githubForm.agent });
+      setGithubForm({ url: '', branch: '', agent: githubForm.agent });
+      setGithubBranches(null);
       load();
     } catch (err: any) {
       const message = err.message ?? 'Unable to import GitHub repository';
@@ -109,6 +141,19 @@ export function ReposPanel() {
   const logoutGithub = async () => {
     await fetch('/api/auth/github/logout', { method: 'POST' });
     setGithubSession({ authenticated: false, configured: githubSession.configured });
+  };
+
+  const syncRepo = async (id: string) => {
+    setError('');
+    setSyncingRepoId(id);
+    try {
+      await api.graph.syncGithub(id);
+      await load();
+    } catch (err: any) {
+      setError(err.message ?? 'Unable to sync graph');
+    } finally {
+      setSyncingRepoId('');
+    }
   };
 
   const deleteRepo = async (id: string) => { await api.repos.delete(id); load(); };
@@ -147,18 +192,30 @@ export function ReposPanel() {
             className="bg-slate-700 p-2 rounded col-span-2"
             placeholder="https://github.com/owner/repo or owner/repo"
             value={githubForm.url}
-            onChange={e => setGithubForm({ ...githubForm, url: e.target.value })}
+            onChange={e => {
+              const url = e.target.value;
+              setGithubForm({ ...githubForm, url, branch: url === githubForm.url ? githubForm.branch : '' });
+              if (githubBranches && url !== githubForm.url) {
+                setGithubBranches(null);
+              }
+            }}
             required
           />
+          <button type="button" className="rounded bg-slate-700 px-4 py-2 text-slate-100 hover:bg-slate-600 disabled:opacity-60" onClick={() => loadGithubBranches()} disabled={branchesLoading || !githubForm.url.trim()}>{branchesLoading ? 'Loading branches…' : 'Load Branches'}</button>
+          <select className="bg-slate-700 p-2 rounded" value={githubForm.branch} onChange={e => setGithubForm({ ...githubForm, branch: e.target.value })} disabled={!githubBranches?.branches.length} required>
+            <option value="">Select branch…</option>
+            {(githubBranches?.branches ?? []).map(branch => <option key={branch} value={branch}>{branch}</option>)}
+          </select>
           <select className="bg-slate-700 p-2 rounded" value={githubForm.agent} onChange={e => setGithubForm({ ...githubForm, agent: e.target.value as AgentType })}>
             {(runtimeConfig?.agentOptions ?? []).map(agent => (
               <option key={agent} value={agent}>{agent === 'gpt' ? 'GPT' : agent === 'all' ? 'All Available' : agent.charAt(0).toUpperCase() + agent.slice(1)}</option>
             ))}
           </select>
-          <button className="bg-violet-600 hover:bg-violet-500 px-4 py-2 rounded disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={importing || !(runtimeConfig?.agentOptions?.length)}>{importing ? 'Reading Repo…' : 'Import from GitHub'}</button>
+          <button className="bg-violet-600 hover:bg-violet-500 px-4 py-2 rounded disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={importing || !(runtimeConfig?.agentOptions?.length) || !githubForm.branch}>{importing ? 'Reading Repo…' : 'Import from GitHub'}</button>
         </form>
-        <p className="mt-3 text-sm text-slate-400">After GitHub sign-in, the browser sends only the repository URL. The access token stays in an HttpOnly cookie on the web server and is forwarded server-side during import.</p>
-        <p className="mt-1 text-sm text-slate-400">On import, VectorGraph reads important repo files, generates graph nodes, and precomputes searchable embeddings so AI agents can use the graph with lower token cost.</p>
+        <p className="mt-3 text-sm text-slate-400">After GitHub sign-in, the browser sends only the repository URL and branch. The access token stays in an HttpOnly cookie on the web server and is forwarded server-side during import.</p>
+        <p className="mt-1 text-sm text-slate-400">When you create a graph for a new branch, VectorGraph seeds it from the closest existing graph for the same repository and only re-reads files whose GitHub blob hashes changed.</p>
+        {githubBranches ? <p className="mt-1 text-xs text-slate-500">Default branch: {githubBranches.defaultBranch}. Each imported branch becomes its own stored graph.</p> : null}
         {runtimeConfig ? <p className="mt-1 text-xs text-slate-500">Available AI agents: {runtimeConfig.agentOptions.length ? runtimeConfig.agentOptions.join(', ') : 'none configured'}</p> : null}
         {githubSession.authenticated && githubSession.scopes?.length ? (
           <p className="mt-1 text-xs text-slate-500">Granted GitHub scopes: {githubSession.scopes.join(', ')}</p>
@@ -179,11 +236,16 @@ export function ReposPanel() {
                     {' '}
                     <span>{r.source.isPrivate ? 'private' : 'public'}</span>
                     {' '}
-                    <span>branch {r.source.defaultBranch}</span>
+                    <span>branch {r.source.branch}</span>
+                    {r.sync?.lastSyncedAt ? <span>{' '}· synced {new Date(r.sync.lastSyncedAt).toLocaleString()}</span> : null}
+                    {typeof r.sync?.reusedPaths === 'number' && r.sync.reusedPaths > 0 ? <span>{' '}· reused {r.sync.reusedPaths} paths from an existing graph</span> : null}
                   </div>
                 ) : null}
               </div>
-              <button onClick={() => deleteRepo(r.id)} className="text-red-400 hover:text-red-300 text-sm">Delete</button>
+              <div className="flex items-center gap-3 text-sm">
+                {r.source?.provider === 'github' ? <button onClick={() => syncRepo(r.id)} className="text-sky-400 hover:text-sky-300 disabled:opacity-60" disabled={syncingRepoId === r.id}>{syncingRepoId === r.id ? 'Syncing…' : 'Sync Graph'}</button> : null}
+                <button onClick={() => deleteRepo(r.id)} className="text-red-400 hover:text-red-300">Delete</button>
+              </div>
             </li>
           ))}
         </ul>

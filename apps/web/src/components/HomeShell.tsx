@@ -18,7 +18,6 @@ export function HomeShell() {
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get('tab');
   const [tab, setTab] = useState(() => (requestedTab && validTabs.has(requestedTab) ? requestedTab : 'graph'));
-  const [repos, setRepos] = useState<any[]>([]);
 
   useEffect(() => {
     const nextTab = requestedTab && validTabs.has(requestedTab) ? requestedTab : 'graph';
@@ -39,16 +38,11 @@ export function HomeShell() {
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
-
-  useEffect(() => {
-    if (tab === 'graph') api.repos.list().then(setRepos).catch(() => {});
-  }, [tab]);
-
   return (
     <div className="flex h-screen">
       <Sidebar active={tab} onChange={handleTabChange} />
       <main className="flex-1 overflow-auto">
-        {tab === 'graph'  && <div className="h-full p-6"><Graph repos={repos} /></div>}
+        {tab === 'graph'  && <div className="h-full p-6"><Graph /></div>}
         {tab === 'repos'  && <ReposPanel />}
         {tab === 'search' && <SearchPanel />}
         {tab === 'ai'     && <AIPanel />}

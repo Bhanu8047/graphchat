@@ -6,15 +6,13 @@ export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get(githubAccessTokenCookie)?.value;
   const body = await request.json();
-  const apiResponse = await fetch(`${getServerApiBaseUrl()}/repos/import/github`, {
+  const apiResponse = await fetch(`${getServerApiBaseUrl()}/repos/import/github/branches`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       url: body.url,
-      branch: body.branch,
-      agent: body.agent,
       accessToken,
     }),
   });

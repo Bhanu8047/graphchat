@@ -2,8 +2,24 @@ export type NodeType    = 'module' | 'api' | 'schema' | 'entry' | 'config' | 'no
 export type AgentType   = 'claude' | 'gpt' | 'gemini' | 'all';
 export type EmbeddingProvider = 'voyage' | 'openai' | 'gemini' | 'ollama';
 export type LLMProvider       = 'claude' | 'openai' | 'gemini' | 'ollama' | 'openrouter';
+export type GraphNodeType     = 'repo' | 'directory' | 'file' | NodeType;
+export type GraphEdgeType     = 'contains' | 'summarizes' | 'references' | 'updates';
 
 export const VECTOR_DIMENSION = 1024;
+
+export interface RepositorySyncState {
+  strategy: 'github-tree-sha-diff' | 'manual';
+  autoUpdate: boolean;
+  lastSyncedAt?: string;
+  lastSourceRef?: string;
+  lastSyncStatus?: 'idle' | 'syncing' | 'error';
+  fileCount: number;
+  nodeCount: number;
+  edgeCount: number;
+  reusedPaths?: number;
+  seededFromRepoId?: string;
+  changedPaths?: string[];
+}
 
 export interface GithubRepoSource {
   provider:      'github';
@@ -11,8 +27,15 @@ export interface GithubRepoSource {
   repo:          string;
   fullName:      string;
   url:           string;
+  branch:        string;
   defaultBranch: string;
   isPrivate:     boolean;
+}
+
+export interface GithubBranchListResponse {
+  fullName: string;
+  defaultBranch: string;
+  branches: string[];
 }
 
 export interface ContextNode {
@@ -22,8 +45,46 @@ export interface ContextNode {
   label:      string;
   content:    string;
   tags:       string[];
+  sourcePath?: string;
+  fileDigest?: string;
+  chunkIndex?: number;
+  totalChunks?: number;
   embedding?: number[];
   updatedAt:  string;
+}
+
+export interface GraphNode {
+  id: string;
+  repoId: string;
+  type: GraphNodeType;
+  label: string;
+  path?: string;
+  parentId?: string;
+  depth: number;
+  digest?: string;
+  tags: string[];
+  updatedAt: string;
+}
+
+export interface GraphEdge {
+  id: string;
+  repoId: string;
+  sourceId: string;
+  targetId: string;
+  type: GraphEdgeType;
+  label?: string;
+  updatedAt: string;
+}
+
+export interface GraphSnapshot {
+  repository: Repository;
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  stats: {
+    structuralNodeCount: number;
+    semanticNodeCount: number;
+    edgeCount: number;
+  };
 }
 
 export interface Repository {
@@ -33,6 +94,7 @@ export interface Repository {
   techStack:   string[];
   agent:       AgentType;
   source?:     GithubRepoSource;
+  sync?:       RepositorySyncState;
   nodes:       ContextNode[];
   createdAt:   string;
   updatedAt:   string;
@@ -48,6 +110,11 @@ export interface AgentExportPayload {
   repository:  Pick<Repository, 'name' | 'description' | 'techStack' | 'agent'>;
   contextMap:  Record<NodeType, Array<Omit<ContextNode, 'id' | 'repoId' | 'embedding'>>>;
   vectorIndex: Array<{ id: string; type: NodeType; label: string; tags: string[] }>;
+  graph?: {
+    nodes: GraphNode[];
+    edges: GraphEdge[];
+    sync?: RepositorySyncState;
+  };
   agentHint:   string;
   meta:        { totalNodes: number; lastUpdated: string; format: string };
 }
@@ -69,6 +136,7 @@ export interface CreateRepoDto {
 export interface ImportGithubRepoDto {
   url:         string;
   accessToken?: string;
+  branch?:     string;
   agent?:      AgentType;
 }
 
@@ -85,6 +153,12 @@ export interface SearchQueryDto {
   repoId?: string;
   type?:   NodeType;
   k?:      number;
+}
+
+export interface GraphSyncDto {
+  accessToken?: string;
+  force?: boolean;
+  seedRepoId?: string;
 }
 
 export interface SuggestDto {
