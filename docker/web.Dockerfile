@@ -9,7 +9,7 @@ ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-RUN npm exec nx run @vectorgraph/web:build
+RUN npm exec nx build web
 
 FROM node:24-alpine AS runner
 WORKDIR /app

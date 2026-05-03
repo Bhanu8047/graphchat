@@ -5,7 +5,8 @@
     "rootDir": "src",
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "types": ["node"],
-    "baseUrl": "."
+    "baseUrl": ".",
+    "emitDeclarationOnly": false
   },
   "include": ["src/**/*.ts"],
   "exclude": [

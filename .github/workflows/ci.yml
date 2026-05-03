@@ -26,15 +26,16 @@ jobs:
       - run: npm ci
 
       - name: Check formatting
-        run: |
-          files="$(git ls-files 'apps/api/**' 'apps/web/**' 'libs/**' | paste -sd, -)"
-          npm exec nx format:check -- --files="$files"
+        run: npm run format:check
 
       - name: Typecheck API
-        run: npm exec nx run @vectorgraph/api:typecheck
+        run: npm exec nx typecheck api
+
+      - name: Build API
+        run: npm exec nx build api
 
       - name: Build web
         env:
           NEXT_PUBLIC_APP_URL: https://trchat.co
           NEXT_PUBLIC_API_URL: https://api.trchat.co/api
-        run: npm exec nx run @vectorgraph/web:build
+        run: npm exec nx build web
