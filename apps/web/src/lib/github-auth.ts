@@ -18,16 +18,23 @@ export function githubAuthCookieOptions() {
   };
 }
 
+export function getAppOrigin(requestUrl: string) {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
+  }
+  return new URL(requestUrl).origin;
+}
+
 export function getGithubOauthConfig(requestUrl: string) {
   const clientId = process.env.GITHUB_CLIENT_ID;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
-  const currentUrl = new URL(requestUrl);
-  const appOrigin = process.env.NEXT_PUBLIC_APP_URL ?? currentUrl.origin;
+  const appOrigin = getAppOrigin(requestUrl);
   const callbackUrl = `${appOrigin}/api/auth/github/callback`;
 
   return {
     clientId,
     clientSecret,
+    appOrigin,
     callbackUrl,
     isConfigured: Boolean(clientId && clientSecret),
   };

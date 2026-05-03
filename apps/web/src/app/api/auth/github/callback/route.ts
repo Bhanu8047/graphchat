@@ -22,9 +22,9 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
-  const { clientId, clientSecret, callbackUrl, isConfigured } =
+  const { clientId, clientSecret, callbackUrl, appOrigin, isConfigured } =
     getGithubOauthConfig(request.url);
-  const redirectUrl = new URL('/repos', request.url);
+  const redirectUrl = new URL('/repos', appOrigin);
   const cookieStore = await cookies();
   const expectedState = cookieStore.get(githubOauthStateCookie)?.value;
 

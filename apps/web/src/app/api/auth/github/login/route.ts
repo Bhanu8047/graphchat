@@ -7,12 +7,11 @@ import {
 } from '../../../../../lib/github-auth';
 
 export async function GET(request: NextRequest) {
-  const { clientId, callbackUrl, isConfigured } = getGithubOauthConfig(
-    request.url,
-  );
+  const { clientId, callbackUrl, appOrigin, isConfigured } =
+    getGithubOauthConfig(request.url);
   const redirectTarget = new URL(
     '/auth/sign-in?githubAuth=config-error',
-    request.url,
+    appOrigin,
   );
 
   if (!isConfigured || !clientId) {
