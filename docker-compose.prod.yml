@@ -47,6 +47,8 @@ services:
     image: ${WEB_IMAGE:?WEB_IMAGE is required}
     env_file: .env.prod
     environment:
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
       INTERNAL_API_URL: http://api:3001/api
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://trchat.co}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.trchat.co/api}
