@@ -54,7 +54,9 @@ export function RepositoriesPage() {
     api.repos
       .list()
       .then(setRepos)
-      .catch(() => {});
+      .catch(() => {
+        /* ignored */
+      });
 
   const refreshGithubSession = async () => {
     const response = await fetch('/api/auth/github/session');

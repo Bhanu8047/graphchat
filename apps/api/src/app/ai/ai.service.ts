@@ -10,7 +10,7 @@ export class AiService {
   private llmCfg: LLMConfig;
   private mongo: MongoVectorService;
   constructor(
-    private cfg: ConfigService,
+    cfg: ConfigService,
     private runtimeConfig: RuntimeConfigService,
   ) {
     const defaultProvider =

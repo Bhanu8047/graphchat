@@ -22,7 +22,9 @@ export function ExportPage() {
         setRepos(nextRepos);
         setRepoId(nextRepos[0]?.id ?? '');
       })
-      .catch(() => {});
+      .catch(() => {
+        /* ignored */
+      });
   }, []);
 
   const run = async () => {
