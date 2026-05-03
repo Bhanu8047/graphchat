@@ -29,13 +29,14 @@ VPS_HOST      # VPS IP address or hostname
 VPS_USER      # SSH user that can run Docker in /opt/trchat
 VPS_SSH_KEY   # private key for VPS_USER
 VPS_PORT      # optional; defaults to 22 if unset
+PROD_ENV_FILE # full contents of /opt/trchat/.env.prod
 ```
 
-The workflow uses the built-in `GITHUB_TOKEN` for GHCR push/pull during automated deploys. For manual pulls or rollbacks from another shell, log in to GHCR with a read-capable token first if the package is private.
+The workflow uses the built-in `GITHUB_TOKEN` for GHCR push/pull during automated deploys and writes `/opt/trchat/.env.prod` from the `PROD_ENV_FILE` repository secret. For manual pulls or rollbacks from another shell, log in to GHCR with a read-capable token first if the package is private.
 
 ## VPS environment
 
-Create `/opt/trchat/.env.prod` from `.env.prod.example` on the VPS:
+Store the full production env file contents in the `PROD_ENV_FILE` repository secret. Example content:
 
 ```bash
 MONGO_ROOT_PASSWORD=replace-with-a-long-random-password
@@ -59,14 +60,13 @@ scp scripts/vps/bootstrap-ubuntu.sh <VPS_USER>@<VPS_HOST>:/tmp/bootstrap-ubuntu.
 ssh <VPS_USER>@<VPS_HOST> 'sudo APP_DIR=/opt/trchat bash /tmp/bootstrap-ubuntu.sh'
 ```
 
-Log out and back in so Docker group membership applies, then create the deployment directory contents and production env:
+Log out and back in so Docker group membership applies, then create the deployment directory contents:
 
 ```bash
 ssh <VPS_USER>@<VPS_HOST> 'mkdir -p /opt/trchat'
-scp docker-compose.prod.yml .env.prod.example <VPS_USER>@<VPS_HOST>:/opt/trchat/
+scp docker-compose.prod.yml <VPS_USER>@<VPS_HOST>:/opt/trchat/
 scp -r docker scripts <VPS_USER>@<VPS_HOST>:/opt/trchat/
-ssh <VPS_USER>@<VPS_HOST> 'cd /opt/trchat && cp .env.prod.example .env.prod && chmod +x scripts/vps/*.sh'
-ssh <VPS_USER>@<VPS_HOST> 'nano /opt/trchat/.env.prod'
+ssh <VPS_USER>@<VPS_HOST> 'cd /opt/trchat && chmod +x scripts/vps/*.sh'
 ```
 
 After DNS points at the VPS and port 80 is reachable, issue the first Let's Encrypt certificate:

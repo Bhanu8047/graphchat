@@ -12,7 +12,7 @@ HEALTH_CHECK_TIMEOUT_SECONDS=$((MAX_HEALTH_CHECK_ATTEMPTS * 5))
 cd "$APP_DIR"
 
 if [ ! -f .env.prod ]; then
-  echo "Missing $APP_DIR/.env.prod. Create it from .env.prod.example before deploying." >&2
+  echo "Missing $APP_DIR/.env.prod. Populate it before deploying or provide it via the PROD_ENV_FILE deployment secret." >&2
   exit 1
 fi
 

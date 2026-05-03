@@ -11,11 +11,12 @@ VPS_HOST      # VPS IP address or hostname
 VPS_USER      # SSH user that can run Docker in /opt/trchat
 VPS_SSH_KEY   # private SSH key for VPS_USER
 VPS_PORT      # optional; defaults to 22
+PROD_ENV_FILE # full contents of /opt/trchat/.env.prod
 ```
 
-The workflow uses GitHub's built-in `GITHUB_TOKEN` to push and pull GHCR images. No separate GHCR secret is required for the automated workflow.
+The workflow uses GitHub's built-in `GITHUB_TOKEN` to push and pull GHCR images, and writes `/opt/trchat/.env.prod` from the `PROD_ENV_FILE` repository secret during deploy. No separate GHCR secret is required for the automated workflow.
 
-Create `/opt/trchat/.env.prod` on the VPS from `.env.prod.example`:
+Set `PROD_ENV_FILE` to the full production env file contents, for example:
 
 ```bash
 MONGO_ROOT_PASSWORD=replace-with-a-long-random-password

@@ -51,13 +51,20 @@ jobs:
             NEXT_PUBLIC_APP_URL=https://trchat.co
             NEXT_PUBLIC_API_URL=https://api.trchat.co/api
 
+      - name: Create production env file
+        env:
+          PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
+        run: |
+          : "${PROD_ENV_FILE:?PROD_ENV_FILE secret is required}"
+          printf '%s\n' "$PROD_ENV_FILE" > .env.prod
+
       - name: Prepare deployment bundle
         run: |
           tar -czf /tmp/trchat-deploy.tgz \
             docker-compose.prod.yml \
             docker/nginx \
             scripts/vps \
-            .env.prod.example
+            .env.prod
 
       - name: Configure SSH
         env:
@@ -83,7 +90,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "mkdir -p '${DEPLOY_DIR}'"
           scp -i ~/.ssh/trchat_deploy_key -P "${VPS_PORT:-22}" /tmp/trchat-deploy.tgz "$VPS_USER@$VPS_HOST:${DEPLOY_DIR}/trchat-deploy.tgz"
-          ssh -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '${DEPLOY_DIR}' && tar -xzf trchat-deploy.tgz && chmod +x scripts/vps/*.sh"
+          ssh -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '${DEPLOY_DIR}' && tar -xzf trchat-deploy.tgz && chmod 600 .env.prod && chmod +x scripts/vps/*.sh"
 
       - name: Deploy exact images
         env:
