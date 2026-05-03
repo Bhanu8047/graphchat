@@ -43,7 +43,7 @@ install -d -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$APP_DIR/certbot/www"
 cat >/etc/cron.d/trchat-certbot <<EOF
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-15 3 * * * root cd $APP_DIR && test -f .deploy/current.env && docker compose --env-file .env.prod --env-file .deploy/current.env -f docker-compose.prod.yml run --rm certbot renew --webroot -w /var/www/certbot --quiet && docker compose --env-file .env.prod --env-file .deploy/current.env -f docker-compose.prod.yml exec -T nginx nginx -s reload
+15 3 * * * root cd $APP_DIR && test -f .deploy/current.env && docker compose --env-file .env.prod --env-file .deploy/current.env -f docker-compose.prod.yml run --rm certbot renew --webroot -w /var/www/certbot >> /var/log/trchat-certbot.log 2>&1 && docker compose --env-file .env.prod --env-file .deploy/current.env -f docker-compose.prod.yml exec -T nginx nginx -s reload >> /var/log/trchat-certbot.log 2>&1
 EOF
 
 echo "Bootstrap complete. Log out and back in so Docker group membership applies for $DEPLOY_USER."

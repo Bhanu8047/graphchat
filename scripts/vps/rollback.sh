@@ -17,3 +17,5 @@ cp .deploy/previous.env .deploy/current.env
 docker compose --env-file .env.prod --env-file .deploy/current.env -f "$COMPOSE_FILE" pull api web
 docker compose --env-file .env.prod --env-file .deploy/current.env -f "$COMPOSE_FILE" up -d --remove-orphans
 docker compose --env-file .env.prod --env-file .deploy/current.env -f "$COMPOSE_FILE" ps
+
+echo "Rollback complete. Restored deployment metadata from $APP_DIR/.deploy/previous.env."

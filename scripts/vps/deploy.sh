@@ -36,7 +36,7 @@ for attempt in $(seq 1 30); do
   fi
 
   if [ "$attempt" -eq 30 ]; then
-    echo "API health check failed after deploy." >&2
+    echo "API health check failed after 150 seconds. Inspect logs with: docker compose --env-file .env.prod --env-file .deploy/current.env -f $COMPOSE_FILE logs api" >&2
     exit 1
   fi
 
@@ -50,7 +50,7 @@ for attempt in $(seq 1 30); do
   fi
 
   if [ "$attempt" -eq 30 ]; then
-    echo "Web health check failed after deploy." >&2
+    echo "Web health check failed after 150 seconds. Inspect logs with: docker compose --env-file .env.prod --env-file .deploy/current.env -f $COMPOSE_FILE logs web" >&2
     exit 1
   fi
 
