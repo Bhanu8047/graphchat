@@ -24,6 +24,7 @@
       },
       "build": {
         "executor": "nx:run-commands",
+        "cache": true,
         "options": {
           "command": "NODE_ENV=production next build --webpack",
           "cwd": "apps/web"
