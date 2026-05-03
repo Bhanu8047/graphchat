@@ -68,15 +68,15 @@
           "build"
         ],
         "options": {
-          "buildTarget": "@vectorgraph/api:build",
+          "buildTarget": "api:build",
           "runBuildTargetDependencies": false
         },
         "configurations": {
           "development": {
-            "buildTarget": "@vectorgraph/api:build:development"
+            "buildTarget": "api:build:development"
           },
           "production": {
-            "buildTarget": "@vectorgraph/api:build:production"
+            "buildTarget": "api:build:production"
           }
         }
       }

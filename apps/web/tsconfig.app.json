@@ -13,6 +13,7 @@
     "esModuleInterop": true,
     "incremental": true,
     "noEmit": true,
+    "declaration": true,
     "emitDeclarationOnly": false,
     "composite": false,
     "plugins": [{ "name": "next" }],

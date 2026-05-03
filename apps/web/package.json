@@ -14,8 +14,17 @@
       "type:app"
     ],
     "targets": {
+      "serve": {
+        "continuous": true,
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "next dev",
+          "cwd": "apps/web"
+        }
+      },
       "build": {
         "executor": "nx:run-commands",
+        "cache": true,
         "options": {
           "command": "NODE_ENV=production next build --webpack",
           "cwd": "apps/web"
