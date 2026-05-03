@@ -34,5 +34,9 @@ export function getGithubOauthConfig(requestUrl: string) {
 }
 
 export function getServerApiBaseUrl() {
-  return process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
+  return (
+    process.env.INTERNAL_API_URL ??
+    process.env.NEXT_PUBLIC_API_URL ??
+    'http://localhost:3001/api'
+  );
 }

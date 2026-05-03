@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { ReposModule }  from './repos/repos.module';
-import { NodesModule }  from './nodes/nodes.module';
+import { ReposModule } from './repos/repos.module';
+import { NodesModule } from './nodes/nodes.module';
 import { SearchModule } from './search/search.module';
-import { AiModule }     from './ai/ai.module';
+import { AiModule } from './ai/ai.module';
 import { ExportModule } from './export/export.module';
 import { RuntimeConfigModule } from './runtime/runtime-config.module';
 import { GraphModule } from './graph/graph.module';
@@ -23,7 +23,12 @@ import { DashboardModule } from './dashboard/dashboard.module';
     UsersModule,
     AuthModule,
     DashboardModule,
-    ReposModule, NodesModule, SearchModule, AiModule, ExportModule, GraphModule,
+    ReposModule,
+    NodesModule,
+    SearchModule,
+    AiModule,
+    ExportModule,
+    GraphModule,
   ],
   providers: [
     SessionTokenService,

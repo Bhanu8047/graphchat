@@ -2,7 +2,9 @@ import { createClient, SchemaFieldTypes, VectorAlgorithms } from 'redis';
 import { ContextNode, VECTOR_DIMENSION } from '@vectorgraph/shared-types';
 
 export class RedisVectorService {
-  private client = createClient({ url: process.env.REDIS_URL ?? 'redis://localhost:6379' });
+  private client = createClient({
+    url: process.env.REDIS_URL ?? 'redis://localhost:6379',
+  });
 
   async connect(): Promise<void> {
     await this.client.connect();
@@ -11,28 +13,36 @@ export class RedisVectorService {
 
   private async ensureIndex(): Promise<void> {
     try {
-      await this.client.ft.create('idx:context', {
-        '$.repoId':    { type: SchemaFieldTypes.TAG,  AS: 'repoId'  },
-        '$.type':      { type: SchemaFieldTypes.TAG,   AS: 'type'    },
-        '$.label':     { type: SchemaFieldTypes.TEXT,  AS: 'label'   },
-        '$.content':   { type: SchemaFieldTypes.TEXT,  AS: 'content' },
-        '$.tags.*':    { type: SchemaFieldTypes.TAG,   AS: 'tags'    },
-        '$.embedding': {
-          type: SchemaFieldTypes.VECTOR,
-          AS: 'embedding',
-          ALGORITHM: VectorAlgorithms.HNSW,
-          TYPE: 'FLOAT32',
-          DIM: VECTOR_DIMENSION,
-          DISTANCE_METRIC: 'COSINE',
+      await this.client.ft.create(
+        'idx:context',
+        {
+          '$.ownerId': { type: SchemaFieldTypes.TAG, AS: 'ownerId' },
+          '$.repoId': { type: SchemaFieldTypes.TAG, AS: 'repoId' },
+          '$.type': { type: SchemaFieldTypes.TAG, AS: 'type' },
+          '$.label': { type: SchemaFieldTypes.TEXT, AS: 'label' },
+          '$.content': { type: SchemaFieldTypes.TEXT, AS: 'content' },
+          '$.tags.*': { type: SchemaFieldTypes.TAG, AS: 'tags' },
+          '$.embedding': {
+            type: SchemaFieldTypes.VECTOR,
+            AS: 'embedding',
+            ALGORITHM: VectorAlgorithms.HNSW,
+            TYPE: 'FLOAT32',
+            DIM: VECTOR_DIMENSION,
+            DISTANCE_METRIC: 'COSINE',
+          },
         },
-      }, { ON: 'JSON', PREFIX: 'context:' });
+        { ON: 'JSON', PREFIX: 'context:' },
+      );
     } catch (e: any) {
       if (!e.message.includes('Index already exists')) throw e;
     }
   }
 
   async storeNode(node: ContextNode, embedding: number[]): Promise<void> {
-    await this.client.json.set(`context:${node.id}`, '$', { ...node, embedding });
+    await this.client.json.set(`context:${node.id}`, '$', {
+      ...node,
+      embedding,
+    });
   }
 
   async deleteNode(id: string): Promise<void> {
@@ -49,21 +59,21 @@ export class RedisVectorService {
 
   async search(
     queryEmbedding: number[],
-    options: { repoId?: string; type?: string; k?: number } = {}
+    options: { ownerId: string; repoId?: string; type?: string; k?: number },
   ): Promise<Array<{ node: ContextNode; score: number }>> {
-    const { repoId, type, k = 10 } = options;
-    const filters: string[] = [];
+    const { ownerId, repoId, type, k = 10 } = options;
+    const filters: string[] = [`@ownerId:{${ownerId}}`];
     if (repoId) filters.push(`@repoId:{${repoId}}`);
-    if (type)   filters.push(`@type:{${type}}`);
+    if (type) filters.push(`@type:{${type}}`);
     const filter = filters.length ? filters.join(' ') : '*';
     const blob = Buffer.from(new Float32Array(queryEmbedding).buffer);
     const res = await this.client.ft.search(
       'idx:context',
       `(${filter})=>[KNN ${k} @embedding $BLOB AS __score]`,
-      { PARAMS: { BLOB: blob }, DIALECT: 2, RETURN: ['$', '__score'] }
+      { PARAMS: { BLOB: blob }, DIALECT: 2, RETURN: ['$', '__score'] },
     );
-    return res.documents.map(doc => ({
-      node:  JSON.parse(doc.value['$'] as string) as ContextNode,
+    return res.documents.map((doc) => ({
+      node: JSON.parse(doc.value['$'] as string) as ContextNode,
       score: 1 - parseFloat(doc.value['__score'] as string),
     }));
   }

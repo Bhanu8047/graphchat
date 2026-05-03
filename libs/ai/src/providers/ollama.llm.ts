@@ -2,10 +2,14 @@ import OpenAI from 'openai';
 import { LLMConfig, SuggestResult } from '../types';
 import { buildPrompt, parseJSON } from './_shared';
 
-export async function ollamaSuggest(repoName: string, input: string, cfg: LLMConfig): Promise<SuggestResult> {
+export async function ollamaSuggest(
+  repoName: string,
+  input: string,
+  cfg: LLMConfig,
+): Promise<SuggestResult> {
   const isOpenRouter = cfg.provider === 'openrouter';
   const client = new OpenAI({
-    apiKey:  isOpenRouter ? cfg.openrouterApiKey : 'ollama',
+    apiKey: isOpenRouter ? cfg.openrouterApiKey : 'ollama',
     baseURL: isOpenRouter
       ? 'https://openrouter.ai/api/v1'
       : `${cfg.ollamaBaseUrl ?? 'http://localhost:11434'}/v1`,

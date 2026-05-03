@@ -15,20 +15,21 @@ export class GraphService {
     await this.mongo.connect();
   }
 
-  async getGraph(repoId: string): Promise<GraphSnapshot> {
-    const repository = await this.mongo.getRepo(repoId);
+  async getGraph(repoId: string, ownerId: string): Promise<GraphSnapshot> {
+    const repository = await this.mongo.getRepoForOwner(repoId, ownerId);
     if (!repository) {
       throw new NotFoundException(`Repo ${repoId} not found`);
     }
 
     const [structuralNodes, semanticNodes, edges] = await Promise.all([
-      this.mongo.getGraphNodes(repoId),
-      this.mongo.getNodes(repoId),
-      this.mongo.getGraphEdges(repoId),
+      this.mongo.getGraphNodesForOwner(repoId, ownerId),
+      this.mongo.getNodesForOwner(repoId, ownerId),
+      this.mongo.getGraphEdgesForOwner(repoId, ownerId),
     ]);
 
-    const semanticGraphNodes: GraphNode[] = semanticNodes.map(node => ({
+    const semanticGraphNodes: GraphNode[] = semanticNodes.map((node) => ({
       id: node.id,
+      ownerId: node.ownerId,
       repoId: node.repoId,
       type: node.type,
       label: node.label,

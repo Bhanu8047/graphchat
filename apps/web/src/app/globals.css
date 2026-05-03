@@ -1,24 +1,110 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
-:root {
-	--font-display: 'Space Grotesk', sans-serif;
-	--font-body: 'Plus Jakarta Sans', sans-serif;
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html[data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    min-height: 100%;
+    margin: 0;
+  }
+
+  body {
+    position: relative;
+    overflow-x: hidden;
+    background:
+      radial-gradient(
+        circle at top left,
+        rgba(103, 232, 249, 0.34),
+        transparent 22%
+      ),
+      radial-gradient(
+        circle at 88% 18%,
+        rgba(251, 146, 60, 0.2),
+        transparent 18%
+      ),
+      linear-gradient(180deg, #f8fbff 0%, #edf4fb 100%);
+    color: #0f172a;
+    font-family: var(--font-body), sans-serif;
+  }
+
+  html[data-theme='dark'] body {
+    background:
+      radial-gradient(
+        circle at top left,
+        rgba(34, 211, 238, 0.18),
+        transparent 24%
+      ),
+      radial-gradient(
+        circle at 82% 14%,
+        rgba(249, 115, 22, 0.14),
+        transparent 20%
+      ),
+      radial-gradient(
+        circle at bottom right,
+        rgba(16, 185, 129, 0.12),
+        transparent 26%
+      ),
+      linear-gradient(180deg, #07111d 0%, #030812 100%);
+    color: #e2e8f0;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), transparent 88%);
+    opacity: 0.28;
+  }
+
+  html[data-theme='dark'] body::before {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    opacity: 0.2;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  ::selection {
+    background: rgba(34, 211, 238, 0.28);
+    color: #fff;
+  }
 }
 
-html, body {
-	height: 100%;
-	margin: 0;
-	background: #050912;
-	color: #e5e7eb;
-	font-family: var(--font-body);
-}
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display), sans-serif;
+  }
 
-body {
-	min-height: 100vh;
-}
-
-.font-display {
-	font-family: var(--font-display);
+  .text-balance {
+    text-wrap: balance;
+  }
 }

@@ -1,6 +1,9 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { githubAccessTokenCookie, getGithubOauthConfig } from '../../../../../lib/github-auth';
+import {
+  githubAccessTokenCookie,
+  getGithubOauthConfig,
+} from '../../../../../lib/github-auth';
 
 type GithubUserResponse = {
   login: string;
@@ -15,7 +18,10 @@ export async function GET(request: Request) {
   const accessToken = cookieStore.get(githubAccessTokenCookie)?.value;
 
   if (!accessToken) {
-    return NextResponse.json({ authenticated: false, configured: isConfigured });
+    return NextResponse.json({
+      authenticated: false,
+      configured: isConfigured,
+    });
   }
 
   const userResponse = await fetch('https://api.github.com/user', {
@@ -27,14 +33,19 @@ export async function GET(request: Request) {
 
   if (!userResponse.ok) {
     cookieStore.delete(githubAccessTokenCookie);
-    return NextResponse.json({ authenticated: false, configured: isConfigured });
+    return NextResponse.json({
+      authenticated: false,
+      configured: isConfigured,
+    });
   }
 
-  const user = await userResponse.json() as GithubUserResponse;
-  const scopes = userResponse.headers.get('x-oauth-scopes')
-    ?.split(',')
-    .map(scope => scope.trim())
-    .filter(Boolean) ?? [];
+  const user = (await userResponse.json()) as GithubUserResponse;
+  const scopes =
+    userResponse.headers
+      .get('x-oauth-scopes')
+      ?.split(',')
+      .map((scope) => scope.trim())
+      .filter(Boolean) ?? [];
   const canImportPrivateRepos = scopes.includes('repo');
 
   return NextResponse.json({

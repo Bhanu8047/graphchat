@@ -1,4 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
+import { AuthenticatedUser } from '@vectorgraph/shared-types';
+import { CurrentUser } from '../common/auth/current-user.decorator';
 import { DashboardService } from './dashboard.service';
 
 @Controller('dashboard')
@@ -6,7 +8,7 @@ export class DashboardController {
   constructor(private readonly dashboard: DashboardService) {}
 
   @Get('stats')
-  stats() {
-    return this.dashboard.getStats();
+  stats(@CurrentUser() user: AuthenticatedUser) {
+    return this.dashboard.getStats(user.id);
   }
 }

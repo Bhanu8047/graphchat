@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AppUser, AuthenticatedUser } from '@vectorgraph/shared-types';
 import { PasswordService } from '../common/auth/password.service';
 import { UsersRepository } from './users.repository';
@@ -13,15 +18,39 @@ export class UsersService {
 
   toPublicUser(user: AppUser | null | undefined): AuthenticatedUser | null {
     if (!user) return null;
-    const { id, email, name, authProvider, githubId, githubLogin, avatarUrl, createdAt, updatedAt } = user;
-    return { id, email, name, authProvider, githubId, githubLogin, avatarUrl, createdAt, updatedAt };
+    const {
+      id,
+      email,
+      name,
+      authProvider,
+      githubId,
+      githubLogin,
+      avatarUrl,
+      createdAt,
+      updatedAt,
+    } = user;
+    return {
+      id,
+      email,
+      name,
+      authProvider,
+      themePreference: user.themePreference ?? 'system',
+      githubId,
+      githubLogin,
+      avatarUrl,
+      createdAt,
+      updatedAt,
+    };
   }
 
   findPublicById(id: string) {
-    return this.users.findById(id).then(user => this.toPublicUser(user));
+    return this.users.findById(id).then((user) => this.toPublicUser(user));
   }
 
-  async updateCurrentUser(userId: string, dto: UpdateUserDto): Promise<AuthenticatedUser> {
+  async updateCurrentUser(
+    userId: string,
+    dto: UpdateUserDto,
+  ): Promise<AuthenticatedUser> {
     const existing = await this.users.findById(userId);
     if (!existing) throw new NotFoundException('User not found.');
 
@@ -35,10 +64,15 @@ export class UsersService {
     let passwordHash = existing.passwordHash;
     if (dto.newPassword) {
       if (!existing.passwordHash) {
-        throw new UnauthorizedException('This account does not support password updates.');
+        throw new UnauthorizedException(
+          'This account does not support password updates.',
+        );
       }
 
-      if (!dto.currentPassword || !this.passwords.verify(dto.currentPassword, existing.passwordHash)) {
+      if (
+        !dto.currentPassword ||
+        !this.passwords.verify(dto.currentPassword, existing.passwordHash)
+      ) {
         throw new UnauthorizedException('Current password is incorrect.');
       }
 
@@ -48,6 +82,8 @@ export class UsersService {
     const updated = await this.users.update(userId, {
       name: dto.name ?? existing.name,
       email: dto.email ?? existing.email,
+      themePreference:
+        dto.themePreference ?? existing.themePreference ?? 'system',
       passwordHash,
     });
 

@@ -1,14 +1,22 @@
-import { Injectable, OnApplicationShutdown, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  OnApplicationShutdown,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Collection, Db, Document, MongoClient } from 'mongodb';
 
 @Injectable()
-export class MongoDatabaseService implements OnModuleInit, OnApplicationShutdown {
+export class MongoDatabaseService
+  implements OnModuleInit, OnApplicationShutdown
+{
   private client: MongoClient;
   private db?: Db;
 
   constructor(private readonly config: ConfigService) {
-    this.client = new MongoClient(this.config.get('MONGODB_URI') ?? process.env.MONGODB_URI!);
+    this.client = new MongoClient(
+      this.config.get('MONGODB_URI') ?? process.env.MONGODB_URI!,
+    );
   }
 
   async onModuleInit() {

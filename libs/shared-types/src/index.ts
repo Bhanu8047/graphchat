@@ -1,10 +1,26 @@
-export type NodeType    = 'module' | 'api' | 'schema' | 'entry' | 'config' | 'note';
-export type AgentType   = 'claude' | 'gpt' | 'gemini' | 'all';
+export type NodeType =
+  | 'module'
+  | 'api'
+  | 'schema'
+  | 'entry'
+  | 'config'
+  | 'note';
+export type AgentType = 'claude' | 'gpt' | 'gemini' | 'all';
 export type EmbeddingProvider = 'voyage' | 'openai' | 'gemini' | 'ollama';
-export type LLMProvider       = 'claude' | 'openai' | 'gemini' | 'ollama' | 'openrouter';
-export type GraphNodeType     = 'repo' | 'directory' | 'file' | NodeType;
-export type GraphEdgeType     = 'contains' | 'summarizes' | 'references' | 'updates';
-export type AuthProvider      = 'local' | 'github';
+export type LLMProvider =
+  | 'claude'
+  | 'openai'
+  | 'gemini'
+  | 'ollama'
+  | 'openrouter';
+export type GraphNodeType = 'repo' | 'directory' | 'file' | NodeType;
+export type GraphEdgeType =
+  | 'contains'
+  | 'summarizes'
+  | 'references'
+  | 'updates';
+export type AuthProvider = 'local' | 'github';
+export type ThemeMode = 'light' | 'dark' | 'system';
 
 export const VECTOR_DIMENSION = 1024;
 
@@ -27,6 +43,7 @@ export interface AppUser {
   email: string;
   name: string;
   authProvider: AuthProvider;
+  themePreference: ThemeMode;
   githubLogin?: string;
   githubId?: string;
   avatarUrl?: string;
@@ -63,14 +80,14 @@ export interface DashboardStats {
 }
 
 export interface GithubRepoSource {
-  provider:      'github';
-  owner:         string;
-  repo:          string;
-  fullName:      string;
-  url:           string;
-  branch:        string;
+  provider: 'github';
+  owner: string;
+  repo: string;
+  fullName: string;
+  url: string;
+  branch: string;
   defaultBranch: string;
-  isPrivate:     boolean;
+  isPrivate: boolean;
 }
 
 export interface GithubBranchListResponse {
@@ -80,22 +97,24 @@ export interface GithubBranchListResponse {
 }
 
 export interface ContextNode {
-  id:         string;
-  repoId:     string;
-  type:       NodeType;
-  label:      string;
-  content:    string;
-  tags:       string[];
+  id: string;
+  ownerId: string;
+  repoId: string;
+  type: NodeType;
+  label: string;
+  content: string;
+  tags: string[];
   sourcePath?: string;
   fileDigest?: string;
   chunkIndex?: number;
   totalChunks?: number;
   embedding?: number[];
-  updatedAt:  string;
+  updatedAt: string;
 }
 
 export interface GraphNode {
   id: string;
+  ownerId: string;
   repoId: string;
   type: GraphNodeType;
   label: string;
@@ -109,6 +128,7 @@ export interface GraphNode {
 
 export interface GraphEdge {
   id: string;
+  ownerId: string;
   repoId: string;
   sourceId: string;
   targetId: string;
@@ -129,71 +149,80 @@ export interface GraphSnapshot {
 }
 
 export interface Repository {
-  id:          string;
-  name:        string;
+  id: string;
+  ownerId: string;
+  name: string;
   description: string;
-  techStack:   string[];
-  agent:       AgentType;
-  source?:     GithubRepoSource;
-  sync?:       RepositorySyncState;
-  nodes:       ContextNode[];
-  createdAt:   string;
-  updatedAt:   string;
+  techStack: string[];
+  agent: AgentType;
+  source?: GithubRepoSource;
+  sync?: RepositorySyncState;
+  nodes: ContextNode[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface VectorSearchResult {
-  node:   Omit<ContextNode, 'embedding'>;
+  node: Omit<ContextNode, 'embedding'>;
   repoId: string;
-  score:  number;
+  score: number;
 }
 
 export interface AgentExportPayload {
-  repository:  Pick<Repository, 'name' | 'description' | 'techStack' | 'agent'>;
-  contextMap:  Record<NodeType, Array<Omit<ContextNode, 'id' | 'repoId' | 'embedding'>>>;
-  vectorIndex: Array<{ id: string; type: NodeType; label: string; tags: string[] }>;
+  repository: Pick<Repository, 'name' | 'description' | 'techStack' | 'agent'>;
+  contextMap: Record<
+    NodeType,
+    Array<Omit<ContextNode, 'id' | 'repoId' | 'embedding'>>
+  >;
+  vectorIndex: Array<{
+    id: string;
+    type: NodeType;
+    label: string;
+    tags: string[];
+  }>;
   graph?: {
     nodes: GraphNode[];
     edges: GraphEdge[];
     sync?: RepositorySyncState;
   };
-  agentHint:   string;
-  meta:        { totalNodes: number; lastUpdated: string; format: string };
+  agentHint: string;
+  meta: { totalNodes: number; lastUpdated: string; format: string };
 }
 
 export interface SuggestResult {
-  type:    NodeType;
-  label:   string;
+  type: NodeType;
+  label: string;
   content: string;
-  tags:    string[];
+  tags: string[];
 }
 
 export interface CreateRepoDto {
-  name:        string;
+  name: string;
   description: string;
-  techStack:   string[];
-  agent:       AgentType;
+  techStack: string[];
+  agent: AgentType;
 }
 
 export interface ImportGithubRepoDto {
-  url:         string;
+  url: string;
   accessToken?: string;
-  branch?:     string;
-  agent?:      AgentType;
+  branch?: string;
+  agent?: AgentType;
 }
 
 export interface CreateNodeDto {
-  repoId:  string;
-  type:    NodeType;
-  label:   string;
+  repoId: string;
+  type: NodeType;
+  label: string;
   content: string;
-  tags:    string[];
+  tags: string[];
 }
 
 export interface SearchQueryDto {
-  q:       string;
+  q: string;
   repoId?: string;
-  type?:   NodeType;
-  k?:      number;
+  type?: NodeType;
+  k?: number;
 }
 
 export interface GraphSyncDto {
@@ -204,7 +233,7 @@ export interface GraphSyncDto {
 
 export interface SuggestDto {
   repoId: string;
-  input:  string;
+  input: string;
 }
 
 export interface RuntimeProviderConfig {

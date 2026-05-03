@@ -1,7 +1,10 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerApiBaseUrl } from '../../../../lib/github-auth';
-import { appSessionCookie, appSessionCookieOptions } from '../../../../features/auth/lib/auth-session';
+import {
+  appSessionCookie,
+  appSessionCookieOptions,
+} from '../../../../features/auth/lib/auth-session';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -13,10 +16,17 @@ export async function POST(request: NextRequest) {
 
   const payload = await response.json().catch(() => null);
   if (!response.ok || !payload?.sessionToken) {
-    return NextResponse.json(payload ?? { message: 'Unable to create account.' }, { status: response.status || 400 });
+    return NextResponse.json(
+      payload ?? { message: 'Unable to create account.' },
+      { status: response.status || 400 },
+    );
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(appSessionCookie, payload.sessionToken, appSessionCookieOptions());
+  cookieStore.set(
+    appSessionCookie,
+    payload.sessionToken,
+    appSessionCookieOptions(),
+  );
   return NextResponse.json({ user: payload.user, authenticated: true });
 }

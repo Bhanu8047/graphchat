@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { GraphSyncDto } from '@vectorgraph/shared-types';
+import { AuthenticatedUser, GraphSyncDto } from '@vectorgraph/shared-types';
 import { GraphService } from './graph.service';
 import { ReposService } from '../repos/repos.service';
+import { CurrentUser } from '../common/auth/current-user.decorator';
 
 @Controller('graphs')
 export class GraphController {
@@ -11,12 +12,19 @@ export class GraphController {
   ) {}
 
   @Get(':repoId')
-  getGraph(@Param('repoId') repoId: string) {
-    return this.graphService.getGraph(repoId);
+  getGraph(
+    @Param('repoId') repoId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.graphService.getGraph(repoId, user.id);
   }
 
   @Post(':repoId/sync/github')
-  syncGithub(@Param('repoId') repoId: string, @Body() dto: GraphSyncDto) {
-    return this.reposService.syncGithub(repoId, dto);
+  syncGithub(
+    @Param('repoId') repoId: string,
+    @Body() dto: GraphSyncDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.reposService.syncGithub(repoId, dto, user.id);
   }
 }

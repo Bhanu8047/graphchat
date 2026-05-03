@@ -2,8 +2,14 @@
 const path = require('path');
 
 const aliases = {
-  '@vectorgraph/shared-types': path.resolve(__dirname, '../../libs/shared-types/src/index.ts'),
-  '@vectorgraph/vector-client': path.resolve(__dirname, '../../libs/vector-client/src/index.ts'),
+  '@vectorgraph/shared-types': path.resolve(
+    __dirname,
+    '../../libs/shared-types/src/index.ts',
+  ),
+  '@vectorgraph/vector-client': path.resolve(
+    __dirname,
+    '../../libs/vector-client/src/index.ts',
+  ),
   '@vectorgraph/ai': path.resolve(__dirname, '../../libs/ai/src/index.ts'),
 };
 

@@ -8,12 +8,15 @@ type AuthContextValue = {
   authenticated: boolean;
   loading: boolean;
   refresh: () => Promise<void>;
+  setUser: (user: AuthSessionResponse['user']) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<AuthSessionResponse>({ authenticated: false });
+  const [session, setSession] = useState<AuthSessionResponse>({
+    authenticated: false,
+  });
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
@@ -27,6 +30,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setUser = (user: AuthSessionResponse['user']) => {
+    setSession((current) => ({
+      ...current,
+      user,
+      authenticated: Boolean(user),
+    }));
+  };
+
   useEffect(() => {
     refresh().catch(() => {
       setSession({ authenticated: false });
@@ -34,12 +45,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const value = useMemo(() => ({
-    user: session.user,
-    authenticated: session.authenticated,
-    loading,
-    refresh,
-  }), [session, loading]);
+  const value = useMemo(
+    () => ({
+      user: session.user,
+      authenticated: session.authenticated,
+      loading,
+      refresh,
+      setUser,
+    }),
+    [session, loading],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AgentType, EmbeddingProvider, LLMProvider, RuntimeProviderConfig } from '@vectorgraph/shared-types';
+import {
+  AgentType,
+  EmbeddingProvider,
+  LLMProvider,
+  RuntimeProviderConfig,
+} from '@vectorgraph/shared-types';
 
 @Injectable()
 export class RuntimeConfigService {
@@ -54,30 +59,43 @@ export class RuntimeConfigService {
     return available[0];
   }
 
-  getAvailableAgents(llmProviders = this.getAvailableLlmProviders()): AgentType[] {
+  getAvailableAgents(
+    llmProviders = this.getAvailableLlmProviders(),
+  ): AgentType[] {
     const agentOptions: AgentType[] = [];
     if (llmProviders.includes('claude')) agentOptions.push('claude');
     if (llmProviders.includes('openai')) agentOptions.push('gpt');
     if (llmProviders.includes('gemini')) agentOptions.push('gemini');
-    if ((llmProviders.length > 1 && agentOptions.length > 0) || (llmProviders.length > 0 && agentOptions.length === 0)) {
+    if (
+      (llmProviders.length > 1 && agentOptions.length > 0) ||
+      (llmProviders.length > 0 && agentOptions.length === 0)
+    ) {
       agentOptions.push('all');
     }
     return agentOptions;
   }
 
-  getDefaultAgent(agentOptions = this.getAvailableAgents()): AgentType | undefined {
+  getDefaultAgent(
+    agentOptions = this.getAvailableAgents(),
+  ): AgentType | undefined {
     const defaultLlm = this.getDefaultLlmProvider();
-    const mapped = defaultLlm ? this.mapLlmProviderToAgent(defaultLlm) : undefined;
+    const mapped = defaultLlm
+      ? this.mapLlmProviderToAgent(defaultLlm)
+      : undefined;
     if (mapped && agentOptions.includes(mapped)) return mapped;
     return agentOptions[0];
   }
 
   private mapLlmProviderToAgent(provider: LLMProvider): AgentType | undefined {
     switch (provider) {
-      case 'claude': return 'claude';
-      case 'openai': return 'gpt';
-      case 'gemini': return 'gemini';
-      default: return undefined;
+      case 'claude':
+        return 'claude';
+      case 'openai':
+        return 'gpt';
+      case 'gemini':
+        return 'gemini';
+      default:
+        return undefined;
     }
   }
 }

@@ -2,7 +2,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { LLMConfig, SuggestResult } from '../types';
 import { buildPrompt } from './_shared';
 
-export async function geminiSuggest(repoName: string, input: string, cfg: LLMConfig): Promise<SuggestResult> {
+export async function geminiSuggest(
+  repoName: string,
+  input: string,
+  cfg: LLMConfig,
+): Promise<SuggestResult> {
   const genAI = new GoogleGenerativeAI(cfg.geminiApiKey!);
   const model = genAI.getGenerativeModel({
     model: cfg.geminiModel ?? 'gemini-2.0-flash',

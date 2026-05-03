@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AppUser, AuthenticatedUser } from '@vectorgraph/shared-types';
 import { v4 as uuid } from 'uuid';
 import { PasswordService } from '../common/auth/password.service';
@@ -43,6 +47,7 @@ export class AuthService {
       email: dto.email,
       name: dto.name.trim(),
       authProvider: 'local',
+      themePreference: 'system',
       createdAt: now,
       updatedAt: now,
       passwordHash: this.passwords.hash(dto.password),
@@ -54,7 +59,10 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await this.users.findByEmail(dto.email);
-    if (!user?.passwordHash || !this.passwords.verify(dto.password, user.passwordHash)) {
+    if (
+      !user?.passwordHash ||
+      !this.passwords.verify(dto.password, user.passwordHash)
+    ) {
       throw new UnauthorizedException('Invalid email or password.');
     }
 
@@ -63,8 +71,13 @@ export class AuthService {
 
   async github(dto: GithubAuthDto) {
     const githubUser = await this.fetchGithubUser(dto.accessToken);
-    const email = await this.fetchGithubPrimaryEmail(dto.accessToken, githubUser.login);
-    const existingByGithub = await this.users.findByGithubId(String(githubUser.id));
+    const email = await this.fetchGithubPrimaryEmail(
+      dto.accessToken,
+      githubUser.login,
+    );
+    const existingByGithub = await this.users.findByGithubId(
+      String(githubUser.id),
+    );
     const existingByEmail = email ? await this.users.findByEmail(email) : null;
     const existing = existingByGithub ?? existingByEmail;
     const now = new Date().toISOString();
@@ -74,6 +87,7 @@ export class AuthService {
         email: email ?? existing.email,
         name: githubUser.name?.trim() || existing.name,
         authProvider: 'github',
+        themePreference: existing.themePreference ?? 'system',
         githubId: String(githubUser.id),
         githubLogin: githubUser.login,
         avatarUrl: githubUser.avatar_url ?? existing.avatarUrl,
@@ -88,6 +102,7 @@ export class AuthService {
       email: email ?? `${githubUser.login}@users.noreply.github.com`,
       name: githubUser.name?.trim() || githubUser.login,
       authProvider: 'github',
+      themePreference: 'system',
       githubId: String(githubUser.id),
       githubLogin: githubUser.login,
       avatarUrl: githubUser.avatar_url,
@@ -110,7 +125,9 @@ export class AuthService {
     };
   }
 
-  private async fetchGithubUser(accessToken: string): Promise<GithubUserResponse> {
+  private async fetchGithubUser(
+    accessToken: string,
+  ): Promise<GithubUserResponse> {
     const response = await fetch('https://api.github.com/user', {
       headers: {
         Accept: 'application/vnd.github+json',
@@ -125,7 +142,10 @@ export class AuthService {
     return response.json() as Promise<GithubUserResponse>;
   }
 
-  private async fetchGithubPrimaryEmail(accessToken: string, login: string): Promise<string> {
+  private async fetchGithubPrimaryEmail(
+    accessToken: string,
+    login: string,
+  ): Promise<string> {
     const response = await fetch('https://api.github.com/user/emails', {
       headers: {
         Accept: 'application/vnd.github+json',
@@ -137,9 +157,21 @@ export class AuthService {
       return `${login}@users.noreply.github.com`;
     }
 
-    const emails = await response.json() as GithubEmailResponse[];
-    return emails.find(email => email.primary && email.verified)?.email
-      ?? emails.find(email => email.verified)?.email
-      ?? `${login}@users.noreply.github.com`;
+    const emails = (await response.json()) as GithubEmailResponse[];
+    return (
+      emails.find(
+        (email) =>
+          email.primary &&
+          email.verified &&
+          !email.email.endsWith('@users.noreply.github.com'),
+      )?.email ??
+      emails.find(
+        (email) =>
+          email.verified && !email.email.endsWith('@users.noreply.github.com'),
+      )?.email ??
+      emails.find((email) => email.primary && email.verified)?.email ??
+      emails.find((email) => email.verified)?.email ??
+      `${login}@users.noreply.github.com`
+    );
   }
 }

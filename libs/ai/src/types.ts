@@ -1,4 +1,8 @@
-import type { EmbeddingProvider, LLMProvider, SuggestResult } from '@vectorgraph/shared-types';
+import type {
+  EmbeddingProvider,
+  LLMProvider,
+  SuggestResult,
+} from '@vectorgraph/shared-types';
 
 export type VoyageModel =
   | 'voyage-code-3'
@@ -7,30 +11,30 @@ export type VoyageModel =
   | 'voyage-3-lite';
 
 export interface EmbeddingConfig {
-  provider:         EmbeddingProvider;
-  voyageApiKey?:    string;
-  voyageBaseUrl?:   string;
-  voyageModel?:     VoyageModel;
-  openaiApiKey?:    string;
+  provider: EmbeddingProvider;
+  voyageApiKey?: string;
+  voyageBaseUrl?: string;
+  voyageModel?: VoyageModel;
+  openaiApiKey?: string;
   openaiEmbedModel?: string;
-  geminiApiKey?:    string;
+  geminiApiKey?: string;
   geminiEmbedModel?: string;
-  ollamaBaseUrl?:   string;
+  ollamaBaseUrl?: string;
   ollamaEmbedModel?: string;
 }
 
 export interface LLMConfig {
-  provider:           LLMProvider;
-  anthropicApiKey?:   string;
-  claudeModel?:       string;
-  openaiApiKey?:      string;
-  openaiModel?:       string;
-  geminiApiKey?:      string;
-  geminiModel?:       string;
-  ollamaBaseUrl?:     string;
-  ollamaModel?:       string;
-  openrouterApiKey?:  string;
-  openrouterModel?:   string;
+  provider: LLMProvider;
+  anthropicApiKey?: string;
+  claudeModel?: string;
+  openaiApiKey?: string;
+  openaiModel?: string;
+  geminiApiKey?: string;
+  geminiModel?: string;
+  ollamaBaseUrl?: string;
+  ollamaModel?: string;
+  openrouterApiKey?: string;
+  openrouterModel?: string;
 }
 
 export type { EmbeddingProvider, LLMProvider, SuggestResult };

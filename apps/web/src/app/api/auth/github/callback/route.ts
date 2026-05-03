@@ -7,7 +7,10 @@ import {
   githubOauthStateCookie,
   getServerApiBaseUrl,
 } from '../../../../../lib/github-auth';
-import { appSessionCookie, appSessionCookieOptions } from '../../../../../features/auth/lib/auth-session';
+import {
+  appSessionCookie,
+  appSessionCookieOptions,
+} from '../../../../../features/auth/lib/auth-session';
 
 type GithubAccessTokenResponse = {
   access_token?: string;
@@ -19,7 +22,8 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
-  const { clientId, clientSecret, callbackUrl, isConfigured } = getGithubOauthConfig(request.url);
+  const { clientId, clientSecret, callbackUrl, isConfigured } =
+    getGithubOauthConfig(request.url);
   const redirectUrl = new URL('/repos', request.url);
   const cookieStore = await cookies();
   const expectedState = cookieStore.get(githubOauthStateCookie)?.value;
@@ -36,27 +40,30 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+  const tokenResponse = await fetch(
+    'https://github.com/login/oauth/access_token',
+    {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code,
+        state,
+        redirect_uri: callbackUrl,
+      }),
     },
-    body: JSON.stringify({
-      client_id: clientId,
-      client_secret: clientSecret,
-      code,
-      state,
-      redirect_uri: callbackUrl,
-    }),
-  });
+  );
 
   if (!tokenResponse.ok) {
     redirectUrl.searchParams.set('githubAuth', 'token-error');
     return NextResponse.redirect(redirectUrl);
   }
 
-  const payload = await tokenResponse.json() as GithubAccessTokenResponse;
+  const payload = (await tokenResponse.json()) as GithubAccessTokenResponse;
 
   if (!payload.access_token || payload.error) {
     redirectUrl.searchParams.set('githubAuth', payload.error ?? 'token-error');
@@ -83,7 +90,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  cookieStore.set(appSessionCookie, authPayload.sessionToken, appSessionCookieOptions());
+  cookieStore.set(
+    appSessionCookie,
+    authPayload.sessionToken,
+    appSessionCookieOptions(),
+  );
 
   redirectUrl.searchParams.set('githubAuth', 'connected');
   return NextResponse.redirect(redirectUrl);

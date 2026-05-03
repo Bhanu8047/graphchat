@@ -7,8 +7,13 @@ import {
 } from '../../../../../lib/github-auth';
 
 export async function GET(request: NextRequest) {
-  const { clientId, callbackUrl, isConfigured } = getGithubOauthConfig(request.url);
-  const redirectTarget = new URL('/auth/sign-in?githubAuth=config-error', request.url);
+  const { clientId, callbackUrl, isConfigured } = getGithubOauthConfig(
+    request.url,
+  );
+  const redirectTarget = new URL(
+    '/auth/sign-in?githubAuth=config-error',
+    request.url,
+  );
 
   if (!isConfigured || !clientId) {
     return NextResponse.redirect(redirectTarget);
@@ -24,7 +29,7 @@ export async function GET(request: NextRequest) {
   const authorizeUrl = new URL('https://github.com/login/oauth/authorize');
   authorizeUrl.searchParams.set('client_id', clientId);
   authorizeUrl.searchParams.set('redirect_uri', callbackUrl);
-  authorizeUrl.searchParams.set('scope', 'repo read:user');
+  authorizeUrl.searchParams.set('scope', 'repo read:user user:email');
   authorizeUrl.searchParams.set('state', state);
   authorizeUrl.searchParams.set('allow_signup', 'true');
 

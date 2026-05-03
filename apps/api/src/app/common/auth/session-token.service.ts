@@ -15,7 +15,8 @@ export class SessionTokenService {
   private readonly secret: string;
 
   constructor(config: ConfigService) {
-    this.secret = config.get('AUTH_SESSION_SECRET') || 'vectorgraph-dev-session-secret';
+    this.secret =
+      config.get('AUTH_SESSION_SECRET') || 'vectorgraph-dev-session-secret';
   }
 
   sign(user: AuthenticatedUser): string {

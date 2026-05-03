@@ -14,6 +14,9 @@ export class PasswordService {
     if (!salt || !expected) return false;
     const actual = scryptSync(password, salt, 64);
     const expectedBuffer = Buffer.from(expected, 'hex');
-    return actual.length === expectedBuffer.length && timingSafeEqual(actual, expectedBuffer);
+    return (
+      actual.length === expectedBuffer.length &&
+      timingSafeEqual(actual, expectedBuffer)
+    );
   }
 }

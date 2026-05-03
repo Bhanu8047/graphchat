@@ -13,8 +13,14 @@ export class UsersRepository implements OnModuleInit {
 
   async onModuleInit() {
     this.collection = this.database.collection<StoredUser>('users');
-    await this.collection.createIndex({ email: 1 }, { unique: true, sparse: true });
-    await this.collection.createIndex({ githubId: 1 }, { unique: true, sparse: true });
+    await this.collection.createIndex(
+      { email: 1 },
+      { unique: true, sparse: true },
+    );
+    await this.collection.createIndex(
+      { githubId: 1 },
+      { unique: true, sparse: true },
+    );
   }
 
   create(user: StoredUser) {
@@ -37,7 +43,7 @@ export class UsersRepository implements OnModuleInit {
     return this.collection.findOneAndUpdate(
       { id },
       { $set: { ...patch, updatedAt: new Date().toISOString() } },
-      { returnDocument: 'after', projection: { _id: 0 } }
+      { returnDocument: 'after', projection: { _id: 0 } },
     );
   }
 

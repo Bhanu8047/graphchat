@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable, NestMiddleware } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NestMiddleware,
+} from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
 
 type RateLimitEntry = { count: number; expiresAt: number };
@@ -10,7 +15,10 @@ export class AuthRateLimitMiddleware implements NestMiddleware {
   private readonly store = new Map<string, RateLimitEntry>();
 
   use(req: Request, _res: Response, next: NextFunction) {
-    const forwarded = typeof req.headers['x-forwarded-for'] === 'string' ? req.headers['x-forwarded-for'] : undefined;
+    const forwarded =
+      typeof req.headers['x-forwarded-for'] === 'string'
+        ? req.headers['x-forwarded-for']
+        : undefined;
     const ip = forwarded?.split(',')[0]?.trim() || req.ip || 'unknown';
     const key = `${req.path}:${ip}`;
     const now = Date.now();
@@ -22,7 +30,10 @@ export class AuthRateLimitMiddleware implements NestMiddleware {
     }
 
     if (existing.count >= this.maxRequests) {
-      throw new HttpException('Too many authentication attempts. Try again shortly.', HttpStatus.TOO_MANY_REQUESTS);
+      throw new HttpException(
+        'Too many authentication attempts. Try again shortly.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
 
     existing.count += 1;

@@ -1,5 +1,9 @@
-import { AppShell } from '../../features/navigation/components/AppShell';
+import { AppFrame } from '../../components/templates/AppFrame';
 
-export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
-  return <AppShell>{children}</AppShell>;
+export default function AuthenticatedLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <AppFrame>{children}</AppFrame>;
 }

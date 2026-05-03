@@ -5,7 +5,7 @@ import { DashboardRepository } from './dashboard.repository';
 export class DashboardService {
   constructor(private readonly repository: DashboardRepository) {}
 
-  getStats() {
-    return this.repository.getStats();
+  getStats(ownerId: string) {
+    return this.repository.getStats(ownerId);
   }
 }
