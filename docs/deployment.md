@@ -79,7 +79,7 @@ ssh <VPS_USER>@<VPS_HOST> 'cd /opt/trchat && EMAIL=admin@trchat.co ./scripts/vps
 
 Merging to `main` runs:
 
-1. CI: `npm ci`, `npm exec nx format:check`, `npm exec nx run @vectorgraph/api:typecheck`, and `npm exec nx run @vectorgraph/web:build`.
+1. CI: `npm ci`, `npm run format:check`, `npm exec nx typecheck api`, `npm exec nx build api`, and `npm exec nx build web`.
 2. CD: builds and pushes:
    - `ghcr.io/bhanu8047/trchat-api:<git-sha>`
    - `ghcr.io/bhanu8047/trchat-web:<git-sha>`

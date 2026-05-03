@@ -1,7 +1,8 @@
 FROM node:24-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
-# Copy workspace package manifests so npm ci resolves the monorepo
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
 COPY libs/ai/package.json ./libs/ai/
 COPY libs/shared-types/package.json ./libs/shared-types/
 COPY libs/vector-client/package.json ./libs/vector-client/

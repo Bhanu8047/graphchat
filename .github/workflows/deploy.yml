@@ -55,11 +55,8 @@ jobs:
         run: |
           tar -czf /tmp/trchat-deploy.tgz \
             docker-compose.prod.yml \
-            docker/nginx/nginx.conf \
-            scripts/vps/deploy.sh \
-            scripts/vps/rollback.sh \
-            scripts/vps/init-letsencrypt.sh \
-            scripts/vps/renew-certs.sh \
+            docker/nginx \
+            scripts/vps \
             .env.prod.example
 
       - name: Configure SSH

@@ -2,6 +2,34 @@
 
 Production VPS deployment is documented in [docs/deployment.md](docs/deployment.md).
 
+## CI/CD deployment environment
+
+The deployment workflow publishes immutable Docker images to GHCR and deploys them to `/opt/trchat` on the VPS. Add these repository secrets before merging deployment changes to `main`:
+
+```text
+VPS_HOST      # VPS IP address or hostname
+VPS_USER      # SSH user that can run Docker in /opt/trchat
+VPS_SSH_KEY   # private SSH key for VPS_USER
+VPS_PORT      # optional; defaults to 22
+```
+
+The workflow uses GitHub's built-in `GITHUB_TOKEN` to push and pull GHCR images. No separate GHCR secret is required for the automated workflow.
+
+Create `/opt/trchat/.env.prod` on the VPS from `.env.prod.example`:
+
+```bash
+MONGO_ROOT_PASSWORD=replace-with-a-long-random-password
+WEB_URL=https://trchat.co
+NEXT_PUBLIC_APP_URL=https://trchat.co
+NEXT_PUBLIC_API_URL=https://api.trchat.co/api
+
+GITHUB_CLIENT_ID=your_github_oauth_client_id
+GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
+VOYAGE_BASE_URL=https://api.voyageai.com/v1
+```
+
+Optional provider variables can also be added to `.env.prod` as needed: `VOYAGE_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `OLLAMA_BASE_URL`, `LLM_PROVIDER`, and `EMBEDDING_PROVIDER`.
+
 ## GitHub Web Login
 
 The web app can now sign users into GitHub and use that session to import public or private repositories without pasting a Personal Access Token into the form.
