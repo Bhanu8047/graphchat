@@ -23,7 +23,7 @@ fi
 cat >.deploy/current.env <<EOF
 API_IMAGE=$API_IMAGE
 WEB_IMAGE=$WEB_IMAGE
-DEPLOYED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+DEPLOYED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 EOF
 
 docker compose --env-file .env.prod --env-file .deploy/current.env -f "$COMPOSE_FILE" pull api web
