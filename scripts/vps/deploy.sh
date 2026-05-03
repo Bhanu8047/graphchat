@@ -47,7 +47,7 @@ done
 
 for attempt in $(seq 1 "$MAX_HEALTH_CHECK_ATTEMPTS"); do
   if docker compose --env-file .env.prod --env-file .deploy/current.env -f "$COMPOSE_FILE" exec -T web \
-    node -e "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
+    node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
     break
   fi
 

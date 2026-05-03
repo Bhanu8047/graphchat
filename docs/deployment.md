@@ -118,7 +118,7 @@ ssh <VPS_USER>@<VPS_HOST> 'cd /opt/trchat && ./scripts/vps/rollback.sh'
 
 ## Health checks
 
-- Container health: API `http://127.0.0.1:3001/api/health`, web `http://127.0.0.1:3000`.
+- Container health: API `http://127.0.0.1:3001/api/health`, web `http://127.0.0.1:3000/api/health`.
 - Public smoke tests: `https://trchat.co` and `https://api.trchat.co/api/health`.
 
 ## Residual risks and recommended hardening

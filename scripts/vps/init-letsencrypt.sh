@@ -5,7 +5,7 @@ APP_DIR="${APP_DIR:-/opt/trchat}"
 CERT_NAME="${CERT_NAME:-trchat.co}"
 DOMAINS="${DOMAINS:-trchat.co api.trchat.co}"
 
-: "${EMAIL:?Set EMAIL to the Let's Encrypt registration email address.}"
+: "${EMAIL:?Set EMAIL to the Lets Encrypt registration email address.}"
 
 cd "$APP_DIR"
 mkdir -p certbot/www
