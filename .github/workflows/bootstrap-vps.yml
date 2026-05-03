@@ -1,0 +1,96 @@
+name: Bootstrap VPS
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_user:
+        description: User that should own the app directory and join the docker group
+        required: false
+        type: string
+      app_dir:
+        description: Target application directory on the VPS
+        required: false
+        default: /opt/trchat
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    env:
+      APP_DIR: ${{ inputs.app_dir || '/opt/trchat' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create production env file
+        env:
+          PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
+        run: |
+          : "${PROD_ENV_FILE:?PROD_ENV_FILE secret is required}"
+          printf '%s\n' "$PROD_ENV_FILE" > .env.prod
+
+      - name: Prepare deployment bundle
+        run: |
+          tar -czf /tmp/trchat-deploy.tgz \
+            docker-compose.prod.yml \
+            docker/nginx \
+            scripts/vps \
+            .env.prod
+
+      - name: Configure SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          : "${VPS_HOST:?VPS_HOST secret is required}"
+          : "${VPS_USER:?VPS_USER secret is required}"
+          : "${VPS_SSH_KEY:?VPS_SSH_KEY secret is required}"
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" | tr -d '\r' > ~/.ssh/trchat_deploy_key
+          chmod 600 ~/.ssh/trchat_deploy_key
+          ssh-keygen -y -f ~/.ssh/trchat_deploy_key >/dev/null
+          ssh-keyscan -p "${VPS_PORT:-22}" "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload bootstrap script
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          scp -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -P "${VPS_PORT:-22}" \
+            scripts/vps/bootstrap-centos.sh "$VPS_USER@$VPS_HOST:/tmp/bootstrap-centos.sh"
+
+      - name: Bootstrap CentOS 9 host
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          DEPLOY_USER_INPUT: ${{ inputs.deploy_user }}
+        run: |
+          deploy_user="${DEPLOY_USER_INPUT:-$VPS_USER}"
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
+            "if [ \"\$(id -u)\" -eq 0 ]; then APP_DIR='${APP_DIR}' DEPLOY_USER='${deploy_user}' bash /tmp/bootstrap-centos.sh; else sudo -n APP_DIR='${APP_DIR}' DEPLOY_USER='${deploy_user}' bash /tmp/bootstrap-centos.sh; fi"
+
+      - name: Upload deployment files
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "mkdir -p '${APP_DIR}'"
+          scp -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -P "${VPS_PORT:-22}" /tmp/trchat-deploy.tgz "$VPS_USER@$VPS_HOST:${APP_DIR}/trchat-deploy.tgz"
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '${APP_DIR}' && tar -xzf trchat-deploy.tgz && chmod 600 .env.prod && chmod +x scripts/vps/*.sh"
+
+      - name: Verify Docker install
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
+            "if [ \"\$(id -u)\" -eq 0 ]; then docker --version && docker compose version; else sudo -n docker --version && sudo -n docker compose version; fi"

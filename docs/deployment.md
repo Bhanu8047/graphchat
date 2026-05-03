@@ -1,6 +1,6 @@
 # VPS deployment
 
-This repository deploys production images from GitHub Actions to a Docker Compose stack on a Ubuntu VPS.
+This repository deploys production images from GitHub Actions to a Docker Compose stack on a CentOS 9 VPS.
 
 ## Architecture
 
@@ -53,14 +53,24 @@ VOYAGE_BASE_URL=https://api.voyageai.com/v1
 
 ## One-time VPS bootstrap
 
-From your workstation, copy the bootstrap script and run it on a fresh Ubuntu VPS:
+Run the `Bootstrap VPS` GitHub Actions workflow once for a fresh CentOS 9 VPS. It uploads the CentOS bootstrap script, installs Docker and the required system services, and uploads the deployment bundle into `/opt/trchat`.
+
+Requirements before running it:
+
+- `VPS_USER` must either be `root` or have passwordless `sudo`.
+- `PROD_ENV_FILE` must already contain the full production `.env.prod` contents.
+- If the application directory owner should differ from `VPS_USER`, pass that username as the workflow's `deploy_user` input.
+
+Equivalent manual bootstrap commands:
 
 ```bash
-scp scripts/vps/bootstrap-ubuntu.sh <VPS_USER>@<VPS_HOST>:/tmp/bootstrap-ubuntu.sh
-ssh <VPS_USER>@<VPS_HOST> 'sudo APP_DIR=/opt/trchat bash /tmp/bootstrap-ubuntu.sh'
+scp scripts/vps/bootstrap-centos.sh <VPS_USER>@<VPS_HOST>:/tmp/bootstrap-centos.sh
+ssh <VPS_USER>@<VPS_HOST> 'sudo APP_DIR=/opt/trchat DEPLOY_USER=<VPS_USER> bash /tmp/bootstrap-centos.sh'
 ```
 
-Log out and back in so Docker group membership applies, then create the deployment directory contents:
+After bootstrap, log out and back in once so Docker group membership applies for the deploy user.
+
+If you bootstrap manually instead of using the workflow, upload the deployment directory contents after that:
 
 ```bash
 ssh <VPS_USER>@<VPS_HOST> 'mkdir -p /opt/trchat'

@@ -29,8 +29,8 @@ EOF
 docker rm -f trchat-certbot-nginx >/dev/null 2>&1 || true
 docker run -d --name trchat-certbot-nginx \
   -p 80:80 \
-  -v "$APP_DIR/certbot/www:/var/www/certbot" \
-  -v "$tmp_conf:/etc/nginx/conf.d/default.conf:ro" \
+  -v "$APP_DIR/certbot/www:/var/www/certbot:z" \
+  -v "$tmp_conf:/etc/nginx/conf.d/default.conf:ro,z" \
   nginx:1.27-alpine
 
 domain_args=()
@@ -39,8 +39,8 @@ for domain in $DOMAINS; do
 done
 
 docker run --rm \
-  -v /etc/letsencrypt:/etc/letsencrypt \
-  -v "$APP_DIR/certbot/www:/var/www/certbot" \
+  -v /etc/letsencrypt:/etc/letsencrypt:z \
+  -v "$APP_DIR/certbot/www:/var/www/certbot:z" \
   certbot/certbot certonly \
   --webroot \
   --webroot-path /var/www/certbot \
