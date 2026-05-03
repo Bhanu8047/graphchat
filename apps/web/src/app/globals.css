@@ -4,6 +4,10 @@
 @layer base {
   :root {
     color-scheme: light;
+    --font-body:
+      'Plus Jakarta Sans', Inter, ui-sans-serif, system-ui, sans-serif;
+    --font-display:
+      'Space Grotesk', Inter, ui-sans-serif, system-ui, sans-serif;
   }
 
   html[data-theme='dark'] {
