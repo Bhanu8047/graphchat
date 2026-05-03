@@ -59,6 +59,7 @@ jobs:
             scripts/vps/deploy.sh \
             scripts/vps/rollback.sh \
             scripts/vps/init-letsencrypt.sh \
+            scripts/vps/renew-certs.sh \
             .env.prod.example
 
       - name: Configure SSH
