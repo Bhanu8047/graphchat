@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Delete, Param, Body } from '@nestjs/common';
 import { ReposService } from './repos.service';
-import { CreateRepoDto } from '@vectorgraph/shared-types';
+import { CreateRepoDto, ImportGithubRepoDto } from '@vectorgraph/shared-types';
 
 @Controller('repos')
 export class ReposController {
@@ -8,5 +8,6 @@ export class ReposController {
   @Get()         findAll()                        { return this.svc.findAll(); }
   @Get(':id')    findOne(@Param('id') id: string) { return this.svc.findOne(id); }
   @Post()        create(@Body() dto: CreateRepoDto){ return this.svc.create(dto); }
+  @Post('import/github') importGithub(@Body() dto: ImportGithubRepoDto) { return this.svc.importGithub(dto); }
   @Delete(':id') remove(@Param('id') id: string)  { return this.svc.remove(id); }
 }

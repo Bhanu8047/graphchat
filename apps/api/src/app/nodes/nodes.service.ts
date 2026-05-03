@@ -4,6 +4,7 @@ import { MongoVectorService, RedisVectorService } from '@vectorgraph/vector-clie
 import { getEmbedding, EmbeddingConfig } from '@vectorgraph/ai';
 import { ContextNode, CreateNodeDto, EmbeddingProvider } from '@vectorgraph/shared-types';
 import { v4 as uuid } from 'uuid';
+import { RuntimeConfigService } from '../runtime/runtime-config.service';
 
 @Injectable()
 export class NodesService implements OnModuleInit {
@@ -11,12 +12,14 @@ export class NodesService implements OnModuleInit {
   private redis: RedisVectorService;
   private embedCfg: EmbeddingConfig;
 
-  constructor(private cfg: ConfigService) {
+  constructor(private cfg: ConfigService, private runtimeConfig: RuntimeConfigService) {
+    const defaultProvider = this.runtimeConfig.getDefaultEmbeddingProvider() ?? cfg.get<EmbeddingProvider>('EMBEDDING_PROVIDER', 'gemini');
     this.mongo = new MongoVectorService(cfg.get('MONGODB_URI'));
     this.redis = new RedisVectorService();
     this.embedCfg = {
-      provider:      cfg.get<EmbeddingProvider>('EMBEDDING_PROVIDER', 'voyage'),
+      provider:      defaultProvider,
       voyageApiKey:  cfg.get('VOYAGE_API_KEY'),
+      voyageBaseUrl: cfg.get('VOYAGE_BASE_URL'),
       voyageModel:   cfg.get('VOYAGE_MODEL', 'voyage-code-3') as any,
       openaiApiKey:  cfg.get('OPENAI_API_KEY'),
       geminiApiKey:  cfg.get('GEMINI_API_KEY'),

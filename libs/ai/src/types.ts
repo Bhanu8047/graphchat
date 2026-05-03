@@ -9,6 +9,7 @@ export type VoyageModel =
 export interface EmbeddingConfig {
   provider:         EmbeddingProvider;
   voyageApiKey?:    string;
+  voyageBaseUrl?:   string;
   voyageModel?:     VoyageModel;
   openaiApiKey?:    string;
   openaiEmbedModel?: string;

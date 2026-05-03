@@ -3,17 +3,20 @@ import { ConfigService } from '@nestjs/config';
 import { RedisVectorService } from '@vectorgraph/vector-client';
 import { getEmbedding, EmbeddingConfig } from '@vectorgraph/ai';
 import { SearchQueryDto, VectorSearchResult, EmbeddingProvider } from '@vectorgraph/shared-types';
+import { RuntimeConfigService } from '../runtime/runtime-config.service';
 
 @Injectable()
 export class SearchService implements OnModuleInit {
   private redis: RedisVectorService;
   private embedCfg: EmbeddingConfig;
 
-  constructor(private cfg: ConfigService) {
+  constructor(private cfg: ConfigService, private runtimeConfig: RuntimeConfigService) {
+    const defaultProvider = this.runtimeConfig.getDefaultEmbeddingProvider() ?? cfg.get<EmbeddingProvider>('EMBEDDING_PROVIDER', 'gemini');
     this.redis = new RedisVectorService();
     this.embedCfg = {
-      provider:      cfg.get<EmbeddingProvider>('EMBEDDING_PROVIDER', 'voyage'),
+      provider:      defaultProvider,
       voyageApiKey:  cfg.get('VOYAGE_API_KEY'),
+      voyageBaseUrl: cfg.get('VOYAGE_BASE_URL'),
       voyageModel:   cfg.get('VOYAGE_MODEL', 'voyage-code-3') as any,
       openaiApiKey:  cfg.get('OPENAI_API_KEY'),
       geminiApiKey:  cfg.get('GEMINI_API_KEY'),

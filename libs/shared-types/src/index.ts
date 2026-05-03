@@ -3,6 +3,18 @@ export type AgentType   = 'claude' | 'gpt' | 'gemini' | 'all';
 export type EmbeddingProvider = 'voyage' | 'openai' | 'gemini' | 'ollama';
 export type LLMProvider       = 'claude' | 'openai' | 'gemini' | 'ollama' | 'openrouter';
 
+export const VECTOR_DIMENSION = 1024;
+
+export interface GithubRepoSource {
+  provider:      'github';
+  owner:         string;
+  repo:          string;
+  fullName:      string;
+  url:           string;
+  defaultBranch: string;
+  isPrivate:     boolean;
+}
+
 export interface ContextNode {
   id:         string;
   repoId:     string;
@@ -20,6 +32,7 @@ export interface Repository {
   description: string;
   techStack:   string[];
   agent:       AgentType;
+  source?:     GithubRepoSource;
   nodes:       ContextNode[];
   createdAt:   string;
   updatedAt:   string;
@@ -53,6 +66,12 @@ export interface CreateRepoDto {
   agent:       AgentType;
 }
 
+export interface ImportGithubRepoDto {
+  url:         string;
+  accessToken?: string;
+  agent?:      AgentType;
+}
+
 export interface CreateNodeDto {
   repoId:  string;
   type:    NodeType;
@@ -71,4 +90,13 @@ export interface SearchQueryDto {
 export interface SuggestDto {
   repoId: string;
   input:  string;
+}
+
+export interface RuntimeProviderConfig {
+  llmProviders: LLMProvider[];
+  defaultLlmProvider?: LLMProvider;
+  embeddingProviders: EmbeddingProvider[];
+  defaultEmbeddingProvider?: EmbeddingProvider;
+  agentOptions: AgentType[];
+  defaultAgent?: AgentType;
 }

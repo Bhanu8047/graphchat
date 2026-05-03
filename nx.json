@@ -27,5 +27,25 @@
     }
   ],
   "nxCloudId": "69f69fc768ff1a992df565be",
-  "analytics": false
+  "analytics": false,
+  "targetDefaults": {
+    "dev": {
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
+      "cache": true
+    },
+    "build": {
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
+      "cache": true
+    },
+    "start": {
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
+      "cache": true
+    }
+  }
 }

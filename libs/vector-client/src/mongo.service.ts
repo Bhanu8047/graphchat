@@ -29,6 +29,13 @@ export class MongoVectorService {
     return this.repoCol.findOne({ id }, { projection: { _id: 0 } });
   }
 
+  async findRepoByGithubFullName(fullName: string): Promise<Repository | null> {
+    return this.repoCol.findOne(
+      { 'source.provider': 'github', 'source.fullName': fullName },
+      { projection: { _id: 0 } }
+    );
+  }
+
   async getAllRepos(): Promise<Repository[]> {
     const repos = await this.repoCol.find({}, { projection: { _id: 0 } }).toArray();
     return Promise.all(repos.map(async repo => ({
@@ -40,6 +47,10 @@ export class MongoVectorService {
   async deleteRepo(id: string): Promise<void> {
     await this.repoCol.deleteOne({ id });
     await this.nodeCol.deleteMany({ repoId: id });
+  }
+
+  async deleteNodesByRepo(repoId: string): Promise<void> {
+    await this.nodeCol.deleteMany({ repoId });
   }
 
   async saveNode(node: ContextNode, embedding: number[]): Promise<void> {

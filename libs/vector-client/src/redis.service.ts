@@ -1,5 +1,5 @@
 import { createClient, SchemaFieldTypes, VectorAlgorithms } from 'redis';
-import { ContextNode } from '@vectorgraph/shared-types';
+import { ContextNode, VECTOR_DIMENSION } from '@vectorgraph/shared-types';
 
 export class RedisVectorService {
   private client = createClient({ url: process.env.REDIS_URL ?? 'redis://localhost:6379' });
@@ -22,7 +22,7 @@ export class RedisVectorService {
           AS: 'embedding',
           ALGORITHM: VectorAlgorithms.HNSW,
           TYPE: 'FLOAT32',
-          DIM: 1024,
+          DIM: VECTOR_DIMENSION,
           DISTANCE_METRIC: 'COSINE',
         },
       }, { ON: 'JSON', PREFIX: 'context:' });

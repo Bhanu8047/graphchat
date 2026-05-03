@@ -5,10 +5,12 @@ import { NodesModule }  from './nodes/nodes.module';
 import { SearchModule } from './search/search.module';
 import { AiModule }     from './ai/ai.module';
 import { ExportModule } from './export/export.module';
+import { RuntimeConfigModule } from './runtime/runtime-config.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    RuntimeConfigModule,
     ReposModule, NodesModule, SearchModule, AiModule, ExportModule,
   ],
 })

@@ -2,13 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { suggestContextNode, LLMConfig } from '@vectorgraph/ai';
 import { SuggestDto, LLMProvider } from '@vectorgraph/shared-types';
+import { RuntimeConfigService } from '../runtime/runtime-config.service';
 
 @Injectable()
 export class AiService {
   private llmCfg: LLMConfig;
-  constructor(private cfg: ConfigService) {
+  constructor(private cfg: ConfigService, private runtimeConfig: RuntimeConfigService) {
+    const defaultProvider = this.runtimeConfig.getDefaultLlmProvider() ?? cfg.get<LLMProvider>('LLM_PROVIDER', 'gemini');
     this.llmCfg = {
-      provider:          cfg.get<LLMProvider>('LLM_PROVIDER', 'claude'),
+      provider:          defaultProvider,
       anthropicApiKey:   cfg.get('ANTHROPIC_API_KEY'),
       claudeModel:       cfg.get('CLAUDE_MODEL', 'claude-sonnet-4-20250514'),
       openaiApiKey:      cfg.get('OPENAI_API_KEY'),
