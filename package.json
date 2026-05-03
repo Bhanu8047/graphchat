@@ -17,15 +17,13 @@
     "format": "prettier --write --ignore-unknown \"apps/api/**/*\" \"apps/web/**/*\" \"libs/**/*\"",
     "format:check": "prettier --check --ignore-unknown \"apps/api/**/*\" \"apps/web/**/*\" \"libs/**/*\"",
     "format:staged": "lint-staged",
-    "nx:serve:api": "npm run api:dev",
-    "nx:serve:web": "npm run web:dev",
     "docker": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:prod": "docker-compose -f docker-compose.prod.yml up -d --build",
     "docker:logs": "docker-compose logs -f",
     "release": "nx release --skip-publish",
     "check": "nx run-many -t lint test build typecheck",
-    "clean": "rm -rf dist && rm -rf apps/**/dist && nx reset && rm -rf apps/**/out-tsc"
+    "clean": "rm -rf dist && rm -rf apps/**/dist && nx reset && rm -rf apps/**/out-tsc && rm -rf apps/**/.next && rm -rf apps/**/tsconfig.lib.tsbuildinfo && rm -rf apps/**/tsconfig.app.tsbuildinfo && rm -rf libs/**/dist && rm -rf libs/**/out-tsc && rm -rf libs/**/.next && rm -rf libs/**/tsconfig.lib.tsbuildinfo && rm -rf libs/**/tsconfig.app.tsbuildinfo"
   },
   "private": true,
   "devDependencies": {
