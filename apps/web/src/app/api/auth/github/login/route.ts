@@ -8,7 +8,7 @@ import {
 
 export async function GET(request: NextRequest) {
   const { clientId, callbackUrl, isConfigured } = getGithubOauthConfig(request.url);
-  const redirectTarget = new URL('/?tab=repos&githubAuth=config-error', request.url);
+  const redirectTarget = new URL('/auth/sign-in?githubAuth=config-error', request.url);
 
   if (!isConfigured || !clientId) {
     return NextResponse.redirect(redirectTarget);

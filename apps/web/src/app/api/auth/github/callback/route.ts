@@ -5,7 +5,9 @@ import {
   githubAccessTokenCookie,
   githubAuthCookieOptions,
   githubOauthStateCookie,
+  getServerApiBaseUrl,
 } from '../../../../../lib/github-auth';
+import { appSessionCookie, appSessionCookieOptions } from '../../../../../features/auth/lib/auth-session';
 
 type GithubAccessTokenResponse = {
   access_token?: string;
@@ -18,7 +20,7 @@ export async function GET(request: NextRequest) {
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
   const { clientId, clientSecret, callbackUrl, isConfigured } = getGithubOauthConfig(request.url);
-  const redirectUrl = new URL('/?tab=repos', request.url);
+  const redirectUrl = new URL('/repos', request.url);
   const cookieStore = await cookies();
   const expectedState = cookieStore.get(githubOauthStateCookie)?.value;
 
@@ -65,6 +67,23 @@ export async function GET(request: NextRequest) {
     ...githubAuthCookieOptions(),
     maxAge: 60 * 60 * 24 * 30,
   });
+
+  const authResponse = await fetch(`${getServerApiBaseUrl()}/auth/github`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ accessToken: payload.access_token }),
+  });
+
+  const authPayload = await authResponse.json().catch(() => null);
+  if (!authResponse.ok || !authPayload?.sessionToken) {
+    redirectUrl.pathname = '/auth/sign-in';
+    redirectUrl.searchParams.set('githubAuth', 'token-error');
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  cookieStore.set(appSessionCookie, authPayload.sessionToken, appSessionCookieOptions());
 
   redirectUrl.searchParams.set('githubAuth', 'connected');
   return NextResponse.redirect(redirectUrl);

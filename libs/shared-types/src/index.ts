@@ -4,6 +4,7 @@ export type EmbeddingProvider = 'voyage' | 'openai' | 'gemini' | 'ollama';
 export type LLMProvider       = 'claude' | 'openai' | 'gemini' | 'ollama' | 'openrouter';
 export type GraphNodeType     = 'repo' | 'directory' | 'file' | NodeType;
 export type GraphEdgeType     = 'contains' | 'summarizes' | 'references' | 'updates';
+export type AuthProvider      = 'local' | 'github';
 
 export const VECTOR_DIMENSION = 1024;
 
@@ -19,6 +20,46 @@ export interface RepositorySyncState {
   reusedPaths?: number;
   seededFromRepoId?: string;
   changedPaths?: string[];
+}
+
+export interface AppUser {
+  id: string;
+  email: string;
+  name: string;
+  authProvider: AuthProvider;
+  githubLogin?: string;
+  githubId?: string;
+  avatarUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthenticatedUser extends AppUser {}
+
+export interface AuthSessionResponse {
+  authenticated: boolean;
+  user?: AuthenticatedUser;
+}
+
+export interface DashboardRecentRepo {
+  id: string;
+  name: string;
+  description: string;
+  updatedAt: string;
+  techStack: string[];
+  branch?: string;
+  nodes: number;
+}
+
+export interface DashboardStats {
+  totals: {
+    repositories: number;
+    graphs: number;
+    graphNodes: number;
+    graphEdges: number;
+    semanticNodes: number;
+  };
+  recentRepositories: DashboardRecentRepo[];
 }
 
 export interface GithubRepoSource {
