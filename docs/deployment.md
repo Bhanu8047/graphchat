@@ -91,8 +91,8 @@ Merging to `main` runs:
 
 1. CI: `npm ci`, `npm run format:check`, `npm exec nx typecheck api`, `npm exec nx build api`, and `npm exec nx build web`.
 2. CD: builds and pushes:
-   - `ghcr.io/bhanu8047/trchat-api:<git-sha>`
-   - `ghcr.io/bhanu8047/trchat-web:<git-sha>`
+   - `ghcr.io/bhanu8047/vector-graph-api:<git-sha>`
+   - `ghcr.io/bhanu8047/vector-graph-web:<git-sha>`
 3. CD uploads the Compose/nginx/scripts bundle to `/opt/trchat`.
 4. CD runs `/opt/trchat/scripts/vps/deploy.sh` with exact image tags.
 5. CD verifies `https://trchat.co` and `https://api.trchat.co/api/health`.
@@ -103,8 +103,8 @@ The normal initial deploy is a merge to `main` after bootstrap and certificate i
 
 ```bash
 cd /opt/trchat
-API_IMAGE=ghcr.io/bhanu8047/trchat-api:<git-sha> \
-WEB_IMAGE=ghcr.io/bhanu8047/trchat-web:<git-sha> \
+API_IMAGE=ghcr.io/bhanu8047/vector-graph-api:<git-sha> \
+WEB_IMAGE=ghcr.io/bhanu8047/vector-graph-web:<git-sha> \
 ./scripts/vps/deploy.sh
 ```
 
