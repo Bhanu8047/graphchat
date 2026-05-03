@@ -51,7 +51,7 @@ export interface AppUser {
   updatedAt: string;
 }
 
-export interface AuthenticatedUser extends AppUser {}
+export type AuthenticatedUser = AppUser;
 
 export interface AuthSessionResponse {
   authenticated: boolean;

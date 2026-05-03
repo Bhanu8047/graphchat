@@ -1,7 +1,7 @@
-/** @type {import('next').NextConfig} */
-const path = require('path');
+import * as path from 'node:path';
+import type { NextConfig } from 'next';
 
-const aliases = {
+const aliases: Record<string, string> = {
   '@vectorgraph/shared-types': path.resolve(
     __dirname,
     '../../libs/shared-types/src/index.ts',
@@ -13,9 +13,14 @@ const aliases = {
   '@vectorgraph/ai': path.resolve(__dirname, '../../libs/ai/src/index.ts'),
 };
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  transpilePackages: [
+    '@vectorgraph/shared-types',
+    '@vectorgraph/vector-client',
+    '@vectorgraph/ai',
+  ],
   turbopack: {
     resolveAlias: aliases,
   },
@@ -24,4 +29,5 @@ const nextConfig = {
     return config;
   },
 };
-module.exports = nextConfig;
+
+export default nextConfig;

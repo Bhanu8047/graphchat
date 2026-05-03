@@ -1,10 +1,8 @@
 import './globals.css';
 import type { ReactNode } from 'react';
 import { AuthProvider } from '../features/auth/providers/AuthProvider';
-import {
-  ThemeProvider,
-  themeInitScript,
-} from '../features/theme/providers/ThemeProvider';
+import { ThemeProvider } from '../features/theme/providers/ThemeProvider';
+import { themeInitScript } from '../features/theme/themeInitScript';
 
 export const metadata = {
   title: 'VectorGraph',

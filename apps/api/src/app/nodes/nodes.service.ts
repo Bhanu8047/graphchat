@@ -20,7 +20,7 @@ export class NodesService implements OnModuleInit {
   private embedCfg: EmbeddingConfig;
 
   constructor(
-    private cfg: ConfigService,
+    cfg: ConfigService,
     private runtimeConfig: RuntimeConfigService,
   ) {
     const defaultProvider =

@@ -24,7 +24,9 @@ export function AIAssistPage() {
         setRepos(nextRepos);
         setRepoId(nextRepos[0]?.id ?? '');
       })
-      .catch(() => {});
+      .catch(() => {
+        /* ignored */
+      });
   }, []);
 
   const run = async (event: React.FormEvent) => {
