@@ -7,11 +7,13 @@ on:
     paths:
       - 'apps/api/**'
       - 'apps/web/**'
+      - 'graph-service/**'
       - 'libs/ai/**'
       - 'libs/shared-types/**'
       - 'libs/vector-client/**'
       - 'docker/api.Dockerfile'
       - 'docker/web.Dockerfile'
+      - 'docker/graph-service.Dockerfile'
       - 'docker/nginx/**'
       - 'docker-compose.prod.yml'
       - 'scripts/vps/deploy.sh'
@@ -58,6 +60,7 @@ jobs:
 
           api_changed=false
           web_changed=false
+          graph_service_changed=false
           full_redeploy=false
           nginx_changed=false
 
@@ -71,6 +74,9 @@ jobs:
                 ;;
               apps/web/*|docker/web.Dockerfile)
                 web_changed=true
+                ;;
+              graph-service/*|docker/graph-service.Dockerfile)
+                graph_service_changed=true
                 ;;
               libs/shared-types/*|package.json|package-lock.json|tsconfig.base.json|tsconfig.json|nx.json)
                 api_changed=true
@@ -89,7 +95,7 @@ jobs:
           should_deploy=false
           deploy_services=''
 
-          if [ "$api_changed" = true ] || [ "$web_changed" = true ]; then
+          if [ "$api_changed" = true ] || [ "$web_changed" = true ] || [ "$graph_service_changed" = true ]; then
             build_images=true
             should_deploy=true
           fi
@@ -109,6 +115,10 @@ jobs:
               deploy_targets+=(web)
             fi
 
+            if [ "$graph_service_changed" = true ]; then
+              deploy_targets+=(graph-service)
+            fi
+
             if [ "$nginx_changed" = true ]; then
               deploy_targets+=(nginx)
             fi
@@ -120,6 +130,7 @@ jobs:
 
           echo "api_changed=$api_changed" >> "$GITHUB_OUTPUT"
           echo "web_changed=$web_changed" >> "$GITHUB_OUTPUT"
+          echo "graph_service_changed=$graph_service_changed" >> "$GITHUB_OUTPUT"
           echo "build_images=$build_images" >> "$GITHUB_OUTPUT"
           echo "should_deploy=$should_deploy" >> "$GITHUB_OUTPUT"
           echo "full_redeploy=$full_redeploy" >> "$GITHUB_OUTPUT"
@@ -132,6 +143,7 @@ jobs:
             echo
             echo "- API changed: ${{ steps.changes.outputs.api_changed }}"
             echo "- Web changed: ${{ steps.changes.outputs.web_changed }}"
+            echo "- Graph service changed: ${{ steps.changes.outputs.graph_service_changed }}"
             echo "- Build images: ${{ steps.changes.outputs.build_images }}"
             echo "- Should deploy: ${{ steps.changes.outputs.should_deploy }}"
             echo "- Full redeploy: ${{ steps.changes.outputs.full_redeploy }}"
@@ -152,6 +164,7 @@ jobs:
           repository="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
           echo "api=${REGISTRY}/${repository}-api:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
           echo "web=${REGISTRY}/${repository}-web:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "graph_service=${REGISTRY}/${repository}-graph-service:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/login-action@v3
         if: steps.changes.outputs.build_images == 'true'
@@ -178,6 +191,14 @@ jobs:
           build-args: |
             NEXT_PUBLIC_APP_URL=https://trchat.co
             NEXT_PUBLIC_API_URL=https://api.trchat.co/api
+
+      - uses: docker/build-push-action@v6
+        if: steps.changes.outputs.graph_service_changed == 'true'
+        with:
+          context: .
+          file: docker/graph-service.Dockerfile
+          push: true
+          tags: ${{ steps.images.outputs.graph_service }}
 
       - name: Create production env file
         if: steps.changes.outputs.should_deploy == 'true'
@@ -239,6 +260,10 @@ jobs:
 
           if [ "${{ steps.changes.outputs.web_changed }}" = 'true' ]; then
             remote_env+=("WEB_IMAGE='${{ steps.images.outputs.web }}'")
+          fi
+
+          if [ "${{ steps.changes.outputs.graph_service_changed }}" = 'true' ]; then
+            remote_env+=("GRAPH_SERVICE_IMAGE='${{ steps.images.outputs.graph_service }}'")
           fi
 
           if [ -n "${{ steps.changes.outputs.deploy_services }}" ]; then

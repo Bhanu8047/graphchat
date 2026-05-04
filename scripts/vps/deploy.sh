@@ -20,27 +20,33 @@ current_env=.deploy/current.env
 
 requested_api_image="${API_IMAGE:-}"
 requested_web_image="${WEB_IMAGE:-}"
+requested_graph_service_image="${GRAPH_SERVICE_IMAGE:-}"
 existing_api_image=""
 existing_web_image=""
+existing_graph_service_image=""
 
 if [ -f "$current_env" ]; then
   while IFS='=' read -r key value; do
     case "$key" in
       API_IMAGE) existing_api_image="$value" ;;
       WEB_IMAGE) existing_web_image="$value" ;;
+      GRAPH_SERVICE_IMAGE) existing_graph_service_image="$value" ;;
     esac
   done < "$current_env"
 fi
 
 API_IMAGE="${requested_api_image:-$existing_api_image}"
 WEB_IMAGE="${requested_web_image:-$existing_web_image}"
+GRAPH_SERVICE_IMAGE="${requested_graph_service_image:-$existing_graph_service_image}"
 
 : "${API_IMAGE:?API_IMAGE is required. Provide it or deploy once to create .deploy/current.env.}"
 : "${WEB_IMAGE:?WEB_IMAGE is required. Provide it or deploy once to create .deploy/current.env.}"
+: "${GRAPH_SERVICE_IMAGE:?GRAPH_SERVICE_IMAGE is required. Provide it or deploy once to create .deploy/current.env.}"
 
 cat >"$candidate_env" <<EOF
 API_IMAGE=$API_IMAGE
 WEB_IMAGE=$WEB_IMAGE
+GRAPH_SERVICE_IMAGE=$GRAPH_SERVICE_IMAGE
 DEPLOYED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 EOF
 
@@ -92,6 +98,10 @@ fi
 
 if [ -n "$requested_web_image" ]; then
   pull_services+=(web)
+fi
+
+if [ -n "$requested_graph_service_image" ]; then
+  pull_services+=(graph-service)
 fi
 
 if [ -n "${DEPLOY_SERVICES:-}" ]; then
