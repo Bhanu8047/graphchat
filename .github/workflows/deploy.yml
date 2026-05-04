@@ -95,6 +95,14 @@ jobs:
           should_deploy=false
           deploy_services=''
 
+          # A full redeploy must rebuild all images so new services (like graph-service)
+          # get an image even if their source files were not part of this commit.
+          if [ "$full_redeploy" = true ]; then
+            api_changed=true
+            web_changed=true
+            graph_service_changed=true
+          fi
+
           if [ "$api_changed" = true ] || [ "$web_changed" = true ] || [ "$graph_service_changed" = true ]; then
             build_images=true
             should_deploy=true
