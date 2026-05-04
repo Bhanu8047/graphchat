@@ -2,22 +2,23 @@ name: Vector Database Stack
 services:
   redis:
     image: redis/redis-stack:latest
-    ports: ["6379:6379", "8001:8001"]
+    ports: ['6379:6379', '8001:8001']
     volumes: [redis_data:/data]
   mongo:
     image: mongo:7
-    ports: ["27017:27017"]
+    ports: ['27017:27017']
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: secret
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
     volumes: [mongo_data:/data/db]
   graph-service:
     build:
       context: .
       dockerfile: docker/graph-service.Dockerfile
-    ports: ["5000:5000"]
+    ports: ['5000:5000']
     environment:
-      MONGODB_URI: mongodb://root:secret@mongo:27017/vectorgraph?authSource=admin
+      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/vectorgraph?authSource=admin
       REDIS_URL: redis://redis:6379
     volumes:
       - ./graph-service:/app # hot-reload for dev

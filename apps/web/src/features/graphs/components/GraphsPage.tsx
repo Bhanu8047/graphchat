@@ -311,16 +311,18 @@ export function GraphsPage() {
             />
           )}
         </Surface>
-        <Surface tone="soft" padding="md" className="space-y-3 text-sm">
-          <PageIntro
-            eyebrow="Summary"
-            title={snapshot?.repository.name ?? 'No repository selected'}
-            description={
-              snapshot
-                ? 'The graph keeps repository structure as persistent graph nodes and semantic chunks as leaf nodes.'
-                : 'Import a repository to create a stored graph that agents can query through the API.'
-            }
-          />
+        <Surface tone="soft" padding="md" className="min-w-0 space-y-3 text-sm">
+          <div className="min-w-0 [&_h2]:wrap-anywhere [&_p]:wrap-break-word">
+            <PageIntro
+              eyebrow="Summary"
+              title={snapshot?.repository.name ?? 'No repository selected'}
+              description={
+                snapshot
+                  ? 'The graph keeps repository structure as persistent graph nodes and semantic chunks as leaf nodes.'
+                  : 'Import a repository to create a stored graph that agents can query through the API.'
+              }
+            />
+          </div>
           {snapshot ? (
             <div className="space-y-3 text-muted-foreground">
               <div>{snapshot.stats.structuralNodeCount} structural nodes</div>

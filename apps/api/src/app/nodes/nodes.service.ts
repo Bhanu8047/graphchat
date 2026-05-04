@@ -12,6 +12,7 @@ import {
 } from '@vectorgraph/shared-types';
 import { v4 as uuid } from 'uuid';
 import { RuntimeConfigService } from '../runtime/runtime-config.service';
+import { SearchService } from '../search/search.service';
 
 @Injectable()
 export class NodesService implements OnModuleInit {
@@ -22,6 +23,7 @@ export class NodesService implements OnModuleInit {
   constructor(
     cfg: ConfigService,
     private runtimeConfig: RuntimeConfigService,
+    private searchService: SearchService,
   ) {
     const defaultProvider =
       this.runtimeConfig.getDefaultEmbeddingProvider() ??
@@ -64,6 +66,10 @@ export class NodesService implements OnModuleInit {
       this.mongo.saveNode(node, embedding),
       this.redis.storeNode(node, embedding),
     ]);
+    await this.searchService.invalidateCache({
+      ownerId,
+      repoId: node.repoId,
+    });
     return node;
   }
 
@@ -74,5 +80,9 @@ export class NodesService implements OnModuleInit {
     }
 
     await Promise.all([this.mongo.deleteNode(id), this.redis.deleteNode(id)]);
+    await this.searchService.invalidateCache({
+      ownerId,
+      repoId: node.repoId,
+    });
   }
 }

@@ -7,5 +7,6 @@ import { RuntimeConfigModule } from '../runtime/runtime-config.module';
   imports: [RuntimeConfigModule],
   providers: [SearchService],
   controllers: [SearchController],
+  exports: [SearchService],
 })
 export class SearchModule {}

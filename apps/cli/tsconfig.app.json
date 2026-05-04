@@ -17,9 +17,5 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.test.ts"],
-  "references": [
-    {
-      "path": "../../libs/shared-types/tsconfig.lib.json"
-    }
-  ]
+  "references": []
 }

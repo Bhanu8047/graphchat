@@ -30,6 +30,7 @@ import {
 import { v4 as uuid } from 'uuid';
 import { RuntimeConfigService } from '../runtime/runtime-config.service';
 import { GraphBridgeService } from '../graph/graph-bridge.service';
+import { SearchService } from '../search/search.service';
 
 type GithubApiRepo = {
   full_name: string;
@@ -171,6 +172,7 @@ export class ReposService implements OnModuleInit {
     private cfg: ConfigService,
     private runtimeConfig: RuntimeConfigService,
     private graphBridge: GraphBridgeService,
+    private searchService: SearchService,
   ) {
     const defaultProvider =
       this.runtimeConfig.getDefaultEmbeddingProvider() ??
@@ -551,12 +553,14 @@ export class ReposService implements OnModuleInit {
     };
 
     await this.mongo.saveRepo(updatedRepo);
+    await this.searchService.invalidateCache({ ownerId, repoId });
     return this.findOne(repoId, ownerId);
   }
 
   async remove(id: string, ownerId: string) {
     await this.findOne(id, ownerId);
     await Promise.all([this.mongo.deleteRepo(id), this.redis.deleteByRepo(id)]);
+    await this.searchService.invalidateCache({ ownerId, repoId: id });
   }
 
   private async findSeedRepo(
