@@ -35,5 +35,10 @@
         ]
       }
     }
+  },
+  "dependencies": {
+    "@tiptap/extension-typography": "^3.22.5",
+    "@tiptap/react": "^3.22.5",
+    "@tiptap/starter-kit": "^3.22.5"
   }
 }

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Fragment } from 'react';
 import { Badge } from '../components/atoms/Badge';
 import { buttonStyles } from '../components/atoms/buttonStyles';
 import {
@@ -225,12 +226,9 @@ export default function MarketingHomePage() {
           {/* Steps row with dashed connectors */}
           <div className="mt-16 flex flex-col items-center gap-12 md:flex-row md:items-start md:gap-0">
             {steps.map((step, index) => (
-              <>
+              <Fragment key={step.title}>
                 {/* Step — equal flex-1 width */}
-                <div
-                  key={step.title}
-                  className="flex flex-1 flex-col items-center"
-                >
+                <div className="flex flex-1 flex-col items-center">
                   <StepTile
                     title={step.title}
                     description={step.description}
@@ -242,7 +240,6 @@ export default function MarketingHomePage() {
                 {/* Dashed connector — only between steps, not after last */}
                 {index < steps.length - 1 ? (
                   <div
-                    key={`connector-${index}`}
                     aria-hidden
                     className="mx-2 hidden shrink-0 items-center gap-2 md:flex"
                     style={{ marginTop: '37px' }}
@@ -262,7 +259,7 @@ export default function MarketingHomePage() {
                     <span className="h-1.5 w-1.5 rounded-full bg-[var(--border)]" />
                   </div>
                 ) : null}
-              </>
+              </Fragment>
             ))}
           </div>
         </div>
@@ -299,6 +296,78 @@ export default function MarketingHomePage() {
               <GraphVisual />
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* WHAT'S NEW ------------------------------------------------------- */}
+      <section
+        id="whats-new"
+        className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8"
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <Badge>What&apos;s new</Badge>
+            <h2 className="mt-4 font-display text-3xl font-medium tracking-tight text-[var(--foreground)] sm:text-4xl">
+              Latest updates
+            </h2>
+          </div>
+          <Link
+            href="/changelog"
+            className={cn(
+              buttonStyles({ tone: 'ghost', size: 'sm' }),
+              'shrink-0',
+            )}
+          >
+            Full changelog
+            <ArrowRightIcon className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            {
+              version: 'v1.3.0',
+              tag: 'Feature',
+              tagTone: 'primary' as const,
+              title: 'gph CLI — 12-command graph tool',
+              description:
+                'Login, index, search, query, path, explain, report, export, and watch — all speaking directly to the graph API with token-budget output for AI agents.',
+            },
+            {
+              version: 'v1.3.0',
+              tag: 'Feature',
+              tagTone: 'primary' as const,
+              title: 'API key + JWT auth',
+              description:
+                'Mint scoped API keys in the dashboard, exchange them for auto-refreshing JWT tokens, and authenticate the CLI with a single gph login command.',
+            },
+            {
+              version: 'v1.2.0',
+              tag: 'Improvement',
+              tagTone: 'success' as const,
+              title: 'Leiden community detection',
+              description:
+                'Graph communities are now detected via Leiden (graspologic), cached in Redis per graph version, and surfaced as agent-ready context bundles.',
+            },
+          ].map((item) => (
+            <div
+              key={item.title}
+              className="flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <Badge tone={item.tagTone}>{item.tag}</Badge>
+                <span className="font-mono text-xs text-[var(--muted-foreground)]">
+                  {item.version}
+                </span>
+              </div>
+              <h3 className="font-semibold text-[var(--foreground)]">
+                {item.title}
+              </h3>
+              <p className="text-sm leading-6 text-[var(--muted-foreground)]">
+                {item.description}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
 

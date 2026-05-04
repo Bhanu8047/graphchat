@@ -10,9 +10,11 @@ import { Input } from '../../../components/atoms/Input';
 import { Surface } from '../../../components/atoms/Surface';
 import { FieldGroup } from '../../../components/molecules/FieldGroup';
 import { Notice } from '../../../components/molecules/Notice';
+import { useAuth } from '../providers/AuthProvider';
 
 export function SignUpForm() {
   const router = useRouter();
+  const { refresh } = useAuth();
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,6 +42,7 @@ export function SignUpForm() {
 
       router.replace('/dashboard');
       router.refresh();
+      await refresh();
     } catch (err: any) {
       setError(err.message ?? 'Unable to create account.');
     } finally {

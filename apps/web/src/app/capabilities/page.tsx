@@ -11,6 +11,8 @@ import {
   NetworkIcon,
   ShieldIcon,
   ZapIcon,
+  ActivityIcon,
+  CheckIcon,
 } from '../../components/atoms/Icon';
 import { CapabilityCard } from '../../components/molecules/CapabilityCard';
 import { MarketingShell } from '../../components/templates/MarketingShell';
@@ -201,55 +203,62 @@ const capabilities = [
   },
   {
     icon: <ZapIcon className="h-5 w-5" />,
-    title: 'trchat grapher & Budget Search',
+    title: 'gph CLI — 12-Command Graph Tool',
     description:
-      'A purpose-built CLI (gph) for AI agents — semantic search with token budgets, graph traversal, plain-language explain, live watch mode, and structured export.',
+      'A purpose-built CLI for humans and AI agents: semantic search with token budgets, shortest-path traversal, AI explain, live watch mode, incremental index, and structured JSON export.',
     badges: [
       { label: 'gph search', tone: 'indigo' as const },
       { label: 'gph path', tone: 'indigo' as const },
+      { label: 'gph explain', tone: 'indigo' as const },
       { label: '--budget', tone: 'teal' as const },
-      { label: 'Redis cache', tone: 'teal' as const },
+      { label: '--agent', tone: 'teal' as const },
+      { label: 'Redis cache', tone: 'neutral' as const },
     ],
     detail: (
       <div className="space-y-4">
         <p>
           <strong className="font-semibold text-[var(--foreground)]">
-            trchat grapher
-          </strong>{' '}
-          is the CLI layer — invoked via the short alias{' '}
-          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
             gph
-          </code>
-          . Every command speaks directly to the graph API and returns a
-          budget-trimmed, structured context slice ready to paste into an agent
-          prompt.
+          </strong>{' '}
+          is the trchat command-line tool. Every command authenticates via a
+          short-lived JWT (auto-refreshed) and speaks directly to the graph API,
+          returning a budget-trimmed, structured context slice ready to paste
+          into an agent prompt.
         </p>
 
         <div className="space-y-2">
           {[
             {
+              cmd: 'gph login --key sk-trchat-...',
+              desc: 'Exchange an API key for JWT tokens — stored locally, auto-refreshed before expiry. One-time setup.',
+            },
+            {
+              cmd: 'gph index ./src --repo my-api-id',
+              desc: 'Incrementally index a local repo path. Only changed files are re-parsed; prior state is reused.',
+            },
+            {
               cmd: 'gph search "authentication middleware" --budget 1500',
-              desc: 'Nearest-neighbour semantic search capped at 1 500 tokens. Lower-confidence nodes are dropped first to fit the budget.',
+              desc: 'Nearest-neighbour semantic search capped at 1 500 tokens. Lower-confidence nodes are dropped first.',
             },
             {
-              cmd: 'gph path AuthService ResponseInterceptor',
-              desc: 'Shortest path between two named symbols — surfaces the exact call chain an agent needs to reason about middleware ordering.',
+              cmd: 'gph path AuthService ResponseInterceptor --repo my-api-id',
+              desc: 'Shortest path between two named symbols — surfaces the exact call chain in hop order.',
             },
             {
-              cmd: 'gph explain JwtGuard',
-              desc: 'Plain-language explanation of a node: its community, inbound callers, outbound callees, and confidence tier of each edge.',
+              cmd: 'gph explain JwtGuard --repo my-api-id',
+              desc: 'AI explanation of a node: its community, inbound callers, outbound callees, and confidence tier of each edge.',
             },
             {
-              cmd: 'gph query "what calls validateToken?" --dfs',
-              desc: 'Natural-language query resolved to a DFS traversal from the matching entry-point — returns the full reachable subgraph.',
+              cmd: 'gph query "what calls validateToken?" --mode dfs',
+              desc: 'Natural-language query resolved via DFS from the best matching entry-point — returns the full reachable subgraph.',
             },
             {
               cmd: 'gph export --repo backend-api --out ./context.json',
-              desc: 'Exports a full agent payload for a named repo as a structured JSON context bundle, ready to feed into an LLM session.',
+              desc: 'Exports a full agent context payload as a structured JSON bundle ready to feed into an LLM session.',
             },
             {
-              cmd: 'gph watch ./src --on-commit',
-              desc: 'Hooks into git commits and triggers an incremental re-index on every change — keeps the graph fresh without a manual sync step.',
+              cmd: 'gph watch ./src --repo my-api-id --on-commit',
+              desc: 'Installs git post-commit hooks — triggers an incremental re-index on every commit automatically.',
             },
           ].map(({ cmd, desc }) => (
             <div
@@ -271,6 +280,138 @@ const capabilities = [
           agent queries for the same module are served instantly with zero
           re-serialisation cost.
         </p>
+      </div>
+    ),
+  },
+  {
+    icon: <CheckIcon className="h-5 w-5" />,
+    title: 'API Key + JWT Auth for CLI',
+    description:
+      'Scoped API keys (sk-trchat-…) are minted in the dashboard and exchanged for short-lived JWT access + refresh tokens. The CLI auto-renews tokens invisibly — no repeated logins.',
+    badges: [
+      { label: 'sk-trchat-…', tone: 'indigo' as const },
+      { label: 'JWT exchange', tone: 'teal' as const },
+      { label: 'auto-refresh', tone: 'teal' as const },
+      { label: 'scopes', tone: 'neutral' as const },
+    ],
+    detail: (
+      <div className="space-y-3">
+        <p>
+          API keys are the bridge between the web dashboard and the CLI. A key
+          is minted with a label and optional scope list (e.g.{' '}
+          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
+            search
+          </code>
+          ,{' '}
+          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
+            export
+          </code>
+          ). The plaintext (
+          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
+            sk-trchat-…
+          </code>
+          ) is shown once and never stored — only its bcrypt hash lives in the
+          database.
+        </p>
+        <p>
+          Running{' '}
+          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
+            gph login --key sk-trchat-…
+          </code>{' '}
+          calls{' '}
+          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
+            POST /api/auth/exchange
+          </code>
+          , which validates the key hash and returns a short-lived JWT access
+          token plus a refresh token. Both are stored in{' '}
+          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
+            ~/.trchat/credentials.json
+          </code>
+          .
+        </p>
+        <ul className="mt-2 space-y-1 pl-4">
+          <li className="list-disc">
+            Access tokens are short-lived; the CLI calls{' '}
+            <code className="font-mono text-xs">POST /api/auth/refresh</code>{' '}
+            automatically before any request when expiry is imminent
+          </li>
+          <li className="list-disc">
+            Concurrent refresh races are deduplicated server-side — only one new
+            token pair is issued per refresh window
+          </li>
+          <li className="list-disc">
+            <code className="font-mono text-xs">gph logout</code> revokes the
+            refresh token on the server — subsequent refresh attempts return 401
+          </li>
+          <li className="list-disc">
+            Keys can be revoked individually via{' '}
+            <code className="font-mono text-xs">DELETE /api/auth/keys/:id</code>{' '}
+            without affecting other active keys or sessions
+          </li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    icon: <ActivityIcon className="h-5 w-5" />,
+    title: 'Live Watch & Incremental Index',
+    description:
+      'gph watch keeps the graph in sync automatically: file-system watcher mode for continuous polling, or git hook mode that re-indexes only on commit — zero manual sync steps.',
+    badges: [
+      { label: 'gph watch', tone: 'indigo' as const },
+      { label: '--on-commit', tone: 'indigo' as const },
+      { label: 'post-commit hook', tone: 'teal' as const },
+      { label: 'incremental', tone: 'neutral' as const },
+    ],
+    detail: (
+      <div className="space-y-3">
+        <p>
+          <strong className="font-semibold text-[var(--foreground)]">
+            Server-side watcher
+          </strong>{' '}
+          (default) — the API starts a file-system observer on the specified
+          repository path. Any write triggers a targeted re-index of only the
+          changed files; the rest of the graph is untouched.
+        </p>
+        <p>
+          <strong className="font-semibold text-[var(--foreground)]">
+            Git hook mode
+          </strong>{' '}
+          (
+          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
+            --on-commit
+          </code>
+          ) — installs{' '}
+          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
+            post-commit
+          </code>{' '}
+          and{' '}
+          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
+            post-checkout
+          </code>{' '}
+          hooks in the local repository. After every{' '}
+          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
+            git commit
+          </code>{' '}
+          or branch switch, the graph is re-synced automatically — no polling
+          process is required.
+        </p>
+        <ul className="mt-2 space-y-1 pl-4">
+          <li className="list-disc">
+            Stop the server-side watcher with{' '}
+            <code className="font-mono text-xs">
+              gph watch &lt;path&gt; --repo &lt;id&gt; --stop
+            </code>
+          </li>
+          <li className="list-disc">
+            Incremental sync reuses all unchanged node embeddings — only files
+            whose content hash changed are re-parsed and re-embedded
+          </li>
+          <li className="list-disc">
+            Works alongside the web dashboard — syncs triggered by the CLI are
+            reflected in real time in the graph UI
+          </li>
+        </ul>
       </div>
     ),
   },
