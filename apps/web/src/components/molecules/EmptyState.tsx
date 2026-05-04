@@ -9,7 +9,7 @@ export function EmptyState({ message }: EmptyStateProps) {
     <Surface
       tone="default"
       padding="md"
-      className="border-dashed text-sm text-slate-500 dark:text-slate-500"
+      className="border-dashed text-sm text-[var(--muted-foreground)] shadow-none"
     >
       {message}
     </Surface>

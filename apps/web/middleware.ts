@@ -2,7 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { appSessionCookie } from './src/features/auth/lib/auth-session';
 
-const publicPaths = ['/auth/sign-in', '/auth/sign-up'];
+// Public paths that never require authentication.
+// `/` is the marketing landing page, so it's public too.
+const publicPaths = ['/', '/auth/sign-in', '/auth/sign-up'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -17,24 +19,28 @@ export function middleware(request: NextRequest) {
 
   const session = request.cookies.get(appSessionCookie)?.value;
   const isPublicPath = publicPaths.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`),
+    (path) =>
+      pathname === path || (path !== '/' && pathname.startsWith(`${path}/`)),
   );
 
+  // Unauthenticated visitors hitting an app route → sign-in
   if (!session && !isPublicPath) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/sign-in';
     return NextResponse.redirect(url);
   }
 
-  if (session && (pathname === '/' || isPublicPath)) {
+  // Authenticated visitors landing on `/` or auth pages → dashboard
+  if (
+    session &&
+    (pathname === '/' ||
+      pathname === '/auth/sign-in' ||
+      pathname === '/auth/sign-up' ||
+      pathname.startsWith('/auth/sign-in/') ||
+      pathname.startsWith('/auth/sign-up/'))
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
-  }
-
-  if (!session && pathname === '/') {
-    const url = request.nextUrl.clone();
-    url.pathname = '/auth/sign-in';
     return NextResponse.redirect(url);
   }
 

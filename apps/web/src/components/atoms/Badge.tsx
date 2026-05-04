@@ -7,12 +7,14 @@ const badgeStyles = tv({
   variants: {
     tone: {
       neutral:
-        'border-slate-300 bg-white/70 text-slate-500 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-400',
+        'border-[var(--border)] bg-[var(--surface-muted)] text-[var(--muted-foreground)]',
       accent:
-        'border-cyan-300/60 bg-cyan-100 text-cyan-700 dark:border-cyan-300/20 dark:bg-cyan-300/10 dark:text-cyan-100',
-      warm: 'border-orange-300/60 bg-orange-100 text-orange-700 dark:border-orange-300/20 dark:bg-orange-300/10 dark:text-orange-100',
+        'border-transparent bg-[color-mix(in_oklab,var(--accent)_18%,transparent)] text-[var(--accent)] dark:bg-[color-mix(in_oklab,var(--accent)_22%,transparent)] dark:text-[var(--color-berry-crush-100)]',
+      warm: 'border-transparent bg-[color-mix(in_oklab,var(--color-rosy-taupe-300)_30%,transparent)] text-[var(--color-rosy-taupe-700)] dark:bg-[color-mix(in_oklab,var(--color-rosy-taupe-700)_45%,transparent)] dark:text-[var(--color-rosy-taupe-100)]',
       success:
-        'border-emerald-300/60 bg-emerald-100 text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-300/10 dark:text-emerald-100',
+        'border-transparent bg-[color-mix(in_oklab,var(--color-dusty-olive-300)_35%,transparent)] text-[var(--color-dusty-olive-800)] dark:bg-[color-mix(in_oklab,var(--color-dusty-olive-700)_50%,transparent)] dark:text-[var(--color-dusty-olive-100)]',
+      primary:
+        'border-transparent bg-[color-mix(in_oklab,var(--primary)_18%,transparent)] text-[var(--primary)] dark:text-[var(--color-space-indigo-100)]',
     },
   },
   defaultVariants: {

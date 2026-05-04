@@ -1,15 +1,146 @@
 @import 'tailwindcss';
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
+/* ---------------------------------------------------------------------------
+ * Design system palette
+ *
+ *   Use BLACK foreground on  almond-silk / rosy-taupe (light & soft accents)
+ *   Use WHITE foreground on  berry-crush / dusty-olive / space-indigo
+ *                            (mid-to-dark surfaces & primary actions)
+ *
+ * Tokens are exposed both as raw CSS variables and via Tailwind v4 `@theme`
+ * so utilities such as `bg-space-indigo-600`, `text-almond-silk-50`,
+ * `bg-primary text-primary-foreground` are available throughout the app.
+ * ------------------------------------------------------------------------- */
+
+@theme {
+  --color-almond-silk-50: #f8f0ed;
+  --color-almond-silk-100: #f1e1da;
+  --color-almond-silk-200: #e2c2b6;
+  --color-almond-silk-300: #d4a491;
+  --color-almond-silk-400: #c6866c;
+  --color-almond-silk-500: #b86747;
+  --color-almond-silk-600: #935339;
+  --color-almond-silk-700: #6e3e2b;
+  --color-almond-silk-800: #49291d;
+  --color-almond-silk-900: #25150e;
+  --color-almond-silk-950: #1a0e0a;
+
+  --color-rosy-taupe-50: #f8eeec;
+  --color-rosy-taupe-100: #f2ddd9;
+  --color-rosy-taupe-200: #e5bbb3;
+  --color-rosy-taupe-300: #d89a8d;
+  --color-rosy-taupe-400: #cb7867;
+  --color-rosy-taupe-500: #be5641;
+  --color-rosy-taupe-600: #984534;
+  --color-rosy-taupe-700: #723427;
+  --color-rosy-taupe-800: #4c221a;
+  --color-rosy-taupe-900: #26110d;
+  --color-rosy-taupe-950: #1b0c09;
+
+  --color-berry-crush-50: #f8edef;
+  --color-berry-crush-100: #f1dadf;
+  --color-berry-crush-200: #e2b6bf;
+  --color-berry-crush-300: #d4919f;
+  --color-berry-crush-400: #c66c80;
+  --color-berry-crush-500: #b84760;
+  --color-berry-crush-600: #93394d;
+  --color-berry-crush-700: #6e2b39;
+  --color-berry-crush-800: #491d26;
+  --color-berry-crush-900: #250e13;
+  --color-berry-crush-950: #1a0a0d;
+
+  --color-dusty-olive-50: #f1f4f1;
+  --color-dusty-olive-100: #e2e9e3;
+  --color-dusty-olive-200: #c5d3c8;
+  --color-dusty-olive-300: #a9bcac;
+  --color-dusty-olive-400: #8ca691;
+  --color-dusty-olive-500: #6f9075;
+  --color-dusty-olive-600: #59735e;
+  --color-dusty-olive-700: #435646;
+  --color-dusty-olive-800: #2c3a2f;
+  --color-dusty-olive-900: #161d17;
+  --color-dusty-olive-950: #101410;
+
+  --color-space-indigo-50: #f0eef6;
+  --color-space-indigo-100: #e1deed;
+  --color-space-indigo-200: #c4bcdc;
+  --color-space-indigo-300: #a69bca;
+  --color-space-indigo-400: #8879b9;
+  --color-space-indigo-500: #6a58a7;
+  --color-space-indigo-600: #554686;
+  --color-space-indigo-700: #403564;
+  --color-space-indigo-800: #2b2343;
+  --color-space-indigo-900: #151221;
+  --color-space-indigo-950: #0f0c17;
+
+  /* Semantic tokens (resolve to CSS variables defined per theme below) */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-ring: var(--ring);
+
+  --font-body: ui-sans-serif, system-ui, sans-serif;
+  --font-display: ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 1.5rem;
+}
+
 @layer base {
   :root {
     color-scheme: light;
-    --font-body: ui-sans-serif, system-ui, sans-serif;
-    --font-display: ui-sans-serif, system-ui, sans-serif;
+
+    /* Light theme — semantic tokens */
+    --background: #f8f0ed; /* almond-silk-50 */
+    --foreground: #151221; /* space-indigo-900 */
+    --surface: #ffffff;
+    --surface-muted: #f1e1da; /* almond-silk-100 */
+    --border: #e2c2b6; /* almond-silk-200 */
+    --border-strong: #d4a491; /* almond-silk-300 */
+    --primary: #554686; /* space-indigo-600 */
+    --primary-foreground: #ffffff;
+    --accent: #b84760; /* berry-crush-500 */
+    --accent-foreground: #ffffff;
+    --success: #59735e; /* dusty-olive-600 */
+    --success-foreground: #ffffff;
+    --danger: #93394d; /* berry-crush-600 */
+    --danger-foreground: #ffffff;
+    --muted-foreground: #403564; /* space-indigo-700 */
+    --ring: #6a58a7; /* space-indigo-500 */
   }
 
   html[data-theme='dark'] {
     color-scheme: dark;
+
+    /* Dark theme — semantic tokens */
+    --background: #0f0c17; /* space-indigo-950 */
+    --foreground: #f8f0ed; /* almond-silk-50 */
+    --surface: #151221; /* space-indigo-900 */
+    --surface-muted: #2b2343; /* space-indigo-800 */
+    --border: #403564; /* space-indigo-700 */
+    --border-strong: #554686; /* space-indigo-600 */
+    --primary: #8879b9; /* space-indigo-400 */
+    --primary-foreground: #ffffff;
+    --accent: #c66c80; /* berry-crush-400 */
+    --accent-foreground: #ffffff;
+    --success: #8ca691; /* dusty-olive-400 */
+    --success-foreground: #0f0c17;
+    --danger: #c66c80; /* berry-crush-400 */
+    --danger-foreground: #ffffff;
+    --muted-foreground: #e2c2b6; /* almond-silk-200 */
+    --ring: #a69bca; /* space-indigo-300 */
   }
 
   html,
@@ -21,62 +152,55 @@
   body {
     position: relative;
     overflow-x: hidden;
-    background:
-      radial-gradient(
-        circle at top left,
-        rgba(103, 232, 249, 0.34),
-        transparent 22%
-      ),
-      radial-gradient(
-        circle at 88% 18%,
-        rgba(251, 146, 60, 0.2),
-        transparent 18%
-      ),
-      linear-gradient(180deg, #f8fbff 0%, #edf4fb 100%);
-    color: #0f172a;
+    background: var(--background);
+    color: var(--foreground);
     font-family: var(--font-body), sans-serif;
   }
 
-  html[data-theme='dark'] body {
-    background:
-      radial-gradient(
-        circle at top left,
-        rgba(34, 211, 238, 0.18),
-        transparent 24%
-      ),
-      radial-gradient(
-        circle at 82% 14%,
-        rgba(249, 115, 22, 0.14),
-        transparent 20%
-      ),
-      radial-gradient(
-        circle at bottom right,
-        rgba(16, 185, 129, 0.12),
-        transparent 26%
-      ),
-      linear-gradient(180deg, #07111d 0%, #030812 100%);
-    color: #e2e8f0;
-  }
-
+  /* Soft global ambient gradient — calm, low-noise */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background-image:
-      linear-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
-    background-size: 72px 72px;
-    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), transparent 88%);
-    opacity: 0.28;
+    background:
+      radial-gradient(
+        circle at 12% 8%,
+        color-mix(in oklab, var(--color-rosy-taupe-200) 60%, transparent),
+        transparent 38%
+      ),
+      radial-gradient(
+        circle at 88% 6%,
+        color-mix(in oklab, var(--color-space-indigo-200) 55%, transparent),
+        transparent 36%
+      ),
+      radial-gradient(
+        circle at 50% 100%,
+        color-mix(in oklab, var(--color-dusty-olive-100) 70%, transparent),
+        transparent 50%
+      );
+    opacity: 0.85;
   }
 
   html[data-theme='dark'] body::before {
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-    opacity: 0.2;
+    background:
+      radial-gradient(
+        circle at 12% 8%,
+        color-mix(in oklab, var(--color-space-indigo-700) 55%, transparent),
+        transparent 36%
+      ),
+      radial-gradient(
+        circle at 88% 6%,
+        color-mix(in oklab, var(--color-berry-crush-800) 60%, transparent),
+        transparent 34%
+      ),
+      radial-gradient(
+        circle at 50% 100%,
+        color-mix(in oklab, var(--color-dusty-olive-900) 80%, transparent),
+        transparent 48%
+      );
+    opacity: 0.9;
   }
 
   * {
@@ -96,11 +220,30 @@
   }
 
   ::selection {
-    background: rgba(34, 211, 238, 0.28);
-    color: #fff;
+    background: color-mix(in oklab, var(--primary) 35%, transparent);
+    color: var(--primary-foreground);
+  }
+
+  :focus-visible {
+    outline: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
+/* ---------------------------------------------------------------------------
+ * Reusable gradient utilities — single source of truth (DRY).
+ * Components compose these classes instead of inlining `linear-gradient(...)`.
+ * ------------------------------------------------------------------------- */
 @layer utilities {
   .font-display {
     font-family: var(--font-display), sans-serif;
@@ -108,5 +251,76 @@
 
   .text-balance {
     text-wrap: balance;
+  }
+
+  .gradient-hero {
+    background-image: linear-gradient(
+      135deg,
+      var(--color-space-indigo-600) 0%,
+      var(--color-berry-crush-500) 55%,
+      var(--color-rosy-taupe-400) 100%
+    );
+  }
+
+  .gradient-soft {
+    background-image: linear-gradient(
+      180deg,
+      var(--color-almond-silk-50) 0%,
+      var(--color-rosy-taupe-50) 100%
+    );
+  }
+
+  html[data-theme='dark'] .gradient-soft {
+    background-image: linear-gradient(
+      180deg,
+      var(--color-space-indigo-950) 0%,
+      var(--color-space-indigo-900) 100%
+    );
+  }
+
+  .gradient-cta {
+    background-image: linear-gradient(
+      135deg,
+      var(--color-space-indigo-700) 0%,
+      var(--color-berry-crush-600) 100%
+    );
+  }
+
+  .gradient-olive {
+    background-image: linear-gradient(
+      135deg,
+      var(--color-dusty-olive-500) 0%,
+      var(--color-space-indigo-600) 100%
+    );
+  }
+
+  .gradient-text-hero {
+    background-image: linear-gradient(
+      135deg,
+      var(--color-space-indigo-700),
+      var(--color-berry-crush-500)
+    );
+    background-clip: text;
+    color: transparent;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  html[data-theme='dark'] .gradient-text-hero {
+    background-image: linear-gradient(
+      135deg,
+      var(--color-almond-silk-100),
+      var(--color-rosy-taupe-300)
+    );
+  }
+
+  .focus-ring {
+    outline: none;
+  }
+
+  .focus-ring:focus-visible {
+    box-shadow:
+      0 0 0 2px var(--background),
+      0 0 0 4px var(--ring);
   }
 }

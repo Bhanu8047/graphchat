@@ -120,15 +120,15 @@ export function GraphsPage() {
         'note',
       ])
       .range([
-        '#0891b2',
-        '#10b981',
-        '#f59e0b',
-        '#14b8a6',
-        '#f97316',
-        '#8b5cf6',
-        '#0284c7',
-        '#e11d48',
-        '#64748b',
+        '#554686',
+        '#59735e',
+        '#cb7867',
+        '#6f9075',
+        '#b84760',
+        '#6a58a7',
+        '#c66c80',
+        '#be5641',
+        '#8ca691',
       ]);
 
     const zoom = d3
@@ -166,7 +166,7 @@ export function GraphsPage() {
 
     const link = canvas
       .append('g')
-      .attr('stroke', '#94a3b8')
+      .attr('stroke', 'var(--border-strong)')
       .attr('stroke-opacity', 0.55)
       .selectAll('line')
       .data(links)
@@ -223,7 +223,7 @@ export function GraphsPage() {
       .text((datum: any) => datum.label)
       .attr('x', 12)
       .attr('y', 4)
-      .attr('fill', '#cbd5e1')
+      .attr('fill', 'var(--muted-foreground)')
       .attr('font-size', 11);
 
     sim.on('tick', () => {
@@ -276,7 +276,7 @@ export function GraphsPage() {
             Sync from GitHub
           </Button>
         </div>
-        <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
           {snapshot?.repository.sync?.lastSyncedAt ? (
             <span>
               Last sync{' '}
@@ -301,13 +301,13 @@ export function GraphsPage() {
           className="min-h-[460px] lg:min-h-[620px]"
         >
           {loading && !snapshot ? (
-            <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">
+            <div className="flex h-full items-center justify-center text-muted-foreground">
               Loading graph...
             </div>
           ) : (
             <svg
               ref={ref}
-              className="h-full w-full rounded-[22px] bg-slate-50 dark:bg-slate-900"
+              className="h-full w-full rounded-[22px] bg-surface-muted"
             />
           )}
         </Surface>
@@ -322,7 +322,7 @@ export function GraphsPage() {
             }
           />
           {snapshot ? (
-            <div className="space-y-3 text-slate-600 dark:text-slate-400">
+            <div className="space-y-3 text-muted-foreground">
               <div>{snapshot.stats.structuralNodeCount} structural nodes</div>
               <div>{snapshot.stats.semanticNodeCount} semantic nodes</div>
               <div>{snapshot.stats.edgeCount} edges</div>
