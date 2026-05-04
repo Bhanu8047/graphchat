@@ -67,10 +67,10 @@ export function SignInForm() {
           <Badge tone="accent" className="mt-5">
             trchat
           </Badge>
-          <h1 className="mt-4 font-display text-4xl leading-[1.02] text-slate-900 dark:text-white sm:text-5xl">
+          <h1 className="mt-4 font-display text-4xl leading-[1.02] text-foreground sm:text-5xl">
             Persistent repository graphs for humans and AI agents
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-700 dark:text-slate-200/90 sm:text-lg">
+          <p className="mt-4 max-w-2xl text-base leading-7 text-foreground sm:text-lg">
             Sign in to manage branch-specific graphs, sync changes
             incrementally, and give agents API access to structured graph
             context instead of raw repository dumps.
@@ -91,12 +91,8 @@ export function SignInForm() {
               ],
             ].map(([title, copy]) => (
               <Surface key={title} tone="soft" padding="md">
-                <div className="font-medium text-slate-900 dark:text-white">
-                  {title}
-                </div>
-                <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                  {copy}
-                </div>
+                <div className="font-medium text-foreground">{title}</div>
+                <div className="mt-2 text-sm text-muted-foreground">{copy}</div>
               </Surface>
             ))}
           </div>
@@ -109,10 +105,10 @@ export function SignInForm() {
       >
         <Surface tone="elevated" padding="xl">
           <Badge tone="warm">Sign in</Badge>
-          <h2 className="mt-2 font-display text-3xl text-slate-900 dark:text-white">
+          <h2 className="mt-2 font-display text-3xl text-foreground">
             Welcome back
           </h2>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-2 text-sm text-muted-foreground">
             Use your email and password or continue with GitHub.
           </p>
           {error ? (
@@ -151,11 +147,11 @@ export function SignInForm() {
           >
             Continue with GitHub
           </a>
-          <div className="mt-5 text-sm text-slate-600 dark:text-slate-400">
+          <div className="mt-5 text-sm text-muted-foreground">
             New here?{' '}
             <Link
               href="/auth/sign-up"
-              className="text-cyan-600 hover:text-cyan-700 dark:text-cyan-300 dark:hover:text-cyan-200"
+              className="text-primary hover:text-primary/80"
             >
               Create an account
             </Link>

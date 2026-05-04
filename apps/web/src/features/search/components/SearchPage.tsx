@@ -81,17 +81,17 @@ export function SearchPage() {
             <li key={index}>
               <Surface tone="default" padding="md">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <span className="font-medium text-slate-900 dark:text-white">
+                  <span className="font-medium text-foreground">
                     {result.node.label}{' '}
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted-foreground">
                       [{result.node.type}]
                     </span>
                   </span>
-                  <span className="rounded-full border border-emerald-300/40 bg-emerald-50 px-3 py-1 text-sm text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-300/10 dark:text-emerald-200">
+                  <span className="rounded-full border border-success bg-[color-mix(in_oklab,var(--success)_15%,transparent)] px-3 py-1 text-sm text-success">
                     {(result.score * 100).toFixed(1)}%
                   </span>
                 </div>
-                <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-slate-300">
+                <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                   {result.node.content}
                 </div>
               </Surface>

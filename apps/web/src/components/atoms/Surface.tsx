@@ -2,20 +2,28 @@ import { type HTMLAttributes } from 'react';
 import { tv, type VariantProps } from 'tailwind-variants';
 import { cn } from '../../lib/ui';
 
+/**
+ * Surface — semantic container atom.
+ *
+ * All tones are derived from semantic tokens (--surface, --border, ...) so a
+ * single dark/light flip in `globals.css` re-themes every consumer.
+ */
 export const surfaceStyles = tv({
-  base: 'rounded-[28px] border shadow-[0_24px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:shadow-[0_24px_80px_rgba(2,8,23,0.32)]',
+  base: 'rounded-[var(--radius-card)] border border-[var(--border)] text-[var(--foreground)] shadow-[0_18px_48px_-28px_color-mix(in_oklab,var(--color-space-indigo-900)_30%,transparent)] backdrop-blur-xl',
   variants: {
     tone: {
-      default:
-        'border-slate-200/80 bg-white/82 text-slate-900 dark:border-white/10 dark:bg-slate-950/58 dark:text-slate-100',
+      default: 'bg-[var(--surface)]',
       elevated:
-        'border-slate-200 bg-white/92 text-slate-900 dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(8,15,28,0.96),rgba(6,10,18,0.88))] dark:text-slate-100',
-      hero: 'border-cyan-200/80 bg-[linear-gradient(140deg,rgba(103,232,249,0.38),rgba(255,255,255,0.96)_45%,rgba(251,146,60,0.22))] text-slate-900 dark:border-white/10 dark:bg-[linear-gradient(140deg,rgba(34,211,238,0.18),rgba(12,20,35,0.94)_48%,rgba(249,115,22,0.16))] dark:text-slate-100',
-      soft: 'border-slate-200/80 bg-white/66 text-slate-900 dark:border-white/10 dark:bg-white/[0.045] dark:text-slate-100',
+        'bg-[var(--surface)] shadow-[0_28px_80px_-30px_color-mix(in_oklab,var(--color-space-indigo-900)_40%,transparent)]',
+      soft: 'bg-[var(--surface-muted)] border-transparent shadow-none',
+      hero: 'gradient-hero text-white border-transparent shadow-[0_30px_80px_-30px_color-mix(in_oklab,var(--color-space-indigo-700)_60%,transparent)]',
+      olive:
+        'gradient-olive text-white border-transparent shadow-[0_30px_80px_-30px_color-mix(in_oklab,var(--color-dusty-olive-700)_60%,transparent)]',
       danger:
-        'border-rose-200/80 bg-rose-50/80 text-slate-900 dark:border-rose-400/20 dark:bg-rose-500/5 dark:text-slate-100',
+        'border-[var(--color-berry-crush-300)] bg-[color-mix(in_oklab,var(--color-berry-crush-50)_85%,transparent)] text-[var(--color-berry-crush-800)] dark:border-[var(--color-berry-crush-700)] dark:bg-[color-mix(in_oklab,var(--color-berry-crush-900)_70%,transparent)] dark:text-[var(--color-berry-crush-100)]',
     },
     padding: {
+      none: 'p-0',
       sm: 'p-4',
       md: 'p-5',
       lg: 'p-6',

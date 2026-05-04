@@ -9,12 +9,14 @@ type FieldGroupProps = {
 export function FieldGroup({ label, children, hint }: FieldGroupProps) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm text-slate-600 dark:text-slate-400">
+      <span className="mb-2 block text-sm font-medium text-[var(--foreground)]">
         {label}
       </span>
       {children}
       {hint ? (
-        <span className="mt-2 block text-xs text-slate-500">{hint}</span>
+        <span className="mt-2 block text-xs text-[var(--muted-foreground)]">
+          {hint}
+        </span>
       ) : null}
     </label>
   );

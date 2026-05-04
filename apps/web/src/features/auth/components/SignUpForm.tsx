@@ -55,10 +55,10 @@ export function SignUpForm() {
     >
       <Surface tone="elevated" padding="xl" className="mx-auto max-w-2xl">
         <Badge tone="warm">Create account</Badge>
-        <h1 className="mt-2 font-display text-4xl text-slate-900 dark:text-white">
+        <h1 className="mt-2 font-display text-4xl text-foreground">
           Start building persistent graphs
         </h1>
-        <p className="mt-3 text-slate-600 dark:text-slate-400">
+        <p className="mt-3 text-muted-foreground">
           Create an account to manage repository graphs, branch snapshots, and
           agent-facing API access from one dashboard.
         </p>
@@ -103,11 +103,11 @@ export function SignUpForm() {
             {loading ? 'Creating account…' : 'Create account'}
           </Button>
         </form>
-        <div className="mt-5 text-sm text-slate-600 dark:text-slate-400">
+        <div className="mt-5 text-sm text-muted-foreground">
           Already have an account?{' '}
           <Link
             href="/auth/sign-in"
-            className="text-cyan-600 hover:text-cyan-700 dark:text-cyan-300 dark:hover:text-cyan-200"
+            className="text-primary hover:text-primary/80"
           >
             Sign in
           </Link>

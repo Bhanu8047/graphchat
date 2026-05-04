@@ -241,7 +241,7 @@ export function RepositoriesPage() {
       {error ? <Notice tone="error">{error}</Notice> : null}
 
       <Surface tone="default" padding="lg">
-        <div className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+        <div className="text-sm leading-6 text-muted-foreground">
           {githubSession.authenticated ? (
             <div>
               Signed in to GitHub as{' '}
@@ -249,7 +249,7 @@ export function RepositoriesPage() {
                 href={githubSession.user?.profileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-cyan-600 hover:text-cyan-700 dark:text-cyan-300 dark:hover:text-cyan-200"
+                className="text-primary hover:text-primary/80"
               >
                 @{githubSession.user?.login}
               </a>
@@ -345,7 +345,7 @@ export function RepositoriesPage() {
           </Button>
         </form>
 
-        <div className="mt-4 space-y-1 text-sm text-slate-500 dark:text-slate-400">
+        <div className="mt-4 space-y-1 text-sm text-muted-foreground">
           <p>
             After GitHub sign-in, the browser sends only the repository URL and
             branch. The access token stays in an HttpOnly cookie on the web
@@ -388,22 +388,22 @@ export function RepositoriesPage() {
               <Surface tone="default" padding="md">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div>
-                    <div className="font-medium text-slate-900 dark:text-white">
+                    <div className="font-medium text-foreground">
                       {repository.name}{' '}
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         ({repository.nodes?.length ?? 0} nodes)
                       </span>
                     </div>
-                    <div className="text-sm text-slate-600 dark:text-slate-400">
+                    <div className="text-sm text-muted-foreground">
                       {repository.description}
                     </div>
                     {repository.source?.provider === 'github' ? (
-                      <div className="text-xs text-slate-500">
+                      <div className="text-xs text-muted-foreground">
                         <a
                           href={repository.source.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-cyan-600 hover:text-cyan-700 dark:text-cyan-300 dark:hover:text-cyan-200"
+                          className="text-primary hover:text-primary/80"
                         >
                           {repository.source.fullName}
                         </a>{' '}
@@ -447,7 +447,7 @@ export function RepositoriesPage() {
                     <Button
                       tone="ghost"
                       size="sm"
-                      className="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-200 dark:hover:bg-rose-300/10 dark:hover:text-rose-100"
+                      className="text-danger hover:bg-[color-mix(in_oklab,var(--danger)_15%,transparent)] hover:text-danger"
                       onClick={() => deleteRepo(repository.id)}
                     >
                       Delete

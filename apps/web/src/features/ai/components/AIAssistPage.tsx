@@ -95,14 +95,16 @@ export function AIAssistPage() {
           />
           {result ? (
             <div className="mt-5 space-y-4 text-sm">
-              <div className="font-medium text-slate-900 dark:text-white">
+              <div className="font-medium text-foreground">
                 {result.label}{' '}
-                <span className="text-xs text-slate-500">[{result.type}]</span>
+                <span className="text-xs text-muted-foreground">
+                  [{result.type}]
+                </span>
               </div>
-              <div className="whitespace-pre-wrap text-slate-600 dark:text-slate-300">
+              <div className="whitespace-pre-wrap text-muted-foreground">
                 {result.content}
               </div>
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-muted-foreground">
                 Tags: {result.tags?.join(', ')}
               </div>
               <Button onClick={accept}>Accept and save</Button>

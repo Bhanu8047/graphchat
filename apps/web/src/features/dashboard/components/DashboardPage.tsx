@@ -3,14 +3,59 @@
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
-import { DashboardStats } from '@vectorgraph/shared-types';
+import type { DashboardStats } from '@vectorgraph/shared-types';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../auth/providers/AuthProvider';
+import { Surface } from '../../../components/atoms/Surface';
 import { Badge } from '../../../components/atoms/Badge';
 import { buttonStyles } from '../../../components/atoms/Button';
-import { Surface } from '../../../components/atoms/Surface';
+import {
+  ActivityIcon,
+  ExportIcon,
+  GraphIcon,
+  PlusIcon,
+  RepoIcon,
+  SearchIcon,
+  SparkleIcon,
+} from '../../../components/atoms/Icon';
 import { EmptyState } from '../../../components/molecules/EmptyState';
-import { MetricCard } from '../../../components/molecules/MetricCard';
+import { staggered } from '../../../lib/motion-presets';
+import { cn } from '../../../lib/ui';
+
+function greeting(date = new Date()) {
+  const h = date.getHours();
+  if (h < 5) return 'Working late';
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
+const quickActions = [
+  {
+    href: '/repos',
+    label: 'Import repository',
+    description: 'Pull a GitHub branch into a graph',
+    icon: PlusIcon,
+  },
+  {
+    href: '/graphs',
+    label: 'Inspect graphs',
+    description: 'Browse and explore stored graphs',
+    icon: GraphIcon,
+  },
+  {
+    href: '/search',
+    label: 'Run search',
+    description: 'Semantic retrieval across graphs',
+    icon: SearchIcon,
+  },
+  {
+    href: '/export',
+    label: 'Export bundle',
+    description: 'Agent-ready graph payloads',
+    icon: ExportIcon,
+  },
+] as const;
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -24,193 +69,257 @@ export function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const cards = [
+  const metrics = [
     {
       label: 'Repositories',
       value: stats?.totals.repositories ?? 0,
-      hint: 'Imported repositories in your account',
+      hint: 'Imported',
     },
     {
       label: 'Branch graphs',
       value: stats?.totals.graphs ?? 0,
-      hint: 'Stored graph snapshots you can revisit',
+      hint: 'Stored snapshots',
     },
     {
       label: 'Structural nodes',
       value: stats?.totals.graphNodes ?? 0,
-      hint: 'Files, directories, and graph entities',
+      hint: 'Files + entities',
     },
     {
       label: 'Semantic nodes',
       value: stats?.totals.semanticNodes ?? 0,
-      hint: 'Chunked context for search and AI flows',
+      hint: 'Vector chunks',
     },
   ];
+
   const recentRepositories = stats?.recentRepositories ?? [];
+  const firstName = user?.name?.split(' ')[0] ?? 'there';
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-        >
-          <Surface tone="hero" padding="xl">
-            <Badge tone="accent">Command center</Badge>
-            <h2 className="mt-4 font-display text-4xl leading-[1.02] text-slate-900 dark:text-white sm:text-5xl">
-              Hello, {user?.name?.split(' ')[0] ?? 'there'}
-            </h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-700 dark:text-slate-200/90">
-              Your account now owns its own repositories, graph snapshots, and
-              semantic search index. Import a branch once, sync incrementally,
-              and reuse the graph everywhere from the dashboard to agent
-              exports.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/repos" className={buttonStyles({ tone: 'primary' })}>
-                Import repository
-              </Link>
-              <Link
-                href="/graphs"
-                className={buttonStyles({ tone: 'secondary' })}
-              >
-                Inspect graphs
-              </Link>
-            </div>
-          </Surface>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.05 }}
-        >
-          <Surface tone="soft" padding="lg">
-            <Badge>Recent activity</Badge>
-            <div className="mt-4 space-y-3">
-              {recentRepositories.slice(0, 3).map((repo) => (
-                <Surface key={repo.id} tone="default" padding="md">
-                  <div className="font-medium text-slate-900 dark:text-white">
-                    {repo.name}
-                  </div>
-                  <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    {repo.branch ? `Branch ${repo.branch}` : 'Graph snapshot'}
-                  </div>
-                  <div className="mt-2 text-xs text-slate-500">
-                    {new Date(repo.updatedAt).toLocaleString()}
-                  </div>
-                </Surface>
-              ))}
-              {!recentRepositories.length && !loading ? (
-                <EmptyState message="No graphs yet. Import a repository branch to populate this dashboard." />
-              ) : null}
-            </div>
-          </Surface>
-        </motion.div>
-      </section>
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card, index) => (
-          <motion.div
-            key={card.label}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.08 + index * 0.05 }}
+      {/* Welcome strip */}
+      <motion.section
+        {...staggered(0)}
+        className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+      >
+        <div className="min-w-0">
+          <Badge tone="primary">Dashboard</Badge>
+          <h1 className="mt-3 truncate font-display text-2xl font-medium tracking-tight text-[var(--foreground)] sm:text-3xl">
+            {greeting()}, {firstName}
+          </h1>
+          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+            {recentRepositories.length
+              ? `${recentRepositories.length} ${recentRepositories.length === 1 ? 'repository' : 'repositories'} in your workspace.`
+              : 'Connect a repository to populate your workspace.'}
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <Link
+            href="/repos"
+            className={buttonStyles({ tone: 'primary', size: 'sm' })}
           >
-            <MetricCard
-              label={card.label}
-              value={loading ? '…' : card.value.toLocaleString()}
-              hint={card.hint}
-            />
+            <PlusIcon className="h-4 w-4" />
+            Import repository
+          </Link>
+        </div>
+      </motion.section>
+
+      {/* Metrics */}
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map((metric, index) => (
+          <motion.div key={metric.label} {...staggered(index + 1)}>
+            <Surface tone="default" padding="md" className="h-full">
+              <div className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+                {metric.label}
+              </div>
+              <div className="mt-3 truncate font-display text-3xl tabular-nums text-[var(--foreground)]">
+                {loading ? '—' : metric.value.toLocaleString()}
+              </div>
+              <div className="mt-1 text-xs text-[var(--muted-foreground)]/80">
+                {metric.hint}
+              </div>
+            </Surface>
           </motion.div>
         ))}
       </section>
-      <section className="grid gap-6 xl:grid-cols-[1fr_0.92fr]">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.18 }}
-        >
-          <Surface tone="soft" padding="lg">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <Badge>Recent repositories</Badge>
-                <h3 className="mt-2 font-display text-3xl text-slate-900 dark:text-white">
-                  Latest graph snapshots
-                </h3>
+
+      {/* Activity + Quick actions */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <motion.div {...staggered(5)} className="lg:col-span-2 min-w-0">
+          <Surface tone="default" padding="lg" className="flex h-full flex-col">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="truncate text-base font-medium text-[var(--foreground)]">
+                  Recent activity
+                </h2>
+                <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                  Latest repository updates across your workspace
+                </p>
               </div>
               <Link
                 href="/repos"
-                className={buttonStyles({ tone: 'secondary' })}
+                className="shrink-0 text-xs font-medium text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
               >
-                Manage repos
+                View all
               </Link>
             </div>
-            <div className="mt-5 space-y-3">
-              {recentRepositories.map((repo) => (
-                <Surface key={repo.id} tone="default" padding="md">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <div className="font-medium text-slate-900 dark:text-white">
-                        {repo.name}
+
+            <div className="mt-4 max-h-[420px] flex-1 overflow-y-auto">
+              {recentRepositories.length === 0 && !loading ? (
+                <EmptyState message="No activity yet. Import a repository to get started." />
+              ) : (
+                <ul className="space-y-2">
+                  {recentRepositories.slice(0, 8).map((repo) => (
+                    <li
+                      key={repo.id}
+                      className="flex items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 transition hover:border-[var(--border-strong)]"
+                    >
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_oklab,var(--primary)_14%,transparent)] text-[var(--primary)]">
+                        <ActivityIcon className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="truncate text-sm font-medium text-[var(--foreground)]">
+                            {repo.name}
+                          </div>
+                          <div className="shrink-0 text-xs tabular-nums text-[var(--muted-foreground)]">
+                            {new Date(repo.updatedAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="truncate text-xs text-[var(--muted-foreground)]">
+                          {repo.branch ? `Branch ${repo.branch}` : 'Snapshot'}
+                          {' · '}
+                          {repo.nodes} nodes
+                        </div>
                       </div>
-                      <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                        {repo.description ||
-                          'No repository description provided.'}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </Surface>
+        </motion.div>
+
+        <motion.div {...staggered(6)} className="min-w-0">
+          <Surface tone="default" padding="lg" className="flex h-full flex-col">
+            <h2 className="text-base font-medium text-[var(--foreground)]">
+              Quick actions
+            </h2>
+            <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+              Jump into common tasks
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <Link
+                    key={action.href}
+                    href={action.href}
+                    className={cn(
+                      'group flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 transition',
+                      'hover:border-[var(--border-strong)] hover:shadow-[0_8px_28px_-18px_color-mix(in_oklab,var(--color-space-indigo-700)_40%,transparent)]',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]',
+                    )}
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[color-mix(in_oklab,var(--primary)_14%,transparent)] text-[var(--primary)] transition group-hover:bg-[var(--primary)] group-hover:text-[var(--primary-foreground)]">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <div className="text-sm font-medium text-[var(--foreground)]">
+                        {action.label}
+                      </div>
+                      <div className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                        {action.description}
                       </div>
                     </div>
-                    <div className="text-right text-sm text-slate-600 dark:text-slate-400">
-                      <div>{repo.nodes} nodes</div>
-                      <div>
-                        {repo.branch
-                          ? `Branch ${repo.branch}`
-                          : 'Single snapshot'}
-                      </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </Surface>
+        </motion.div>
+      </section>
+
+      {/* Recent graphs rail */}
+      <motion.section {...staggered(7)} className="min-w-0">
+        <Surface tone="default" padding="lg">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-base font-medium text-[var(--foreground)]">
+                Recent graphs
+              </h2>
+              <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                Latest snapshots across your repositories
+              </p>
+            </div>
+            <Link
+              href="/graphs"
+              className="shrink-0 text-xs font-medium text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
+            >
+              Browse all
+            </Link>
+          </div>
+
+          {recentRepositories.length === 0 && !loading ? (
+            <div className="mt-4">
+              <EmptyState message="No graphs yet. Import a repository to build your first graph." />
+            </div>
+          ) : (
+            <div
+              className="mt-4 -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2"
+              style={{ scrollbarWidth: 'thin' }}
+            >
+              {recentRepositories.slice(0, 8).map((repo) => (
+                <article
+                  key={repo.id}
+                  className="flex w-64 shrink-0 snap-start flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 transition hover:border-[var(--border-strong)]"
+                >
+                  <div className="flex h-24 items-center justify-center rounded-lg bg-[color-mix(in_oklab,var(--color-dusty-olive-200)_60%,transparent)] text-[var(--color-dusty-olive-700)] dark:bg-[color-mix(in_oklab,var(--color-space-indigo-700)_50%,transparent)] dark:text-[var(--color-dusty-olive-200)]">
+                    <GraphIcon className="h-8 w-8" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-[var(--foreground)]">
+                      {repo.name}
+                    </div>
+                    <div className="truncate text-xs text-[var(--muted-foreground)]">
+                      {repo.branch ? `Branch ${repo.branch}` : 'Snapshot'}
+                      {' · '}
+                      {repo.nodes} nodes
                     </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {repo.techStack.slice(0, 4).map((tag) => (
+                  <div className="flex flex-wrap gap-1">
+                    {repo.techStack.slice(0, 3).map((tag) => (
                       <span
                         key={tag}
-                        className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 dark:border-white/10 dark:text-slate-300"
+                        className="rounded-full border border-[var(--border)] px-2 py-0.5 text-[0.65rem] text-[var(--muted-foreground)]"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
-                </Surface>
+                </article>
               ))}
             </div>
-          </Surface>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.24 }}
+          )}
+        </Surface>
+      </motion.section>
+
+      {/* Footer hint */}
+      <motion.div
+        {...staggered(8)}
+        className="flex flex-col gap-2 rounded-xl border border-dashed border-[var(--border)] px-4 py-3 text-xs text-[var(--muted-foreground)] sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div className="flex items-center gap-2">
+          <SparkleIcon className="h-4 w-4 text-[var(--accent)]" />
+          New to Vector Graph? Read the quickstart to import your first repo.
+        </div>
+        <Link
+          href="/repos"
+          className="font-medium text-[var(--foreground)] underline-offset-4 hover:underline"
         >
-          <Surface tone="elevated" padding="lg">
-            <Badge tone="warm">Operational notes</Badge>
-            <h3 className="mt-2 font-display text-3xl text-slate-900 dark:text-white">
-              What changed
-            </h3>
-            <div className="mt-5 space-y-4 text-sm text-slate-700 dark:text-slate-300">
-              <Surface tone="default" padding="md">
-                Data isolation now happens at the storage boundary, so
-                repositories, graphs, search results, and exports are scoped to
-                the signed-in account.
-              </Surface>
-              <Surface tone="default" padding="md">
-                Each GitHub branch can become its own stored graph, and branch
-                imports can seed from an existing graph to avoid rereading
-                unchanged files.
-              </Surface>
-              <Surface tone="default" padding="md">
-                GitHub sign-in now requests the email scope needed to prefer the
-                user’s verified email over the noreply fallback.
-              </Surface>
-            </div>
-          </Surface>
-        </motion.div>
-      </section>
+          Get started →
+        </Link>
+      </motion.div>
     </div>
   );
 }

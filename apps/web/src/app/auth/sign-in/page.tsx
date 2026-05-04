@@ -7,7 +7,7 @@ export default function SignInRoute() {
     <AuthFrame maxWidth="7xl">
       <Suspense
         fallback={
-          <div className="rounded-[32px] border border-white/10 bg-slate-950/85 p-8 text-slate-400">
+          <div className="rounded-[var(--radius-card)] border border-border bg-surface p-8 text-muted-foreground">
             Loading sign-in…
           </div>
         }

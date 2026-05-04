@@ -1,10 +1,11 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
+    branches:
+      - dev
+    types:
+      - closed
 
 permissions:
   actions: read
@@ -12,11 +13,13 @@ permissions:
 
 jobs:
   main:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
 
       - uses: actions/setup-node@v4
         with:
@@ -26,12 +29,20 @@ jobs:
       - name: Derive affected SHAs
         id: shas
         run: |
-          if [ "${{ github.event_name }}" = 'pull_request' ]; then
-            base="${{ github.event.pull_request.base.sha }}"
-            head="${{ github.event.pull_request.head.sha }}"
+          if [ -n "${{ github.event.pull_request.merge_commit_sha }}" ]; then
+            head="${{ github.event.pull_request.merge_commit_sha }}"
+            if git rev-parse "${head}^" >/dev/null 2>&1; then
+              base="$(git rev-parse "${head}^")"
+            else
+              base="$head"
+            fi
           else
-            base="${{ github.event.before }}"
             head="${{ github.sha }}"
+            if git rev-parse "${head}^" >/dev/null 2>&1; then
+              base="$(git rev-parse "${head}^")"
+            else
+              base="$head"
+            fi
           fi
 
           if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
