@@ -113,6 +113,18 @@ if [ ${#pull_services[@]} -gt 0 ]; then
   compose pull "${pull_services[@]}"
 fi
 
+# Free ports 80/443 before bringing up nginx. This handles cases where an old
+# deployment ran under a different Docker Compose project name (e.g. after a
+# project rename) and its nginx container is still holding the ports.
+for _port in 80 443; do
+  _conflict=$(docker ps -q --filter "publish=${_port}")
+  if [ -n "$_conflict" ]; then
+    echo "Stopping container(s) holding port ${_port}: ${_conflict}"
+    docker stop $_conflict || true
+  fi
+done
+unset _port _conflict
+
 if [ ${#deploy_services[@]} -gt 0 ]; then
   compose up -d --no-deps "${deploy_services[@]}"
 else
