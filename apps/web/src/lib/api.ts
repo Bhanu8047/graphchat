@@ -100,4 +100,68 @@ export const api = {
     deleteMe: () =>
       apiFetch(`${BASE}/users/me`, { method: 'DELETE' }).then(json),
   },
+  trchatKeys: {
+    list: () => apiFetch(`${BASE}/auth/keys`).then(json),
+    create: (body: { label: string; scopes?: string[] }) =>
+      apiFetch(`${BASE}/auth/keys`, {
+        method: 'POST',
+        headers: h,
+        body: JSON.stringify(body),
+      }).then(json),
+    delete: (id: string) =>
+      apiFetch(`${BASE}/auth/keys/${id}`, { method: 'DELETE' }),
+  },
+  credentials: {
+    list: () => apiFetch(`${BASE}/credentials`).then(json),
+    upsert: (body: { provider: string; label: string; apiKey: string }) =>
+      apiFetch(`${BASE}/credentials`, {
+        method: 'PUT',
+        headers: h,
+        body: JSON.stringify(body),
+      }).then(json),
+    delete: (id: string) =>
+      apiFetch(`${BASE}/credentials/${id}`, { method: 'DELETE' }),
+  },
+  modelSettings: {
+    list: () => apiFetch(`${BASE}/model-settings`).then(json),
+    upsert: (body: {
+      service: 'ai-assist' | 'embedding';
+      enabled: boolean;
+      provider?: string;
+      model?: string;
+      useOwnKey?: boolean;
+    }) =>
+      apiFetch(`${BASE}/model-settings`, {
+        method: 'PUT',
+        headers: h,
+        body: JSON.stringify(body),
+      }).then(json),
+  },
+  usage: {
+    me: () => apiFetch(`${BASE}/usage/me`).then(json),
+  },
+  rateLimits: {
+    list: () => apiFetch(`${BASE}/rate-limits`).then(json),
+  },
+  admin: {
+    listUsers: () => apiFetch(`${BASE}/admin/users`).then(json),
+    setRole: (id: string, role: 'user' | 'admin') =>
+      apiFetch(`${BASE}/admin/users/${id}/role`, {
+        method: 'PATCH',
+        headers: h,
+        body: JSON.stringify({ role }),
+      }).then(json),
+    listRateLimits: () => apiFetch(`${BASE}/admin/rate-limits`).then(json),
+    upsertRateLimit: (body: {
+      service: 'ai-assist' | 'embedding';
+      dailyLimit: number;
+      sessionLimit: number;
+    }) =>
+      apiFetch(`${BASE}/admin/rate-limits`, {
+        method: 'PUT',
+        headers: h,
+        body: JSON.stringify(body),
+      }).then(json),
+    listUsage: () => apiFetch(`${BASE}/admin/usage`).then(json),
+  },
 };

@@ -1,47 +1,63 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { suggestContextNode, LLMConfig } from '@vectorgraph/ai';
-import { SuggestDto, LLMProvider } from '@vectorgraph/shared-types';
+import { suggestContextNode } from '@vectorgraph/ai';
+import { SuggestDto } from '@vectorgraph/shared-types';
 import { MongoVectorService } from '@vectorgraph/vector-client';
-import { RuntimeConfigService } from '../runtime/runtime-config.service';
+import { AiResolverService } from '../ai-resolver/ai-resolver.service';
 
 @Injectable()
 export class AiService {
-  private llmCfg: LLMConfig;
+  private readonly logger = new Logger(AiService.name);
   private mongo: MongoVectorService;
+
   constructor(
     cfg: ConfigService,
-    private runtimeConfig: RuntimeConfigService,
+    private readonly resolver: AiResolverService,
   ) {
-    const defaultProvider =
-      this.runtimeConfig.getDefaultLlmProvider() ??
-      cfg.get<LLMProvider>('LLM_PROVIDER', 'gemini');
     this.mongo = new MongoVectorService(cfg.get('MONGODB_URI'));
-    this.llmCfg = {
-      provider: defaultProvider,
-      anthropicApiKey: cfg.get('ANTHROPIC_API_KEY'),
-      claudeModel: cfg.get('CLAUDE_MODEL', 'claude-sonnet-4-20250514'),
-      openaiApiKey: cfg.get('OPENAI_API_KEY'),
-      openaiModel: cfg.get('OPENAI_MODEL', 'gpt-4o-mini'),
-      geminiApiKey: cfg.get('GEMINI_API_KEY'),
-      geminiModel: cfg.get('GEMINI_MODEL', 'gemini-2.0-flash'),
-      ollamaBaseUrl: cfg.get('OLLAMA_BASE_URL', 'http://localhost:11434'),
-      ollamaModel: cfg.get('OLLAMA_MODEL', 'llama3.2'),
-      openrouterApiKey: cfg.get('OPENROUTER_API_KEY'),
-      openrouterModel: cfg.get(
-        'OPENROUTER_MODEL',
-        'meta-llama/llama-3.1-8b-instruct:free',
-      ),
-    };
   }
 
   async suggest(dto: SuggestDto, ownerId: string) {
+    if (!dto?.repoId || !dto?.input?.trim()) {
+      throw new HttpException(
+        'repoId and input are required for AI assist.',
+        400,
+      );
+    }
+    await this.resolver.enforceRateLimit(ownerId, 'ai-assist');
     await this.mongo.connect();
     const repo = await this.mongo.getRepoForOwner(dto.repoId, ownerId);
     if (!repo) {
       throw new NotFoundException(`Repo ${dto.repoId} not found`);
     }
-
-    return suggestContextNode(repo.name, dto.input, this.llmCfg);
+    const cfg = await this.resolver.resolveLlmConfig(ownerId);
+    try {
+      const result = await suggestContextNode(repo.name, dto.input, cfg);
+      void this.resolver.recordUsage(
+        ownerId,
+        'ai-assist',
+        cfg.provider,
+        cfg.model,
+      );
+      return result;
+    } catch (err) {
+      const e = err as Error;
+      this.logger.error(
+        `AI suggest failed (provider=${cfg.provider}, model=${cfg.model}): ${e.message}`,
+        e.stack,
+      );
+      // Re-throw HttpException as-is, otherwise wrap with a useful message
+      // so the client sees the underlying cause instead of a bare 500.
+      if (err instanceof HttpException) throw err;
+      throw new InternalServerErrorException(
+        `AI provider error (${cfg.provider}): ${e.message}`,
+      );
+    }
   }
 }

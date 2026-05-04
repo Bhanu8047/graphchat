@@ -7,12 +7,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisVectorService } from '@vectorgraph/vector-client';
-import { getEmbedding, EmbeddingConfig } from '@vectorgraph/ai';
-import {
-  VectorSearchResult,
-  EmbeddingProvider,
-} from '@vectorgraph/shared-types';
-import { RuntimeConfigService } from '../runtime/runtime-config.service';
+import { getEmbedding } from '@vectorgraph/ai';
+import { VectorSearchResult } from '@vectorgraph/shared-types';
+import { AiResolverService } from '../ai-resolver/ai-resolver.service';
 import { SearchQueryDto } from './dto/search-query.dto';
 import {
   SEARCH_CACHE,
@@ -24,46 +21,25 @@ import {
 export class SearchService implements OnModuleInit {
   private readonly logger = new Logger(SearchService.name);
   private redis: RedisVectorService;
-  private embedCfg: EmbeddingConfig;
 
   constructor(
-    cfg: ConfigService,
-    private runtimeConfig: RuntimeConfigService,
+    _cfg: ConfigService,
+    private readonly resolver: AiResolverService,
   ) {
-    const defaultProvider =
-      this.runtimeConfig.getDefaultEmbeddingProvider() ??
-      cfg.get<EmbeddingProvider>('EMBEDDING_PROVIDER', 'gemini');
     this.redis = new RedisVectorService();
-    this.embedCfg = {
-      provider: defaultProvider,
-      voyageApiKey: cfg.get('VOYAGE_API_KEY'),
-      voyageBaseUrl: cfg.get('VOYAGE_BASE_URL'),
-      voyageModel: cfg.get('VOYAGE_MODEL', 'voyage-code-3') as any,
-      openaiApiKey: cfg.get('OPENAI_API_KEY'),
-      geminiApiKey: cfg.get('GEMINI_API_KEY'),
-      ollamaBaseUrl: cfg.get('OLLAMA_BASE_URL'),
-      ollamaEmbedModel: cfg.get('OLLAMA_EMBED_MODEL'),
-    };
   }
 
   async onModuleInit() {
     await this.redis.connect();
   }
 
-  /**
-   * Run a semantic search.
-   *
-   * Defensive layout (each step isolated so a failure in one does not surface
-   * as an opaque 500):
-   *   1. Cache lookup — never fatal; failures are logged and ignored.
-   *   2. Embedding   — provider outage → 503 ServiceUnavailable.
-   *   3. Vector KNN  — backend error  → 500 with logged stack.
-   *   4. Cache write — fire-and-forget; failures are logged and ignored.
-   */
   async search(
     dto: SearchQueryDto,
     ownerId: string,
   ): Promise<VectorSearchResult[]> {
+    await this.resolver.enforceRateLimit(ownerId, 'embedding');
+    const embedCfg = await this.resolver.resolveEmbeddingConfig(ownerId);
+
     const cacheKey = buildSearchCacheKey({
       ownerId,
       q: dto.q,
@@ -72,7 +48,7 @@ export class SearchService implements OnModuleInit {
       k: dto.k,
       budget: dto.budget,
       minConfidence: dto.minConfidence,
-      provider: this.embedCfg.provider,
+      provider: embedCfg.provider,
     });
     const cacheTags = buildSearchCacheTags({
       ownerId,
@@ -92,7 +68,7 @@ export class SearchService implements OnModuleInit {
     // 2. Embedding
     let embedding: number[];
     try {
-      embedding = await getEmbedding(dto.q, this.embedCfg);
+      embedding = await getEmbedding(dto.q, embedCfg);
     } catch (err) {
       this.logger.error(
         `Embedding failed for query "${dto.q.slice(0, 80)}"`,
@@ -102,6 +78,13 @@ export class SearchService implements OnModuleInit {
         'Embedding provider is currently unavailable. Please try again.',
       );
     }
+
+    void this.resolver.recordUsage(
+      ownerId,
+      'embedding',
+      embedCfg.provider,
+      embedCfg.model,
+    );
 
     // 3. Vector KNN
     let results: VectorSearchResult[];
@@ -140,11 +123,6 @@ export class SearchService implements OnModuleInit {
     return results;
   }
 
-  /**
-   * Invalidate cached search results when underlying data changes.
-   * Callers (node create/update/delete pipelines) should invoke this with the
-   * relevant scope so stale results never surface.
-   */
   async invalidateCache(scope: {
     ownerId?: string;
     repoId?: string;

@@ -29,7 +29,11 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
 
       <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-5">
         {navSections.map((section) => {
-          const items = navItems.filter((item) => item.section === section.id);
+          const items = navItems.filter(
+            (item) =>
+              item.section === section.id &&
+              (!item.adminOnly || user?.role === 'admin'),
+          );
           if (items.length === 0) return null;
           const baseIndex = runningIndex;
           runningIndex += items.length;

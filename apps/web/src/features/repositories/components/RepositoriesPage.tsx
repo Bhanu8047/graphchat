@@ -188,14 +188,6 @@ export function RepositoriesPage() {
     }
   };
 
-  const logoutGithub = async () => {
-    await fetch('/api/auth/github/logout', { method: 'POST' });
-    setGithubSession({
-      authenticated: false,
-      configured: githubSession.configured,
-    });
-  };
-
   const syncRepo = async (id: string) => {
     setError('');
     setSyncingRepoId(id);
@@ -222,18 +214,12 @@ export function RepositoriesPage() {
           title="Bring GitHub repositories into your graph workspace"
           description="Choose a repository, select a branch, and build an owner-scoped graph that can be synced incrementally and reused across search, AI, and export flows."
           actions={
-            githubSession.authenticated ? (
-              <Button tone="secondary" onClick={logoutGithub}>
-                Disconnect GitHub
-              </Button>
-            ) : githubSession.configured ? (
-              <a
-                href="/api/auth/github/login"
-                className={buttonStyles({ tone: 'secondary' })}
-              >
-                Connect GitHub
-              </a>
-            ) : null
+            <a
+              href="/settings/connections"
+              className={buttonStyles({ tone: 'secondary' })}
+            >
+              Manage GitHub connection
+            </a>
           }
         />
       </Surface>
@@ -244,7 +230,7 @@ export function RepositoriesPage() {
         <div className="text-sm leading-6 text-muted-foreground">
           {githubSession.authenticated ? (
             <div>
-              Signed in to GitHub as{' '}
+              Importing as{' '}
               <a
                 href={githubSession.user?.profileUrl}
                 target="_blank"
@@ -255,16 +241,20 @@ export function RepositoriesPage() {
               </a>
               {githubSession.canImportPrivateRepos
                 ? '. Private repositories can be imported without pasting a token.'
-                : '. This login is missing private-repository access. Sign out and sign in again, then approve the repo scope.'}
+                : '. Private-repo scope is missing — manage your connection in Settings → Connections.'}
             </div>
           ) : githubSession.configured ? (
             <div>
-              Sign in with GitHub to import private repositories automatically.
-              Public repositories can still be imported without signing in.
+              Public repositories can be imported anonymously. Sign in to GitHub
+              from{' '}
+              <a href="/settings/connections" className="text-primary">
+                Settings → Connections
+              </a>{' '}
+              to import private repositories.
             </div>
           ) : (
             <div>
-              GitHub login is not configured yet. Set GITHUB_CLIENT_ID and
+              GitHub login is not configured. Set GITHUB_CLIENT_ID and
               GITHUB_CLIENT_SECRET in the web environment to enable OAuth
               sign-in.
             </div>

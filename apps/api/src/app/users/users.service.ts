@@ -35,6 +35,7 @@ export class UsersService {
       name,
       authProvider,
       themePreference: user.themePreference ?? 'system',
+      role: user.role ?? 'user',
       githubId,
       githubLogin,
       avatarUrl,

@@ -9,7 +9,7 @@ export async function claudeSuggest(
 ): Promise<SuggestResult> {
   const client = new Anthropic({ apiKey: cfg.anthropicApiKey });
   const msg = await client.messages.create({
-    model: cfg.claudeModel ?? 'claude-sonnet-4-20250514',
+    model: cfg.claudeModel ?? 'claude-sonnet-4-5-20250929',
     max_tokens: 1024,
     messages: [{ role: 'user', content: buildPrompt(repoName, input) }],
   });
