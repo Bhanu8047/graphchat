@@ -4,96 +4,80 @@ import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { Button } from '../atoms/Button';
-import { Badge } from '../atoms/Badge';
-import { Surface } from '../atoms/Surface';
+import { CloseIcon } from '../atoms/Icon';
 import { AppHeader } from '../organisms/AppHeader';
 import { AppSidebar } from '../organisms/AppSidebar';
-import { NavCard } from '../molecules/NavCard';
-import { navItems } from '../../features/navigation/config/nav-items';
-import { useAuth } from '../../features/auth/providers/AuthProvider';
+import { drawerSpring } from '../../lib/motion-presets';
 
 export function AppFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     setMobileNavOpen(false);
   }, [pathname]);
 
-  const currentItem =
-    navItems.find((item) => item.href === pathname) ?? navItems[0];
-  const quickItems = navItems.slice(0, 5);
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [mobileNavOpen]);
 
   return (
-    <div className="min-h-screen text-[var(--foreground)]">
-      <div className="mx-auto flex min-h-screen max-w-[1600px] gap-4 px-3 py-3 sm:px-4 lg:gap-6 lg:px-6 lg:py-4">
-        <aside className="hidden w-80 shrink-0 lg:block">
-          <div className="sticky top-4 h-[calc(100vh-2rem)]">
-            <AppSidebar currentPath={pathname} />
+    <div className="flex h-screen w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
+      <aside className="hidden w-64 shrink-0 border-r border-[var(--border)] lg:block">
+        <AppSidebar />
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <AppHeader onOpenMenu={() => setMobileNavOpen(true)} />
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+            {children}
           </div>
-        </aside>
-        <div className="flex min-w-0 flex-1 flex-col gap-4">
-          <div className="sticky top-3 z-30">
-            <AppHeader
-              currentItem={currentItem}
-              quickItems={quickItems}
-              currentPath={pathname}
-              onOpenMenu={() => setMobileNavOpen(true)}
-            />
-          </div>
-          <main className="min-h-[calc(100vh-10rem)]">{children}</main>
-        </div>
+        </main>
       </div>
+
       <AnimatePresence>
         {mobileNavOpen ? (
           <motion.div
-            className="fixed inset-0 z-50 lg:hidden"
+            className="fixed inset-0 z-50 flex lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
           >
             <motion.button
-              className="absolute inset-0 bg-[color-mix(in_oklab,var(--color-space-indigo-950)_60%,transparent)] backdrop-blur-sm"
+              type="button"
               aria-label="Close navigation"
               onClick={() => setMobileNavOpen(false)}
+              className="absolute inset-0 bg-[color-mix(in_oklab,var(--color-space-indigo-950)_60%,transparent)] backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             />
-            <motion.aside
-              className="absolute inset-y-3 right-3 w-[min(88vw,360px)] overflow-y-auto"
-              initial={{ x: 28, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 28, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+            <motion.div
+              className="relative ml-0 flex h-full w-[min(82vw,300px)] flex-col bg-[var(--surface-muted)] shadow-2xl"
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={drawerSpring}
             >
-              <Surface tone="elevated" padding="lg" className="h-full">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <Badge tone="accent">Navigation</Badge>
-                    <div className="mt-3 font-display text-2xl text-[var(--foreground)]">
-                      {user?.name?.split(' ')[0] ?? 'Workspace'}
-                    </div>
-                    <div className="mt-1 text-sm text-[var(--muted-foreground)]">
-                      {user?.email}
-                    </div>
-                  </div>
-                  <Button tone="ghost" onClick={() => setMobileNavOpen(false)}>
-                    Close
-                  </Button>
-                </div>
-                <nav className="mt-6 space-y-2">
-                  {navItems.map((item) => (
-                    <NavCard
-                      key={item.href}
-                      item={item}
-                      active={pathname === item.href}
-                    />
-                  ))}
-                </nav>
-              </Surface>
-            </motion.aside>
+              <div className="absolute right-3 top-3 z-10">
+                <Button
+                  tone="ghost"
+                  size="sm"
+                  onClick={() => setMobileNavOpen(false)}
+                  aria-label="Close navigation"
+                >
+                  <CloseIcon className="h-4 w-4" />
+                </Button>
+              </div>
+              <AppSidebar onNavigate={() => setMobileNavOpen(false)} />
+            </motion.div>
           </motion.div>
         ) : null}
       </AnimatePresence>

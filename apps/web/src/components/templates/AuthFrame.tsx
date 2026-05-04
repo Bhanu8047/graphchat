@@ -13,7 +13,7 @@ const widthMap: Record<NonNullable<AuthFrameProps['maxWidth']>, string> = {
 
 export function AuthFrame({ children, maxWidth = '7xl' }: AuthFrameProps) {
   return (
-    <div className="min-h-screen px-4 py-6 text-[var(--foreground)] sm:py-8 lg:px-8">
+    <div className="px-4 py-10 text-[var(--foreground)] sm:py-14 lg:px-8 lg:py-20">
       <div className={cn('mx-auto', widthMap[maxWidth])}>{children}</div>
     </div>
   );
