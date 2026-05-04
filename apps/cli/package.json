@@ -1,0 +1,42 @@
+{
+  "name": "@vectorgraph/cli",
+  "version": "0.0.1",
+  "private": true,
+  "description": "TRCHAT CLI — Repository context graph for AI agents",
+  "bin": {
+    "gph": "./main.js"
+  },
+  "main": "main.js",
+  "keywords": [
+    "trchat",
+    "gph",
+    "cli",
+    "knowledge-graph",
+    "ai-agents",
+    "vector-search"
+  ],
+  "license": "MIT",
+  "nx": {
+    "name": "cli",
+    "tags": ["scope:cli", "type:app"],
+    "targets": {
+      "build": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "tsc -p tsconfig.app.json",
+          "cwd": "apps/cli"
+        },
+        "outputs": ["{projectRoot}/dist"]
+      }
+    }
+  },
+  "dependencies": {
+    "axios": "^1.13.5",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.2",
+    "conf": "^15.1.0",
+    "inquirer": "^13.4.2",
+    "open": "^10.2.0",
+    "ora": "^9.4.0"
+  }
+}
