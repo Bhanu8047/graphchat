@@ -14,10 +14,21 @@ export class ApiAccessTokenService {
   private readonly expiresIn: string;
 
   constructor(config: ConfigService) {
-    this.secret =
+    const configured =
       config.get<string>('API_JWT_SECRET') ??
-      config.get<string>('AUTH_SESSION_SECRET') ??
-      'vectorgraph-dev-api-secret';
+      config.get<string>('AUTH_SESSION_SECRET');
+    if (!configured) {
+      const env =
+        config.get<string>('NODE_ENV') ?? process.env.NODE_ENV ?? 'development';
+      if (env === 'production') {
+        throw new Error(
+          'API_JWT_SECRET (or AUTH_SESSION_SECRET) must be set in production.',
+        );
+      }
+      this.secret = 'vectorgraph-dev-api-secret';
+    } else {
+      this.secret = configured;
+    }
     this.expiresIn = config.get<string>('API_JWT_EXPIRES_IN') ?? '15m';
   }
 

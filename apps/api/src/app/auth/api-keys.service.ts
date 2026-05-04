@@ -21,6 +21,21 @@ const KEY_ID_BYTES = 12; // 24 hex chars
 const KEY_SECRET_BYTES = 24; // 48 hex chars
 const REFRESH_BYTES = 32; // opaque token, 64 hex chars
 const KEY_REGEX = /^sk-trchat-([a-f0-9]{24})\.([a-f0-9]{48})$/;
+// Generic message used for every auth failure so callers cannot distinguish
+// between a malformed key, an unknown keyId, or a wrong secret.
+const INVALID_KEY_MESSAGE = 'Invalid API key.';
+// Pre-computed hash of an unrelated random secret. Used as a constant-time
+// dummy verification target when the keyId is unknown so that the attacker
+// cannot enumerate valid keyIds via response timing.
+const DUMMY_SECRET_HASH = (() => {
+  const salt = randomBytes(16).toString('hex');
+  const derived = scryptSync(
+    randomBytes(KEY_SECRET_BYTES).toString('hex'),
+    salt,
+    64,
+  ).toString('hex');
+  return `${salt}:${derived}`;
+})();
 
 interface CreateKeyResult {
   apiKey: ApiKey;
@@ -79,19 +94,29 @@ export class ApiKeysService {
 
   /**
    * Exchange a raw `sk-trchat-...` API key for an access + refresh token pair.
+   *
+   * Uses a single generic error message for every failure mode (bad format,
+   * unknown keyId, wrong secret) and always performs a hash verification so
+   * that the response time does not leak which branch was taken.
    */
   async exchange(rawKey: string): Promise<ApiTokenResponse> {
     const match = KEY_REGEX.exec(rawKey);
     if (!match) {
-      throw new UnauthorizedException('Invalid API key format.');
+      // Still burn time on a dummy verification so total request duration
+      // matches the path taken when the regex matches but the key is wrong.
+      this.verifySecret('invalid', DUMMY_SECRET_HASH);
+      throw new UnauthorizedException(INVALID_KEY_MESSAGE);
     }
     const [, keyId, secret] = match;
     const stored = await this.keys.findByKeyId(keyId);
     if (!stored) {
-      throw new UnauthorizedException('Invalid API key.');
+      // Verify against a dummy hash so unknown-keyId timing matches
+      // wrong-secret timing.
+      this.verifySecret(secret, DUMMY_SECRET_HASH);
+      throw new UnauthorizedException(INVALID_KEY_MESSAGE);
     }
     if (!this.verifySecret(secret, stored.secretHash)) {
-      throw new UnauthorizedException('Invalid API key.');
+      throw new UnauthorizedException(INVALID_KEY_MESSAGE);
     }
     await this.keys.touch(stored.id);
     return this.issueTokenPair(stored);

@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import chalk from 'chalk';
 import { config } from './config.js';
 import {
@@ -11,7 +11,8 @@ import {
 /**
  * Build an axios client pointed at the configured server. Adds a response
  * interceptor that silently refreshes the access token on 401, retrying
- * the original request once.
+ * the original request once. Concurrent 401s share a single in-flight
+ * refresh promise to avoid stampeding the refresh endpoint.
  */
 export function createClient(requireAuth = true): AxiosInstance {
   const creds = loadCredentials();
@@ -30,11 +31,37 @@ export function createClient(requireAuth = true): AxiosInstance {
     timeout: 30_000,
   });
 
+  let inflightRefresh: Promise<string> | null = null;
+
+  const refreshOnce = (): Promise<string> => {
+    if (inflightRefresh) return inflightRefresh;
+    if (!creds) return Promise.reject(new Error('Not logged in'));
+    inflightRefresh = axios
+      .post<{ access_token: string; expires_in: number }>(
+        `${server}/api/auth/refresh`,
+        { refresh_token: creds.refresh_token },
+      )
+      .then(({ data }) => {
+        const updated: Credentials = {
+          ...creds,
+          access_token: data.access_token,
+          expires_in: data.expires_in ?? creds.expires_in,
+          savedAt: Date.now(),
+        };
+        saveCredentials(updated);
+        return updated.access_token;
+      })
+      .finally(() => {
+        inflightRefresh = null;
+      });
+    return inflightRefresh;
+  };
+
   client.interceptors.response.use(
     (res) => res,
     async (error: AxiosError) => {
       const original = error.config as
-        | (typeof error.config & { _retried?: boolean })
+        | (AxiosRequestConfig & { _retried?: boolean })
         | undefined;
       if (
         error.response?.status === 401 &&
@@ -44,22 +71,10 @@ export function createClient(requireAuth = true): AxiosInstance {
       ) {
         original._retried = true;
         try {
-          const { data } = await axios.post<{
-            access_token: string;
-            expires_in: number;
-          }>(`${server}/api/auth/refresh`, {
-            refresh_token: creds.refresh_token,
-          });
-          const updated: Credentials = {
-            ...creds,
-            access_token: data.access_token,
-            expires_in: data.expires_in ?? creds.expires_in,
-            savedAt: Date.now(),
-          };
-          saveCredentials(updated);
+          const newToken = await refreshOnce();
           original.headers = original.headers ?? {};
           (original.headers as Record<string, string>).Authorization =
-            `Bearer ${updated.access_token}`;
+            `Bearer ${newToken}`;
           return client.request(original);
         } catch {
           deleteCredentials();
