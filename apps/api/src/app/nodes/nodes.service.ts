@@ -55,6 +55,7 @@ export class NodesService implements OnModuleInit {
       id: uuid(),
       ownerId,
       updatedAt: new Date().toISOString(),
+      confidence: dto.confidence ?? 'INFERRED',
       ...dto,
     };
     const text = `${node.label} ${node.content} ${node.tags.join(' ')}`;

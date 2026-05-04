@@ -1,5 +1,7 @@
 import { MongoClient, Collection, Document } from 'mongodb';
 import {
+  Community,
+  ContextEdge,
   ContextNode,
   GraphEdge,
   GraphNode,
@@ -14,6 +16,8 @@ export class MongoVectorService {
   private nodeCol!: Collection<NodeDoc>;
   private graphNodeCol!: Collection<GraphNode>;
   private edgeCol!: Collection<GraphEdge>;
+  private contextEdgeCol!: Collection<ContextEdge>;
+  private communityCol!: Collection<Community>;
 
   constructor(uri?: string) {
     this.client = new MongoClient(uri ?? process.env.MONGODB_URI!);
@@ -26,6 +30,8 @@ export class MongoVectorService {
     this.nodeCol = db.collection<NodeDoc>('context_nodes');
     this.graphNodeCol = db.collection<GraphNode>('graph_nodes');
     this.edgeCol = db.collection<GraphEdge>('graph_edges');
+    this.contextEdgeCol = db.collection<ContextEdge>('context_edges');
+    this.communityCol = db.collection<Community>('communities');
     await this.repoCol.createIndex({ ownerId: 1 });
     await this.repoCol.createIndex({
       ownerId: 1,
@@ -47,6 +53,12 @@ export class MongoVectorService {
     await this.edgeCol.createIndex({ ownerId: 1 });
     await this.edgeCol.createIndex({ repoId: 1 });
     await this.edgeCol.createIndex({ repoId: 1, sourceId: 1 });
+    // Priority 2 — context_edges + communities indexes for the graph sidecar
+    await this.contextEdgeCol.createIndex({ repoId: 1 });
+    await this.contextEdgeCol.createIndex({ sourceId: 1 });
+    await this.contextEdgeCol.createIndex({ targetId: 1 });
+    await this.communityCol.createIndex({ repoId: 1 });
+    await this.communityCol.createIndex({ godNodeId: 1 });
   }
 
   async saveRepo(repo: Repository): Promise<void> {
