@@ -70,14 +70,14 @@ export function AccountSettingsPanel() {
       <form onSubmit={save}>
         <Surface tone="soft" padding="lg">
           <Badge>Profile</Badge>
-          <h2 className="mt-2 font-display text-3xl text-slate-900 dark:text-white">
+          <h2 className="mt-2 font-display text-3xl text-foreground">
             Account settings
           </h2>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-2 text-sm text-muted-foreground">
             Update your identity, email, or password. GitHub-connected accounts
             can still update name and email here.
           </p>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-muted-foreground">
             Theme preference now persists at the account level and syncs when
             you change it from the app shell.
           </p>
@@ -141,10 +141,10 @@ export function AccountSettingsPanel() {
       </form>
       <Surface tone="danger" padding="lg">
         <Badge tone="warm">Danger zone</Badge>
-        <h2 className="mt-2 font-display text-3xl text-slate-900 dark:text-white">
+        <h2 className="mt-2 font-display text-3xl text-foreground">
           Delete account
         </h2>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+        <p className="mt-2 text-sm text-muted-foreground">
           This removes your user record and signs you out. Repository and graph
           ownership cleanup is not implemented yet, so existing graph data
           remains in storage.

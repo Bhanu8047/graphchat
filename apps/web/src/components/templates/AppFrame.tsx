@@ -26,7 +26,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
   const quickItems = navItems.slice(0, 5);
 
   return (
-    <div className="min-h-screen text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen text-[var(--foreground)]">
       <div className="mx-auto flex min-h-screen max-w-[1600px] gap-4 px-3 py-3 sm:px-4 lg:gap-6 lg:px-6 lg:py-4">
         <aside className="hidden w-80 shrink-0 lg:block">
           <div className="sticky top-4 h-[calc(100vh-2rem)]">
@@ -54,7 +54,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
             exit={{ opacity: 0 }}
           >
             <motion.button
-              className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
+              className="absolute inset-0 bg-[color-mix(in_oklab,var(--color-space-indigo-950)_60%,transparent)] backdrop-blur-sm"
               aria-label="Close navigation"
               onClick={() => setMobileNavOpen(false)}
               initial={{ opacity: 0 }}
@@ -72,10 +72,10 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <Badge tone="accent">Navigation</Badge>
-                    <div className="mt-3 font-display text-2xl text-slate-900 dark:text-white">
+                    <div className="mt-3 font-display text-2xl text-[var(--foreground)]">
                       {user?.name?.split(' ')[0] ?? 'Workspace'}
                     </div>
-                    <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                    <div className="mt-1 text-sm text-[var(--muted-foreground)]">
                       {user?.email}
                     </div>
                   </div>

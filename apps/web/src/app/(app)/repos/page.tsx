@@ -4,7 +4,9 @@ import { RepositoriesPage } from '../../../features/repositories/components/Repo
 export default function RepositoriesRoute() {
   return (
     <Suspense
-      fallback={<div className="p-6 text-slate-400">Loading repositories…</div>}
+      fallback={
+        <div className="p-6 text-muted-foreground">Loading repositories…</div>
+      }
     >
       <RepositoriesPage />
     </Suspense>

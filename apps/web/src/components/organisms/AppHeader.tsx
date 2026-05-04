@@ -2,7 +2,7 @@
 
 import { Button } from '../atoms/Button';
 import { Badge } from '../atoms/Badge';
-import { Surface } from '../atoms/Surface';
+import { MenuIcon } from '../atoms/Icon';
 import { NavCard } from '../molecules/NavCard';
 import { ThemeToggle } from '../molecules/ThemeToggle';
 import type { NavigationItem } from '../../features/navigation/config/nav-items';
@@ -21,23 +21,28 @@ export function AppHeader({
   onOpenMenu,
 }: AppHeaderProps) {
   return (
-    <Surface tone="elevated" padding="lg">
+    <header className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]/85 px-5 py-4 backdrop-blur-xl">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Badge>Workspace</Badge>
-          <h1 className="mt-3 font-display text-2xl text-slate-900 dark:text-white sm:text-3xl">
+          <Badge tone="primary">Workspace</Badge>
+          <h1 className="mt-3 font-display text-2xl font-medium tracking-tight text-[var(--foreground)] sm:text-3xl">
             {currentItem.label}
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted-foreground)]">
             {currentItem.description}
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="hidden xl:block">
-            <ThemeToggle />
-          </div>
-          <Button tone="secondary" className="lg:hidden" onClick={onOpenMenu}>
-            Menu
+          <ThemeToggle />
+          <Button
+            tone="secondary"
+            size="sm"
+            className="lg:hidden"
+            onClick={onOpenMenu}
+            aria-label="Open navigation menu"
+          >
+            <MenuIcon className="h-4 w-4" />
+            <span>Menu</span>
           </Button>
         </div>
       </div>
@@ -51,6 +56,6 @@ export function AppHeader({
           />
         ))}
       </div>
-    </Surface>
+    </header>
   );
 }

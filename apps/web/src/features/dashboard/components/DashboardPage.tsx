@@ -58,10 +58,10 @@ export function DashboardPage() {
         >
           <Surface tone="hero" padding="xl">
             <Badge tone="accent">Command center</Badge>
-            <h2 className="mt-4 font-display text-4xl leading-[1.02] text-slate-900 dark:text-white sm:text-5xl">
+            <h2 className="mt-4 font-display text-4xl leading-[1.02] text-foreground sm:text-5xl">
               Hello, {user?.name?.split(' ')[0] ?? 'there'}
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-700 dark:text-slate-200/90">
+            <p className="mt-4 max-w-2xl text-base leading-7 text-foreground">
               Your account now owns its own repositories, graph snapshots, and
               semantic search index. Import a branch once, sync incrementally,
               and reuse the graph everywhere from the dashboard to agent
@@ -90,13 +90,11 @@ export function DashboardPage() {
             <div className="mt-4 space-y-3">
               {recentRepositories.slice(0, 3).map((repo) => (
                 <Surface key={repo.id} tone="default" padding="md">
-                  <div className="font-medium text-slate-900 dark:text-white">
-                    {repo.name}
-                  </div>
-                  <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  <div className="font-medium text-foreground">{repo.name}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">
                     {repo.branch ? `Branch ${repo.branch}` : 'Graph snapshot'}
                   </div>
-                  <div className="mt-2 text-xs text-slate-500">
+                  <div className="mt-2 text-xs text-muted-foreground">
                     {new Date(repo.updatedAt).toLocaleString()}
                   </div>
                 </Surface>
@@ -134,7 +132,7 @@ export function DashboardPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <Badge>Recent repositories</Badge>
-                <h3 className="mt-2 font-display text-3xl text-slate-900 dark:text-white">
+                <h3 className="mt-2 font-display text-3xl text-foreground">
                   Latest graph snapshots
                 </h3>
               </div>
@@ -150,15 +148,15 @@ export function DashboardPage() {
                 <Surface key={repo.id} tone="default" padding="md">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <div className="font-medium text-slate-900 dark:text-white">
+                      <div className="font-medium text-foreground">
                         {repo.name}
                       </div>
-                      <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      <div className="mt-1 text-sm text-muted-foreground">
                         {repo.description ||
                           'No repository description provided.'}
                       </div>
                     </div>
-                    <div className="text-right text-sm text-slate-600 dark:text-slate-400">
+                    <div className="text-right text-sm text-muted-foreground">
                       <div>{repo.nodes} nodes</div>
                       <div>
                         {repo.branch
@@ -171,7 +169,7 @@ export function DashboardPage() {
                     {repo.techStack.slice(0, 4).map((tag) => (
                       <span
                         key={tag}
-                        className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 dark:border-white/10 dark:text-slate-300"
+                        className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground"
                       >
                         {tag}
                       </span>
@@ -189,10 +187,10 @@ export function DashboardPage() {
         >
           <Surface tone="elevated" padding="lg">
             <Badge tone="warm">Operational notes</Badge>
-            <h3 className="mt-2 font-display text-3xl text-slate-900 dark:text-white">
+            <h3 className="mt-2 font-display text-3xl text-foreground">
               What changed
             </h3>
-            <div className="mt-5 space-y-4 text-sm text-slate-700 dark:text-slate-300">
+            <div className="mt-5 space-y-4 text-sm text-muted-foreground">
               <Surface tone="default" padding="md">
                 Data isolation now happens at the storage boundary, so
                 repositories, graphs, search results, and exports are scoped to

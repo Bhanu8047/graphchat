@@ -24,24 +24,20 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
   };
 
   return (
-    <Surface
-      tone="elevated"
-      padding="lg"
-      className="flex h-full flex-col justify-between"
-    >
+    <aside className="flex h-full flex-col justify-between rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-5">
       <div>
         <Surface tone="hero" padding="lg">
-          <BrandLogo href="/dashboard" priority />
-          <div className="mt-4 font-display text-3xl leading-tight text-slate-900 dark:text-white">
+          <BrandLogo href="/dashboard" priority className="text-white" />
+          <div className="mt-4 font-display text-2xl leading-tight text-white">
             Repository graphs for persistent AI context
           </div>
-          <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
+          <p className="mt-3 text-sm leading-6 text-white/80">
             Store multiple branch graphs, sync them incrementally, and let
             agents query structural context instead of rereading whole
             repositories.
           </p>
         </Surface>
-        <nav className="mt-6 space-y-2">
+        <nav className="mt-6 space-y-1.5">
           {navItems.map((item) => (
             <NavCard
               key={item.href}
@@ -52,15 +48,15 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
         </nav>
       </div>
       <div className="space-y-4">
-        <ThemeToggle />
-        <Surface tone="soft" padding="md">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        <ThemeToggle variant="labeled" />
+        <Surface tone="default" padding="md">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
             Signed in
           </div>
-          <div className="mt-3 font-medium text-slate-900 dark:text-white">
+          <div className="mt-3 font-medium text-[var(--foreground)]">
             {user?.name ?? 'Unknown user'}
           </div>
-          <div className="text-sm text-slate-600 dark:text-slate-400">
+          <div className="text-sm text-[var(--muted-foreground)]">
             {user?.email}
           </div>
           <Button tone="secondary" fullWidth className="mt-4" onClick={signOut}>
@@ -68,6 +64,6 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
           </Button>
         </Surface>
       </div>
-    </Surface>
+    </aside>
   );
 }

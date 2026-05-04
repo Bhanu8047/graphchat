@@ -82,7 +82,7 @@ export function ExportPage() {
             title="Agent-ready JSON"
             description="This export can be persisted or passed directly to clients and agents that need graph context."
           />
-          <pre className="mt-5 max-h-[70vh] overflow-auto rounded-[22px] border border-slate-200 bg-white/70 p-4 text-xs text-slate-700 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200">
+          <pre className="mt-5 max-h-[70vh] overflow-auto rounded-[22px] border border-border bg-surface p-4 text-xs text-muted-foreground">
             {JSON.stringify(payload, null, 2)}
           </pre>
         </Surface>

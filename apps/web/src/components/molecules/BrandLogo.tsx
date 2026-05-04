@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { cn } from '../../lib/ui';
 
 type BrandLogoProps = {
   href?: string;
@@ -15,12 +16,10 @@ export function BrandLogo({
   return (
     <Link
       href={href}
-      className={[
-        'inline-flex items-center gap-3 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950',
+      className={cn(
+        'inline-flex items-center gap-3 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]',
         className,
-      ]
-        .filter(Boolean)
-        .join(' ')}
+      )}
       aria-label="trchat home"
     >
       <Image
