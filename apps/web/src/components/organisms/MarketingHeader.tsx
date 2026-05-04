@@ -13,7 +13,8 @@ const navLinks = [
   { href: '#features', label: 'Features' },
   { href: '#how-it-works', label: 'How it works' },
   { href: '#showcase', label: 'Visualization' },
-  { href: '/auth/sign-in', label: 'Docs' },
+  // TODO: replace with a real `/docs` route once the docs site exists.
+  { href: '#features', label: 'Docs' },
 ] as const;
 
 /**

@@ -34,7 +34,7 @@ export function NavCard({ item, active, compact = false }: NavCardProps) {
             'mt-1 text-xs',
             active
               ? 'text-[color-mix(in_oklab,var(--foreground)_70%,transparent)]'
-              : 'text-[var(--muted-foreground)]/80',
+              : 'text-[color-mix(in_oklab,var(--muted-foreground)_80%,transparent)]',
           )}
         >
           {item.description}
