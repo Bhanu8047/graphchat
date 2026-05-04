@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   OnModuleInit,
   BadRequestException,
   InternalServerErrorException,
@@ -28,6 +29,7 @@ import {
 } from '@vectorgraph/shared-types';
 import { v4 as uuid } from 'uuid';
 import { RuntimeConfigService } from '../runtime/runtime-config.service';
+import { GraphBridgeService } from '../graph/graph-bridge.service';
 
 type GithubApiRepo = {
   full_name: string;
@@ -160,6 +162,7 @@ const OVERVIEW_SOURCE_PATH = '__repo_overview__';
 
 @Injectable()
 export class ReposService implements OnModuleInit {
+  private readonly logger = new Logger(ReposService.name);
   private mongo: MongoVectorService;
   private redis: RedisVectorService;
   private embedCfg: EmbeddingConfig;
@@ -167,6 +170,7 @@ export class ReposService implements OnModuleInit {
   constructor(
     private cfg: ConfigService,
     private runtimeConfig: RuntimeConfigService,
+    private graphBridge: GraphBridgeService,
   ) {
     const defaultProvider =
       this.runtimeConfig.getDefaultEmbeddingProvider() ??
@@ -210,6 +214,20 @@ export class ReposService implements OnModuleInit {
       ...dto,
     };
     await this.mongo.saveRepo(repo);
+
+    // Fire-and-forget AST graph analysis when a local path is supplied.
+    // Repos without `repoPath` skip this — users can trigger manually via
+    // `POST /api/graph/analyze`.
+    if (dto.repoPath) {
+      void this.graphBridge
+        .analyzeRepo({ repoId: repo.id, repoPath: dto.repoPath })
+        .catch((err) => {
+          this.logger.warn(
+            `Graph analysis failed for ${repo.id}: ${(err as Error).message}`,
+          );
+        });
+    }
+
     return repo;
   }
 
@@ -834,7 +852,7 @@ export class ReposService implements OnModuleInit {
     source: GithubRepoSource,
     files: SelectedGithubFile[],
   ): IngestCandidate {
-    const typeCounts = files.reduce<Record<NodeType, number>>(
+    const typeCounts = files.reduce<Partial<Record<NodeType, number>>>(
       (counts, file) => {
         const type = this.inferNodeType(file.path);
         counts[type] = (counts[type] ?? 0) + 1;
@@ -853,7 +871,7 @@ export class ReposService implements OnModuleInit {
       `Graph branch: ${source.branch}`,
       `Default branch: ${source.defaultBranch}`,
       `Detected stack: ${[githubRepo.language, ...(githubRepo.topics ?? [])].filter(Boolean).join(', ') || 'unknown'}`,
-      `Node counts: module=${typeCounts.module}, api=${typeCounts.api}, schema=${typeCounts.schema}, entry=${typeCounts.entry}, config=${typeCounts.config}, note=${typeCounts.note}`,
+      `Node counts: module=${typeCounts.module ?? 0}, api=${typeCounts.api ?? 0}, schema=${typeCounts.schema ?? 0}, entry=${typeCounts.entry ?? 0}, config=${typeCounts.config ?? 0}, note=${typeCounts.note ?? 0}`,
       'Priority files:',
       topPaths,
     ]

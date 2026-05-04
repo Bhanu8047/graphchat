@@ -48,6 +48,8 @@ export class SearchService implements OnModuleInit {
       repoId: dto.repoId,
       type: dto.type,
       k: dto.k ?? 10,
+      budget: dto.budget,
+      minConfidence: dto.minConfidence,
     });
     return results.map((r) => ({
       node: r.node,

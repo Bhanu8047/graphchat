@@ -1,5 +1,9 @@
 import { createClient, SchemaFieldTypes, VectorAlgorithms } from 'redis';
-import { ContextNode, VECTOR_DIMENSION } from '@vectorgraph/shared-types';
+import {
+  ContextNode,
+  EdgeConfidence,
+  VECTOR_DIMENSION,
+} from '@vectorgraph/shared-types';
 
 export class RedisVectorService {
   private client = createClient({
@@ -19,6 +23,7 @@ export class RedisVectorService {
           '$.ownerId': { type: SchemaFieldTypes.TAG, AS: 'ownerId' },
           '$.repoId': { type: SchemaFieldTypes.TAG, AS: 'repoId' },
           '$.type': { type: SchemaFieldTypes.TAG, AS: 'type' },
+          '$.confidence': { type: SchemaFieldTypes.TAG, AS: 'confidence' },
           '$.label': { type: SchemaFieldTypes.TEXT, AS: 'label' },
           '$.content': { type: SchemaFieldTypes.TEXT, AS: 'content' },
           '$.tags.*': { type: SchemaFieldTypes.TAG, AS: 'tags' },
@@ -35,6 +40,8 @@ export class RedisVectorService {
       );
     } catch (e: any) {
       if (!e.message.includes('Index already exists')) throw e;
+      // If the index exists without the `confidence` field, drop and recreate
+      // by running once: `await this.client.ft.dropIndex('idx:context')`.
     }
   }
 
@@ -59,12 +66,29 @@ export class RedisVectorService {
 
   async search(
     queryEmbedding: number[],
-    options: { ownerId: string; repoId?: string; type?: string; k?: number },
+    options: {
+      ownerId: string;
+      repoId?: string;
+      type?: string;
+      k?: number;
+      // Priority 1 — token minimization
+      budget?: number;
+      minConfidence?: EdgeConfidence;
+    },
   ): Promise<Array<{ node: ContextNode; score: number }>> {
-    const { ownerId, repoId, type, k = 10 } = options;
+    const { ownerId, repoId, type, k = 10, budget, minConfidence } = options;
     const filters: string[] = [`@ownerId:{${ownerId}}`];
     if (repoId) filters.push(`@repoId:{${repoId}}`);
     if (type) filters.push(`@type:{${type}}`);
+
+    // Confidence filter — EXTRACTED is the strictest, INFERRED widens to both,
+    // SPECULATIVE (or undefined) imposes no filter.
+    if (minConfidence === 'EXTRACTED') {
+      filters.push('@confidence:{EXTRACTED}');
+    } else if (minConfidence === 'INFERRED') {
+      filters.push('@confidence:{EXTRACTED|INFERRED}');
+    }
+
     const filter = filters.length ? filters.join(' ') : '*';
     const blob = Buffer.from(new Float32Array(queryEmbedding).buffer);
     const res = await this.client.ft.search(
@@ -72,9 +96,21 @@ export class RedisVectorService {
       `(${filter})=>[KNN ${k} @embedding $BLOB AS __score]`,
       { PARAMS: { BLOB: blob }, DIALECT: 2, RETURN: ['$', '__score'] },
     );
-    return res.documents.map((doc) => ({
+    let results = res.documents.map((doc) => ({
       node: JSON.parse(doc.value['$'] as string) as ContextNode,
       score: 1 - parseFloat(doc.value['__score'] as string),
     }));
+
+    // Budget trimming — stop once the rough char budget (≈4 chars/token) is hit.
+    if (budget) {
+      const budgetChars = budget * 4;
+      let charCount = 0;
+      results = results.filter((r) => {
+        charCount += r.node.content.length + r.node.label.length;
+        return charCount <= budgetChars;
+      });
+    }
+
+    return results;
   }
 }

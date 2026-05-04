@@ -8,6 +8,7 @@ import { AiModule } from './ai/ai.module';
 import { ExportModule } from './export/export.module';
 import { RuntimeConfigModule } from './runtime/runtime-config.module';
 import { GraphModule } from './graph/graph.module';
+import { GraphSidecarModule } from './graph/graph-sidecar.module';
 import { DatabaseModule } from './common/database/database.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
@@ -31,6 +32,7 @@ import { HealthModule } from './health/health.module';
     AiModule,
     ExportModule,
     GraphModule,
+    GraphSidecarModule,
   ],
   providers: [
     SessionTokenService,
