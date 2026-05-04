@@ -344,3 +344,47 @@ export interface RuntimeProviderConfig {
   agentOptions: AgentType[];
   defaultAgent?: AgentType;
 }
+
+// ── CLI auth (sk-trchat-... API keys + JWT exchange) ──────────────────────────
+export interface ApiKey {
+  id: string;
+  keyId: string; // public prefix (24 hex chars)
+  secretHash: string; // hashed secret (64 hex chars unhashed)
+  userId: string;
+  label: string; // human label e.g. "My Laptop", "CI Pipeline"
+  scopes: string[]; // e.g. ['read', 'write', 'analyze']
+  lastUsed?: string;
+  createdAt: string;
+}
+
+export interface ApiKeySummary {
+  id: string;
+  keyId: string;
+  label: string;
+  scopes: string[];
+  lastUsed?: string;
+  createdAt: string;
+}
+
+export interface RefreshTokenRecord {
+  tokenHash: string; // hashed opaque token
+  userId: string;
+  apiKeyId: string;
+  expiresAt: Date;
+  createdAt: string;
+}
+
+export interface ApiTokenResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number; // seconds
+  token_type: 'Bearer';
+}
+
+export interface ApiAccessTokenPayload {
+  sub: string; // userId
+  apiKeyId: string;
+  scopes: string[];
+  iat?: number;
+  exp?: number;
+}

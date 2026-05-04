@@ -12,6 +12,7 @@ import { GraphSidecarModule } from './graph/graph-sidecar.module';
 import { DatabaseModule } from './common/database/database.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { ApiAccessTokenService } from './auth/api-access-token.service';
 import { AppAuthGuard } from './common/auth/auth.guard';
 import { SessionTokenService } from './common/auth/session-token.service';
 import { DashboardModule } from './dashboard/dashboard.module';
@@ -36,6 +37,7 @@ import { HealthModule } from './health/health.module';
   ],
   providers: [
     SessionTokenService,
+    ApiAccessTokenService,
     { provide: APP_GUARD, useClass: AppAuthGuard },
   ],
 })
