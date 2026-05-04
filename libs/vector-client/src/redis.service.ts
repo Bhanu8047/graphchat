@@ -222,7 +222,7 @@ export class RedisVectorService {
  * generic "Syntax error" from FT.SEARCH. Backslash-escape every special char.
  */
 function escapeTagValue(value: string): string {
-  return value.replace(/[,.<>{}\[\]"':;!@#$%^&*()\-+=~|/\\ ]/g, '\\$&');
+  return value.replace(/[,.<>{}[\]"':;!@#$%^&*()\-+=~|/\\ ]/g, '\\$&');
 }
 
 /** Drop the embedding vector from a node payload before returning to API consumers. */

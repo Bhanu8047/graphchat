@@ -161,7 +161,10 @@ export class AiResolverService {
           ? ownKey
           : this.cfg.get('VOYAGE_API_KEY'),
       voyageBaseUrl: this.cfg.get('VOYAGE_BASE_URL'),
-      voyageModel: this.cfg.get('VOYAGE_MODEL', 'voyage-code-3') as never,
+      voyageModel: this.cfg.get<string>(
+        'VOYAGE_MODEL',
+        'voyage-code-3',
+      ) as EmbeddingConfig['voyageModel'],
       openaiApiKey:
         provider === 'openai' && ownKey
           ? ownKey
