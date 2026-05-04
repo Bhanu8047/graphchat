@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '../atoms/Button';
-import { Badge } from '../atoms/Badge';
 import { Surface } from '../atoms/Surface';
+import { BrandLogo } from '../molecules/BrandLogo';
 import { NavCard } from '../molecules/NavCard';
 import { ThemeToggle } from '../molecules/ThemeToggle';
 import { navItems } from '../../features/navigation/config/nav-items';
@@ -31,7 +31,7 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
     >
       <div>
         <Surface tone="hero" padding="lg">
-          <Badge tone="accent">VectorGraph</Badge>
+          <BrandLogo href="/dashboard" priority />
           <div className="mt-4 font-display text-3xl leading-tight text-slate-900 dark:text-white">
             Repository graphs for persistent AI context
           </div>
@@ -54,7 +54,9 @@ export function AppSidebar({ currentPath }: AppSidebarProps) {
       <div className="space-y-4">
         <ThemeToggle />
         <Surface tone="soft" padding="md">
-          <Badge>Signed in</Badge>
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+            Signed in
+          </div>
           <div className="mt-3 font-medium text-slate-900 dark:text-white">
             {user?.name ?? 'Unknown user'}
           </div>

@@ -5,7 +5,7 @@ import { ThemeProvider } from '../features/theme/providers/ThemeProvider';
 import { themeInitScript } from '../features/theme/themeInitScript';
 
 export const metadata = {
-  title: 'VectorGraph',
+  title: 'trchat',
   description: 'Repository context graph for AI agents',
 };
 

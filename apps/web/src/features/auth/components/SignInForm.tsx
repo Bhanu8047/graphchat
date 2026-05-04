@@ -8,6 +8,7 @@ import { Badge } from '../../../components/atoms/Badge';
 import { Button, buttonStyles } from '../../../components/atoms/Button';
 import { Input } from '../../../components/atoms/Input';
 import { Surface } from '../../../components/atoms/Surface';
+import { BrandLogo } from '../../../components/molecules/BrandLogo';
 import { FieldGroup } from '../../../components/molecules/FieldGroup';
 import { Notice } from '../../../components/molecules/Notice';
 import { cn } from '../../../lib/ui';
@@ -62,7 +63,10 @@ export function SignInForm() {
         transition={{ duration: 0.35 }}
       >
         <Surface tone="hero" padding="xl">
-          <Badge tone="accent">VectorGraph Cloud</Badge>
+          <BrandLogo className="w-fit" priority />
+          <Badge tone="accent" className="mt-5">
+            trchat
+          </Badge>
           <h1 className="mt-4 font-display text-4xl leading-[1.02] text-slate-900 dark:text-white sm:text-5xl">
             Persistent repository graphs for humans and AI agents
           </h1>
