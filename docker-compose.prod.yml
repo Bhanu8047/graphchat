@@ -1,4 +1,4 @@
-name: trchat
+name: TR Chat Production Deployment
 
 services:
   nginx:
