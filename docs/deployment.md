@@ -55,17 +55,39 @@ VOYAGE_BASE_URL=https://api.voyageai.com/v1
 
 Run the `Bootstrap VPS` GitHub Actions workflow once for a fresh CentOS 9 VPS. It uploads the CentOS bootstrap script, installs Docker and the required system services, and uploads the deployment bundle into `/opt/trchat`.
 
+The bootstrap scripts now also harden SSH by writing an explicit `sshd` drop-in and a dedicated `fail2ban` SSH jail. By default they:
+
+- keep SSH on port `22` unless `SSH_PORT` is provided
+- disable SSH password authentication unless `SSH_PASSWORD_AUTH=yes` is provided for a temporary transition
+- keep root key login in `prohibit-password` mode unless `SSH_PERMIT_ROOT_LOGIN` is overridden
+- cap SSH auth retries and shorten the login grace period
+- enable escalating `fail2ban` bans for repeated offenders
+
 Requirements before running it:
 
 - `VPS_USER` must either be `root` or have passwordless `sudo`.
 - `PROD_ENV_FILE` must already contain the full production `.env.prod` contents.
 - If the application directory owner should differ from `VPS_USER`, pass that username as the workflow's `deploy_user` input.
+- If you keep the secure default `SSH_PASSWORD_AUTH=no`, ensure the target login user already has a working `authorized_keys` file before running bootstrap.
+- The workflow now accepts optional `ssh_port`, `ssh_password_auth`, and `ssh_permit_root_login` inputs and automatically switches later SSH/SCP steps to the post-bootstrap port.
 
 Equivalent manual bootstrap commands:
 
 ```bash
 scp scripts/vps/bootstrap-centos.sh <VPS_USER>@<VPS_HOST>:/tmp/bootstrap-centos.sh
 ssh <VPS_USER>@<VPS_HOST> 'sudo APP_DIR=/opt/trchat DEPLOY_USER=<VPS_USER> bash /tmp/bootstrap-centos.sh'
+```
+
+To move SSH off the default port during bootstrap:
+
+```bash
+ssh <VPS_USER>@<VPS_HOST> 'sudo APP_DIR=/opt/trchat DEPLOY_USER=<VPS_USER> SSH_PORT=2222 bash /tmp/bootstrap-centos.sh'
+```
+
+If you still need password auth for the first bootstrap session, make that explicit and turn it back off immediately after keys are confirmed:
+
+```bash
+ssh <VPS_USER>@<VPS_HOST> 'sudo APP_DIR=/opt/trchat DEPLOY_USER=<VPS_USER> SSH_PASSWORD_AUTH=yes bash /tmp/bootstrap-centos.sh'
 ```
 
 After bootstrap, log out and back in once so Docker group membership applies for the deploy user.
@@ -120,6 +142,40 @@ ssh <VPS_USER>@<VPS_HOST> 'cd /opt/trchat && ./scripts/vps/rollback.sh'
 
 - Container health: API `http://127.0.0.1:3001/api/health`, web `http://127.0.0.1:3000/api/health`.
 - Public smoke tests: `https://trchat.co` and `https://api.trchat.co/api/health`.
+
+## Immediate SSH incident response
+
+If the VPS already reports hundreds of failed SSH logins, treat that as active internet background scanning and harden it immediately:
+
+1. Confirm key-based SSH access works for your admin user from a second terminal.
+2. On the VPS, inspect the current bans and auth failures:
+
+```bash
+sudo fail2ban-client status sshd
+sudo journalctl -u ssh --since '2 hours ago' || sudo journalctl -u sshd --since '2 hours ago'
+```
+
+3. If password auth is still enabled, disable it and validate the config before restart:
+
+```bash
+sudo install -d -m 0755 /etc/ssh/sshd_config.d
+sudo tee /etc/ssh/sshd_config.d/99-trchat-hardening.conf >/dev/null <<'EOF'
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin prohibit-password
+PubkeyAuthentication yes
+MaxAuthTries 3
+LoginGraceTime 30s
+X11Forwarding no
+AllowAgentForwarding no
+AllowTcpForwarding no
+EOF
+sudo sshd -t && sudo systemctl restart ssh || sudo sshd -t && sudo systemctl restart sshd
+```
+
+4. If you want to move SSH to a different port, add `Port <new-port>` to the same file, open that port in the firewall first, then restart SSH.
+5. Rotate any weak or reused passwords and review `~/.ssh/authorized_keys` for stale keys.
+6. Keep `fail2ban` enabled and verify the jail is attached to the active SSH port.
 
 ## Residual risks and recommended hardening
 

@@ -12,6 +12,28 @@ on:
         required: false
         default: /opt/trchat
         type: string
+      ssh_port:
+        description: SSH port that should be configured on the VPS after bootstrap
+        required: false
+        default: '22'
+        type: string
+      ssh_password_auth:
+        description: Keep SSH password authentication enabled during bootstrap
+        required: false
+        default: 'no'
+        type: choice
+        options:
+          - 'no'
+          - 'yes'
+      ssh_permit_root_login:
+        description: PermitRootLogin mode to apply in sshd
+        required: false
+        default: prohibit-password
+        type: choice
+        options:
+          - prohibit-password
+          - 'no'
+          - 'yes'
 
 permissions:
   contents: read
@@ -21,6 +43,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       APP_DIR: ${{ inputs.app_dir || '/opt/trchat' }}
+      TARGET_SSH_PORT: ${{ inputs.ssh_port || '22' }}
+      SSH_PASSWORD_AUTH: ${{ inputs.ssh_password_auth || 'no' }}
+      SSH_PERMIT_ROOT_LOGIN: ${{ inputs.ssh_permit_root_login || 'prohibit-password' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -74,23 +99,27 @@ jobs:
         run: |
           deploy_user="${DEPLOY_USER_INPUT:-$VPS_USER}"
           ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
-            "if [ \"\$(id -u)\" -eq 0 ]; then APP_DIR='${APP_DIR}' DEPLOY_USER='${deploy_user}' bash /tmp/bootstrap-centos.sh; else sudo -n APP_DIR='${APP_DIR}' DEPLOY_USER='${deploy_user}' bash /tmp/bootstrap-centos.sh; fi"
+            "if [ \"\$(id -u)\" -eq 0 ]; then APP_DIR='${APP_DIR}' DEPLOY_USER='${deploy_user}' SSH_PORT='${TARGET_SSH_PORT}' SSH_PASSWORD_AUTH='${SSH_PASSWORD_AUTH}' SSH_PERMIT_ROOT_LOGIN='${SSH_PERMIT_ROOT_LOGIN}' bash /tmp/bootstrap-centos.sh; else sudo -n APP_DIR='${APP_DIR}' DEPLOY_USER='${deploy_user}' SSH_PORT='${TARGET_SSH_PORT}' SSH_PASSWORD_AUTH='${SSH_PASSWORD_AUTH}' SSH_PERMIT_ROOT_LOGIN='${SSH_PERMIT_ROOT_LOGIN}' bash /tmp/bootstrap-centos.sh; fi"
+
+      - name: Trust post-bootstrap SSH port
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          ssh-keyscan -p "${TARGET_SSH_PORT}" "$VPS_HOST" >> ~/.ssh/known_hosts
 
       - name: Upload deployment files
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
-          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "mkdir -p '${APP_DIR}'"
-          scp -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -P "${VPS_PORT:-22}" /tmp/trchat-deploy.tgz "$VPS_USER@$VPS_HOST:${APP_DIR}/trchat-deploy.tgz"
-          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '${APP_DIR}' && tar -xzf trchat-deploy.tgz && chmod 600 .env.prod && chmod +x scripts/vps/*.sh"
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${TARGET_SSH_PORT}" "$VPS_USER@$VPS_HOST" "mkdir -p '${APP_DIR}'"
+          scp -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -P "${TARGET_SSH_PORT}" /tmp/trchat-deploy.tgz "$VPS_USER@$VPS_HOST:${APP_DIR}/trchat-deploy.tgz"
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${TARGET_SSH_PORT}" "$VPS_USER@$VPS_HOST" "cd '${APP_DIR}' && tar -xzf trchat-deploy.tgz && chmod 600 .env.prod && chmod +x scripts/vps/*.sh"
 
       - name: Verify Docker install
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
-          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${TARGET_SSH_PORT}" "$VPS_USER@$VPS_HOST" \
             "if [ \"\$(id -u)\" -eq 0 ]; then docker --version && docker compose version; else sudo -n docker --version && sudo -n docker compose version; fi"

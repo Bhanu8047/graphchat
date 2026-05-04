@@ -4,6 +4,22 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'apps/api/**'
+      - 'apps/web/**'
+      - 'libs/ai/**'
+      - 'libs/shared-types/**'
+      - 'libs/vector-client/**'
+      - 'docker/api.Dockerfile'
+      - 'docker/web.Dockerfile'
+      - 'docker/nginx/**'
+      - 'docker-compose.prod.yml'
+      - 'scripts/vps/deploy.sh'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.base.json'
+      - 'tsconfig.json'
+      - 'nx.json'
 
 permissions:
   contents: read
@@ -18,8 +34,117 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect deploy scope
+        id: changes
+        run: |
+          base="${{ github.event.before }}"
+          head="${{ github.sha }}"
+
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            if git rev-parse "${head}^" >/dev/null 2>&1; then
+              base="$(git rev-parse "${head}^")"
+            else
+              base="$head"
+            fi
+          fi
+
+          mapfile -t changed_files < <(git diff --name-only "$base" "$head")
+          if [ ${#changed_files[@]} -eq 0 ]; then
+            mapfile -t changed_files < <(git ls-tree --name-only -r "$head")
+          fi
+
+          api_changed=false
+          web_changed=false
+          full_redeploy=false
+          nginx_changed=false
+
+          printf 'Changed files between %s and %s:\n' "$base" "$head"
+          printf '  %s\n' "${changed_files[@]}"
+
+          for file in "${changed_files[@]}"; do
+            case "$file" in
+              apps/api/*|libs/ai/*|libs/vector-client/*|docker/api.Dockerfile)
+                api_changed=true
+                ;;
+              apps/web/*|docker/web.Dockerfile)
+                web_changed=true
+                ;;
+              libs/shared-types/*|package.json|package-lock.json|tsconfig.base.json|tsconfig.json|nx.json)
+                api_changed=true
+                web_changed=true
+                ;;
+              docker/nginx/*)
+                nginx_changed=true
+                ;;
+              docker-compose.prod.yml|scripts/vps/deploy.sh)
+                full_redeploy=true
+                ;;
+            esac
+          done
+
+          build_images=false
+          should_deploy=false
+          deploy_services=''
+
+          if [ "$api_changed" = true ] || [ "$web_changed" = true ]; then
+            build_images=true
+            should_deploy=true
+          fi
+
+          if [ "$nginx_changed" = true ] || [ "$full_redeploy" = true ]; then
+            should_deploy=true
+          fi
+
+          if [ "$full_redeploy" = false ]; then
+            deploy_targets=()
+
+            if [ "$api_changed" = true ]; then
+              deploy_targets+=(api)
+            fi
+
+            if [ "$web_changed" = true ]; then
+              deploy_targets+=(web)
+            fi
+
+            if [ "$nginx_changed" = true ]; then
+              deploy_targets+=(nginx)
+            fi
+
+            if [ ${#deploy_targets[@]} -gt 0 ]; then
+              deploy_services="${deploy_targets[*]}"
+            fi
+          fi
+
+          echo "api_changed=$api_changed" >> "$GITHUB_OUTPUT"
+          echo "web_changed=$web_changed" >> "$GITHUB_OUTPUT"
+          echo "build_images=$build_images" >> "$GITHUB_OUTPUT"
+          echo "should_deploy=$should_deploy" >> "$GITHUB_OUTPUT"
+          echo "full_redeploy=$full_redeploy" >> "$GITHUB_OUTPUT"
+          echo "deploy_services=$deploy_services" >> "$GITHUB_OUTPUT"
+
+      - name: Summarize deploy scope
+        run: |
+          {
+            echo '## Deploy Scope'
+            echo
+            echo "- API changed: ${{ steps.changes.outputs.api_changed }}"
+            echo "- Web changed: ${{ steps.changes.outputs.web_changed }}"
+            echo "- Build images: ${{ steps.changes.outputs.build_images }}"
+            echo "- Should deploy: ${{ steps.changes.outputs.should_deploy }}"
+            echo "- Full redeploy: ${{ steps.changes.outputs.full_redeploy }}"
+
+            if [ -n "${{ steps.changes.outputs.deploy_services }}" ]; then
+              echo "- Target services: ${{ steps.changes.outputs.deploy_services }}"
+            else
+              echo '- Target services: all services managed by compose'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: docker/setup-buildx-action@v3
+        if: steps.changes.outputs.build_images == 'true'
 
       - name: Derive image names
         id: images
@@ -29,12 +154,14 @@ jobs:
           echo "web=${REGISTRY}/${repository}-web:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/login-action@v3
+        if: steps.changes.outputs.build_images == 'true'
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
       - uses: docker/build-push-action@v6
+        if: steps.changes.outputs.api_changed == 'true'
         with:
           context: .
           file: docker/api.Dockerfile
@@ -42,6 +169,7 @@ jobs:
           tags: ${{ steps.images.outputs.api }}
 
       - uses: docker/build-push-action@v6
+        if: steps.changes.outputs.web_changed == 'true'
         with:
           context: .
           file: docker/web.Dockerfile
@@ -52,6 +180,7 @@ jobs:
             NEXT_PUBLIC_API_URL=https://api.trchat.co/api
 
       - name: Create production env file
+        if: steps.changes.outputs.should_deploy == 'true'
         env:
           PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
         run: |
@@ -59,14 +188,16 @@ jobs:
           printf '%s\n' "$PROD_ENV_FILE" > .env.prod
 
       - name: Prepare deployment bundle
+        if: steps.changes.outputs.should_deploy == 'true'
         run: |
           tar -czf /tmp/trchat-deploy.tgz \
             docker-compose.prod.yml \
             docker/nginx \
-            scripts/vps \
+            scripts/vps/deploy.sh \
             .env.prod
 
       - name: Configure SSH
+        if: steps.changes.outputs.should_deploy == 'true'
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
@@ -83,6 +214,7 @@ jobs:
           ssh-keyscan -p "${VPS_PORT:-22}" "$VPS_HOST" >> ~/.ssh/known_hosts
 
       - name: Upload deployment files
+        if: steps.changes.outputs.should_deploy == 'true'
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
@@ -90,20 +222,39 @@ jobs:
         run: |
           ssh -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "mkdir -p '${DEPLOY_DIR}'"
           scp -i ~/.ssh/trchat_deploy_key -P "${VPS_PORT:-22}" /tmp/trchat-deploy.tgz "$VPS_USER@$VPS_HOST:${DEPLOY_DIR}/trchat-deploy.tgz"
-          ssh -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '${DEPLOY_DIR}' && tar -xzf trchat-deploy.tgz && chmod 600 .env.prod && chmod +x scripts/vps/*.sh"
+          ssh -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '${DEPLOY_DIR}' && tar -xzf trchat-deploy.tgz && chmod 600 .env.prod && chmod +x scripts/vps/deploy.sh"
 
       - name: Deploy exact images
+        if: steps.changes.outputs.should_deploy == 'true'
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
-          API_IMAGE: ${{ steps.images.outputs.api }}
-          WEB_IMAGE: ${{ steps.images.outputs.web }}
         run: |
+          remote_env=()
+
+          if [ "${{ steps.changes.outputs.api_changed }}" = 'true' ]; then
+            remote_env+=("API_IMAGE='${{ steps.images.outputs.api }}'")
+          fi
+
+          if [ "${{ steps.changes.outputs.web_changed }}" = 'true' ]; then
+            remote_env+=("WEB_IMAGE='${{ steps.images.outputs.web }}'")
+          fi
+
+          if [ -n "${{ steps.changes.outputs.deploy_services }}" ]; then
+            remote_env+=("DEPLOY_SERVICES='${{ steps.changes.outputs.deploy_services }}'")
+          fi
+
+          remote_prefix=''
+          if [ ${#remote_env[@]} -gt 0 ]; then
+            remote_prefix="${remote_env[*]} "
+          fi
+
           ssh -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
-            "cd '${DEPLOY_DIR}' && echo '${{ github.token }}' | docker login '${REGISTRY}' -u '${{ github.actor }}' --password-stdin && API_IMAGE='${API_IMAGE}' WEB_IMAGE='${WEB_IMAGE}' ./scripts/vps/deploy.sh"
+            "cd '${DEPLOY_DIR}' && echo '${{ github.token }}' | docker login '${REGISTRY}' -u '${{ github.actor }}' --password-stdin && ${remote_prefix}./scripts/vps/deploy.sh"
 
       - name: Verify public endpoints
+        if: steps.changes.outputs.should_deploy == 'true'
         run: |
           curl --fail --silent --show-error --retry 12 --retry-delay 5 https://trchat.co >/dev/null
           curl --fail --silent --show-error --retry 12 --retry-delay 5 https://api.trchat.co/api/health

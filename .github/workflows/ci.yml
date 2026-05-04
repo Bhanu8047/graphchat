@@ -23,19 +23,38 @@ jobs:
           node-version: 24
           cache: 'npm'
 
+      - name: Derive affected SHAs
+        id: shas
+        run: |
+          if [ "${{ github.event_name }}" = 'pull_request' ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+            head="${{ github.event.pull_request.head.sha }}"
+          else
+            base="${{ github.event.before }}"
+            head="${{ github.sha }}"
+          fi
+
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            if git rev-parse "${head}^" >/dev/null 2>&1; then
+              base="$(git rev-parse "${head}^")"
+            else
+              base="$head"
+            fi
+          fi
+
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+
       - run: npm ci
 
       - name: Check formatting
         run: npm run format:check
 
-      - name: Typecheck API
-        run: npm exec nx typecheck api
+      - name: Typecheck affected projects
+        run: npm exec -- nx affected -t typecheck --exclude=web --base="${{ steps.shas.outputs.base }}" --head="${{ steps.shas.outputs.head }}" --outputStyle=static
 
-      - name: Build API
-        run: npm exec nx build api
-
-      - name: Build web
+      - name: Build affected apps
         env:
           NEXT_PUBLIC_APP_URL: https://trchat.co
           NEXT_PUBLIC_API_URL: https://api.trchat.co/api
-        run: npm exec nx build web
+        run: npm exec -- nx affected -t build --exclude=ai,shared-types,vector-client --base="${{ steps.shas.outputs.base }}" --head="${{ steps.shas.outputs.head }}" --outputStyle=static
