@@ -23,6 +23,7 @@ MONGO_ROOT_PASSWORD=replace-with-a-long-random-password
 WEB_URL=https://trchat.co
 NEXT_PUBLIC_APP_URL=https://trchat.co
 NEXT_PUBLIC_API_URL=https://api.trchat.co/api
+APP_SESSION_COOKIE_DOMAIN=.trchat.co
 
 GITHUB_CLIENT_ID=your_github_oauth_client_id
 GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
@@ -30,6 +31,8 @@ VOYAGE_BASE_URL=https://api.voyageai.com/v1
 ```
 
 Optional provider variables can also be added to `.env.prod` as needed: `VOYAGE_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `OLLAMA_BASE_URL`, `LLM_PROVIDER`, and `EMBEDDING_PROVIDER`.
+
+When the web app and API live on different subdomains in production, set `APP_SESSION_COOKIE_DOMAIN` to the shared parent domain so the browser sends `vectorgraph_session` to both hosts. For the current deployment, use `.trchat.co`. Leave it unset for localhost development.
 
 ## GitHub Web Login
 

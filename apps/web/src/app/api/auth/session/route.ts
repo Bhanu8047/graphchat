@@ -1,7 +1,10 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { getServerApiBaseUrl } from '../../../../lib/github-auth';
-import { appSessionCookie } from '../../../../features/auth/lib/auth-session';
+import {
+  appSessionCookie,
+  expiredAppSessionCookieOptions,
+} from '../../../../features/auth/lib/auth-session';
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -18,7 +21,7 @@ export async function GET() {
   });
 
   if (!response.ok) {
-    cookieStore.delete(appSessionCookie);
+    cookieStore.set(appSessionCookie, '', expiredAppSessionCookieOptions());
     return NextResponse.json({ authenticated: false });
   }
 

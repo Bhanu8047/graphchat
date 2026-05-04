@@ -43,6 +43,7 @@ MONGO_ROOT_PASSWORD=replace-with-a-long-random-password
 WEB_URL=https://trchat.co
 NEXT_PUBLIC_APP_URL=https://trchat.co
 NEXT_PUBLIC_API_URL=https://api.trchat.co/api
+APP_SESSION_COOKIE_DOMAIN=.trchat.co
 
 GITHUB_CLIENT_ID=your_github_oauth_client_id
 GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
@@ -50,6 +51,8 @@ VOYAGE_BASE_URL=https://api.voyageai.com/v1
 ```
 
 `MONGO_ROOT_PASSWORD` is used both to initialize MongoDB and to compose the API's private `MONGODB_URI`.
+
+`APP_SESSION_COOKIE_DOMAIN` is required when the web app and API are on different subdomains. Without it, the browser stores `vectorgraph_session` only on the web host and authenticated requests to the API return `401 Authentication is required.` For `trchat.co` plus `api.trchat.co`, set it to `.trchat.co`.
 
 ## One-time VPS bootstrap
 

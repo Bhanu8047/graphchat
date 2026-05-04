@@ -52,6 +52,7 @@ services:
       INTERNAL_API_URL: http://api:3001/api
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://trchat.co}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.trchat.co/api}
+      APP_SESSION_COOKIE_DOMAIN: ${APP_SESSION_COOKIE_DOMAIN:-.trchat.co}
     depends_on:
       api:
         condition: service_healthy
