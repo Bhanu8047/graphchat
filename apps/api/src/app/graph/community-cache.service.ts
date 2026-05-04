@@ -64,10 +64,14 @@ export class CommunityCacheService implements OnModuleInit, OnModuleDestroy {
   }
 
   async getRepoCommunities(repoId: string): Promise<CommunityMeta[]> {
-    const keys = await this.client.keys('community:*:meta');
+    // Use SCAN (non-blocking) instead of KEYS to avoid stalling Redis on
+    // large keyspaces.
     const results: CommunityMeta[] = [];
-    for (const key of keys) {
-      const raw = await this.client.get(key);
+    for await (const key of this.client.scanIterator({
+      MATCH: 'community:*:meta',
+      COUNT: 200,
+    })) {
+      const raw = await this.client.get(key as string);
       if (!raw) continue;
       try {
         const meta = JSON.parse(raw) as CommunityMeta;

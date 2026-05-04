@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   OnModuleInit,
   BadRequestException,
   InternalServerErrorException,
@@ -161,6 +162,7 @@ const OVERVIEW_SOURCE_PATH = '__repo_overview__';
 
 @Injectable()
 export class ReposService implements OnModuleInit {
+  private readonly logger = new Logger(ReposService.name);
   private mongo: MongoVectorService;
   private redis: RedisVectorService;
   private embedCfg: EmbeddingConfig;
@@ -220,11 +222,8 @@ export class ReposService implements OnModuleInit {
       void this.graphBridge
         .analyzeRepo({ repoId: repo.id, repoPath: dto.repoPath })
         .catch((err) => {
-          // eslint-disable-next-line no-console
-          console.warn(
-            `[ReposService] Graph analysis failed for ${repo.id}: ${
-              (err as Error).message
-            }`,
+          this.logger.warn(
+            `Graph analysis failed for ${repo.id}: ${(err as Error).message}`,
           );
         });
     }

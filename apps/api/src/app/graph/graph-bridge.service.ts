@@ -19,10 +19,7 @@ export class GraphBridgeService {
 
   constructor(private cfg: ConfigService) {
     this.client = axios.create({
-      baseURL: this.cfg.get(
-        'GRAPH_SERVICE_URL',
-        'http://graph-service:5000',
-      ),
+      baseURL: this.cfg.get('GRAPH_SERVICE_URL', 'http://graph-service:5000'),
       timeout: 120_000, // 2 min — large repos take time
     });
   }
@@ -64,7 +61,9 @@ export class GraphBridgeService {
 
   /** Fetch the pre-built GRAPH_REPORT.md for a repo. */
   async getReport(repoId: string): Promise<string> {
-    const { data } = await this.client.get(`/report/${repoId}`);
+    const { data } = await this.client.get(
+      `/report/${encodeURIComponent(repoId)}`,
+    );
     return data.report;
   }
 

@@ -11,6 +11,20 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: secret
     volumes: [mongo_data:/data/db]
+  graph-service:
+    build:
+      context: .
+      dockerfile: docker/graph-service.Dockerfile
+    ports: ["5000:5000"]
+    environment:
+      MONGODB_URI: mongodb://root:secret@mongo:27017/vectorgraph?authSource=admin
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - ./graph-service:/app # hot-reload for dev
+      - repo_data:/repos # shared volume for repo files
+    depends_on: [redis, mongo]
+    command: uvicorn main:app --host 0.0.0.0 --port 5000 --reload
 volumes:
   redis_data:
   mongo_data:
+  repo_data:
