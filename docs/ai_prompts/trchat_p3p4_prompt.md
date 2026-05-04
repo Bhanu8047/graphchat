@@ -512,18 +512,18 @@ Create this exact structure under `apps/cli/src/`:
 apps/cli/src/
 ├── main.ts                  Commander entry point
 ├── commands/
-│   ├── login.ts             trchat login --key sk-trchat-...
-│   ├── logout.ts            trchat logout
-│   ├── status.ts            trchat status
-│   ├── repos.ts             trchat repos [list|add|delete]
-│   ├── index.ts             trchat index ./src
-│   ├── search.ts            trchat search "auth flow"
-│   ├── query.ts             trchat query "what calls validateToken?"
-│   ├── path.ts              trchat path AuthService JwtGuard
-│   ├── explain.ts           trchat explain AuthService
-│   ├── export.ts            trchat export --repo <id>
-│   ├── report.ts            trchat report --repo <id>
-│   └── watch.ts             trchat watch ./src
+│   ├── login.ts             gph login --key sk-trchat-...
+│   ├── logout.ts            gph logout
+│   ├── status.ts            gph status
+│   ├── repos.ts             gph repos [list|add|delete]
+│   ├── index.ts             gph index ./src
+│   ├── search.ts            gph search "auth flow"
+│   ├── query.ts             gph query "what calls validateToken?"
+│   ├── path.ts              gph path AuthService JwtGuard
+│   ├── explain.ts           gph explain AuthService
+│   ├── export.ts            gph export --repo <id>
+│   ├── report.ts            gph report --repo <id>
+│   └── watch.ts             gph watch ./src
 └── lib/
     ├── credentials.ts       ~/.trchat/credentials (chmod 0600)
     ├── config.ts            ~/.trchat/config.json
@@ -621,7 +621,7 @@ export function createClient(requireAuth = true): AxiosInstance {
   const server = creds?.server ?? config.get('serverUrl');
 
   if (requireAuth && !creds) {
-    console.error(chalk.red('Not logged in. Run: trchat login --key sk-trchat-...'));
+    console.error(chalk.red('Not logged in. Run: gph login --key sk-trchat-...'));
     process.exit(1);
   }
 
@@ -647,7 +647,7 @@ export function createClient(requireAuth = true): AxiosInstance {
           return client.request(original);
         } catch {
           deleteCredentials();
-          console.error(chalk.red('Session expired. Run: trchat login --key sk-trchat-...'));
+          console.error(chalk.red('Session expired. Run: gph login --key sk-trchat-...'));
           process.exit(1);
         }
       }
@@ -780,7 +780,7 @@ export function loginCommand(): Command {
       const server = opts.server ?? config.get('serverUrl');
 
       if (!opts.key) {
-        printError('API key required', 'Use: trchat login --key sk-trchat-...');
+        printError('API key required', 'Use: gph login --key sk-trchat-...');
         printError('Generate a key at: ' + chalk.cyan(`${server}/dashboard/keys`));
         process.exit(1);
       }
@@ -849,7 +849,7 @@ export function statusCommand(): Command {
 
       if (!creds) {
         console.log(chalk.red('● Not logged in'));
-        console.log(`  Run: ${chalk.cyan('trchat login --key sk-trchat-...')}`);
+        console.log(`  Run: ${chalk.cyan('gph login --key sk-trchat-...')}`);
         return;
       }
 
@@ -863,7 +863,7 @@ export function statusCommand(): Command {
         printSeparator('REPOSITORIES');
         if (!repos.length) {
           console.log(chalk.dim('  No repositories indexed yet'));
-          console.log(`  Run: ${chalk.cyan('trchat index ./src --repo my-api')}`);
+          console.log(`  Run: ${chalk.cyan('gph index ./src --repo my-api')}`);
         } else {
           repos.forEach((r: any) => {
             console.log(`  ${chalk.bold(r.name)} ${chalk.dim(`(${r.id.slice(0, 8)}…)`)}`);
@@ -1397,20 +1397,20 @@ import { watchCommand }   from './commands/watch';
 const program = new Command();
 
 program
-  .name('trchat')
+  .name('gph')
   .description(chalk.bold('TRCHAT') + ' — Repository context graph for AI agents')
   .version('1.0.0')
   .addHelpText('after', `
 ${chalk.dim('Examples:')}
-  ${chalk.cyan('trchat login --key sk-trchat-...')}
-  ${chalk.cyan('trchat index ./src --repo my-api-id')}
-  ${chalk.cyan('trchat search "authentication middleware" --budget 1500')}
-  ${chalk.cyan('trchat query "what calls validateToken?" --repo my-api-id --mode knn')}
-  ${chalk.cyan('trchat path AuthService JwtGuard --repo my-api-id')}
-  ${chalk.cyan('trchat explain AuthService --repo my-api-id')}
-  ${chalk.cyan('trchat report --repo my-api-id --out GRAPH_REPORT.md')}
-  ${chalk.cyan('trchat export --repo my-api-id --out context.json')}
-  ${chalk.cyan('trchat watch ./src --repo my-api-id')}
+  ${chalk.cyan('gph login --key sk-trchat-...')}
+  ${chalk.cyan('gph index ./src --repo my-api-id')}
+  ${chalk.cyan('gph search "authentication middleware" --budget 1500')}
+  ${chalk.cyan('gph query "what calls validateToken?" --repo my-api-id --mode knn')}
+  ${chalk.cyan('gph path AuthService JwtGuard --repo my-api-id')}
+  ${chalk.cyan('gph explain AuthService --repo my-api-id')}
+  ${chalk.cyan('gph report --repo my-api-id --out GRAPH_REPORT.md')}
+  ${chalk.cyan('gph export --repo my-api-id --out context.json')}
+  ${chalk.cyan('gph watch ./src --repo my-api-id')}
   `);
 
 program.addCommand(loginCommand());
@@ -1451,7 +1451,7 @@ program.parse(process.argv);
     "build-binary": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun build apps/cli/src/main.ts --compile --outfile dist/trchat-linux-x64 --target bun-linux-x64"
+        "command": "bun build apps/cli/src/main.ts --compile --outfile dist/gph-linux-x64 --target bun-linux-x64"
       },
       "dependsOn": []
     },
@@ -1474,7 +1474,7 @@ program.parse(process.argv);
   "version": "1.0.0",
   "description": "TRCHAT CLI — Repository context graph for AI agents",
   "bin": {
-    "trchat": "./main.js"
+    "gph": "./main.js"
   },
   "main": "main.js",
   "keywords": ["trchat", "cli", "knowledge-graph", "ai-agents", "vector-search"],
@@ -1628,7 +1628,7 @@ from pathlib import Path
 
 HOOK_SCRIPT_TEMPLATE = """#!/bin/sh
 # TRCHAT auto-reindex hook
-# Installed by: trchat watch --on-commit
+# Installed by: gph watch --on-commit
 curl -s -X POST http://localhost:3001/api/graph/analyze \\
   -H "Content-Type: application/json" \\
   -d '{{"repoId": "{repo_id}", "repoPath": "{repo_path}"}}' \\
@@ -2058,8 +2058,8 @@ JWT_SECRET=your_64_char_random_secret_here
 JWT_EXPIRES_IN=15m
 REFRESH_TOKEN_EXPIRES_DAYS=30
 
-# CLI distribution URL (shown in trchat status)
-CLI_DOWNLOAD_URL=https://yourdomain.com/downloads/trchat
+# CLI distribution URL (shown in gph status)
+CLI_DOWNLOAD_URL=https://yourdomain.com/downloads/gph
 ```
 
 **`.env.example`:**
@@ -2080,8 +2080,8 @@ REFRESH_TOKEN_EXPIRES_DAYS=30
 {
   "scripts": {
     "cli:build":        "nx build cli",
-    "cli:binary:linux": "bun build apps/cli/src/main.ts --compile --outfile dist/trchat-linux-x64 --target bun-linux-x64",
-    "cli:binary:mac":   "bun build apps/cli/src/main.ts --compile --outfile dist/trchat-macos --target bun-darwin-arm64",
+    "cli:binary:linux": "bun build apps/cli/src/main.ts --compile --outfile dist/gph-linux-x64 --target bun-linux-x64",
+    "cli:binary:mac":   "bun build apps/cli/src/main.ts --compile --outfile dist/gph-macos --target bun-darwin-arm64",
     "cli:publish":      "cd dist/apps/cli && npm publish --access public"
   }
 }
@@ -2178,9 +2178,9 @@ Step 3 — Priority 4: Advanced graph features
 Step 4 — Binary distribution
   4a npm run cli:build
   4b npm run cli:binary:linux   # requires bun installed on build machine
-  4c ✅ ./dist/trchat-linux-x64 --help
-  4d ✅ ./dist/trchat-linux-x64 login --key sk-trchat-{key}
-  4e ✅ ./dist/trchat-linux-x64 search "auth flow" --budget 1000
+  4c ✅ ./dist/gph-linux-x64 --help
+  4d ✅ ./dist/gph-linux-x64 login --key sk-trchat-{key}
+  4e ✅ ./dist/gph-linux-x64 search "auth flow" --budget 1000
 ```
 
 ---
@@ -2198,26 +2198,26 @@ Auth
   [ ] Expired refresh token returns 401 (not 500)
 
 CLI — Core
-  [ ] trchat --help shows all commands
-  [ ] trchat login --key sk-trchat-... saves credentials to ~/.trchat/credentials (chmod 0600)
-  [ ] trchat logout revokes refresh token and deletes credentials file
-  [ ] trchat status shows server, token validity, and repo list
-  [ ] trchat repos list shows all repositories
-  [ ] trchat repos add --name api --desc "..." creates a repo
+  [ ] gph --help shows all commands
+  [ ] gph login --key sk-trchat-... saves credentials to ~/.trchat/credentials (chmod 0600)
+  [ ] gph logout revokes refresh token and deletes credentials file
+  [ ] gph status shows server, token validity, and repo list
+  [ ] gph repos list shows all repositories
+  [ ] gph repos add --name api --desc "..." creates a repo
 
 CLI — Graph Commands
-  [ ] trchat index ./src --repo {id} calls /graph/analyze and shows nodes/communities
-  [ ] trchat search "auth" returns ranked results with confidence badges
-  [ ] trchat search "auth" --budget 500 stops at ~500 tokens
-  [ ] trchat search "auth" --confidence EXTRACTED shows only AST-extracted nodes
-  [ ] trchat query "what calls validateToken?" --repo {id} shows graph-expanded results
-  [ ] trchat path AuthService JwtGuard --repo {id} shows path with hop count
-  [ ] trchat explain AuthService --repo {id} returns AI-generated explanation
-  [ ] trchat export --repo {id} --out context.json writes valid AgentExportPayload
-  [ ] trchat report --repo {id} returns GRAPH_REPORT.md content
-  [ ] trchat report --repo {id} --out report.md saves file
-  [ ] trchat watch ./src --repo {id} starts file watcher, re-indexes on change
-  [ ] trchat watch ./src --repo {id} --on-commit installs git hooks
+  [ ] gph index ./src --repo {id} calls /graph/analyze and shows nodes/communities
+  [ ] gph search "auth" returns ranked results with confidence badges
+  [ ] gph search "auth" --budget 500 stops at ~500 tokens
+  [ ] gph search "auth" --confidence EXTRACTED shows only AST-extracted nodes
+  [ ] gph query "what calls validateToken?" --repo {id} shows graph-expanded results
+  [ ] gph path AuthService JwtGuard --repo {id} shows path with hop count
+  [ ] gph explain AuthService --repo {id} returns AI-generated explanation
+  [ ] gph export --repo {id} --out context.json writes valid AgentExportPayload
+  [ ] gph report --repo {id} returns GRAPH_REPORT.md content
+  [ ] gph report --repo {id} --out report.md saves file
+  [ ] gph watch ./src --repo {id} starts file watcher, re-indexes on change
+  [ ] gph watch ./src --repo {id} --on-commit installs git hooks
 
 CLI — Auto-refresh
   [ ] After access_token expires (15min), next command auto-refreshes silently
@@ -2246,8 +2246,8 @@ After shipping, users install the CLI with:
 npm install -g @trchat/cli
 
 # Option 2: standalone binary (no Node.js required)
-curl -fsSL https://yourdomain.com/downloads/trchat-linux-x64 -o trchat
-chmod +x trchat && sudo mv trchat /usr/local/bin/
+curl -fsSL https://yourdomain.com/downloads/gph-linux-x64 -o gph
+chmod +x gph && sudo mv gph /usr/local/bin/
 
 # Option 3: bun (fastest)
 bun install -g @trchat/cli
@@ -2256,8 +2256,8 @@ bun install -g @trchat/cli
 Then authenticate:
 
 ```bash
-trchat login --key sk-trchat-{your_key} --server https://yourdomain.com
-trchat status
-trchat index ./my-repo --repo {repo-id}
-trchat search "how does auth work?" --budget 2000
+gph login --key sk-trchat-{your_key} --server https://yourdomain.com
+gph status
+gph index ./my-repo --repo {repo-id}
+gph search "how does auth work?" --budget 2000
 ```
