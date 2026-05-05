@@ -289,5 +289,5 @@ jobs:
       - name: Verify public endpoints
         if: steps.changes.outputs.should_deploy == 'true'
         run: |
-          curl --fail --silent --show-error --retry 12 --retry-delay 5 https://graphchat.co >/dev/null
-          curl --fail --silent --show-error --retry 12 --retry-delay 5 https://api.graphchat.co/api/health
+          curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors https://graphchat.co >/dev/null
+          curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors https://api.graphchat.co/api/health
