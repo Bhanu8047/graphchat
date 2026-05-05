@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import ora from 'ora';
 import { createClient } from '../lib/api-client.js';
 import { confidenceBadge, printError } from '../lib/output.js';
+import { resolveRepoId } from '../lib/repo.js';
 
 interface QueryNode {
   id: string;
@@ -22,7 +23,7 @@ export function queryCommand(): Command {
   return new Command('query')
     .description('Graph-expanded search starting from vector seed nodes')
     .argument('<question>', 'Natural-language question')
-    .requiredOption('-r, --repo <id>', 'Repo ID to query')
+    .option('-r, --repo <id>', 'Repo ID (defaults to selected repo)')
     .option(
       '-m, --mode <mode>',
       'Traversal mode: knn|bfs|dfs',
@@ -36,18 +37,19 @@ export function queryCommand(): Command {
       async (
         question: string,
         opts: {
-          repo: string;
+          repo?: string;
           mode: 'knn' | 'bfs' | 'dfs';
           hops: number;
           budget: number;
           json?: boolean;
         },
       ) => {
+        const repoId = resolveRepoId(opts.repo);
         const client = createClient();
         const spinner = ora(`Querying ${chalk.cyan(question)}…`).start();
         try {
           const { data } = await client.post<QueryResponse>('/graph/query', {
-            repoId: opts.repo,
+            repoId,
             question,
             mode: opts.mode,
             hops: opts.hops,

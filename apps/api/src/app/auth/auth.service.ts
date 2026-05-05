@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { AppUser, AuthenticatedUser } from '@graphchat/shared-types';
@@ -114,6 +115,33 @@ export class AuthService {
 
     await this.users.create(user);
     return this.buildAuthResponse(this.usersService.toPublicUser(user)!);
+  }
+
+  /**
+   * Link a GitHub account to an already-signed-in user. Used by the OAuth
+   * callback when the user is already authenticated — we want to attach
+   * their GitHub identity to the current account rather than swap sessions.
+   */
+  async linkGithub(userId: string, dto: GithubAuthDto) {
+    const githubUser = await this.fetchGithubUser(dto.accessToken);
+    const githubId = String(githubUser.id);
+    const existing = await this.users.findByGithubId(githubId);
+    if (existing && existing.id !== userId) {
+      throw new ConflictException(
+        'This GitHub account is already linked to a different graphchat user.',
+      );
+    }
+    const current = await this.users.findById(userId);
+    if (!current) {
+      throw new NotFoundException('User no longer exists.');
+    }
+    const updated = await this.users.update(userId, {
+      githubId,
+      githubLogin: githubUser.login,
+      avatarUrl: githubUser.avatar_url ?? current.avatarUrl,
+      updatedAt: new Date().toISOString(),
+    });
+    return { user: this.usersService.toPublicUser(updated) };
   }
 
   session(user: AuthenticatedUser) {

@@ -13,6 +13,7 @@ import ora from 'ora';
 import { createClient } from '../lib/api-client.js';
 import { extractRepo } from '../lib/extract/index.js';
 import { printError, printSuccess } from '../lib/output.js';
+import { resolveRepoId } from '../lib/repo.js';
 
 interface IngestResult {
   nodesAdded?: number;
@@ -32,7 +33,7 @@ export function watchCommand(): Command {
         'installs git hooks that re-index after commit / checkout / merge instead.',
     )
     .argument('<path>', 'Path to repository')
-    .requiredOption('-r, --repo <id>', 'Repo ID')
+    .option('-r, --repo <id>', 'Repo ID (defaults to selected repo)')
     .option(
       '-d, --debounce <ms>',
       'Debounce window in ms (default 1500)',
@@ -45,7 +46,7 @@ export function watchCommand(): Command {
       async (
         path: string,
         opts: {
-          repo: string;
+          repo?: string;
           debounce: number;
           onCommit?: boolean;
           stop?: boolean;
@@ -57,11 +58,12 @@ export function watchCommand(): Command {
             uninstallHooks(repoPath);
             return;
           }
+          const repoId = resolveRepoId(opts.repo);
           if (opts.onCommit) {
-            installHooks(repoPath, opts.repo);
+            installHooks(repoPath, repoId);
             return;
           }
-          await runWatcher(repoPath, opts.repo, opts.debounce);
+          await runWatcher(repoPath, repoId, opts.debounce);
         } catch (e) {
           const err = e as {
             response?: { data?: { message?: string; detail?: string } };
