@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AuthenticatedUser } from '@vectorgraph/shared-types';
+import { AuthenticatedUser } from '@trchat/shared-types';
 import jwt from 'jsonwebtoken';
 
 type SessionPayload = {

@@ -1,12 +1,12 @@
 import { Controller, Get, Post, Delete, Param, Body } from '@nestjs/common';
-import { AuthenticatedUser } from '@vectorgraph/shared-types';
+import { AuthenticatedUser } from '@trchat/shared-types';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import { ReposService } from './repos.service';
 import {
   CreateRepoDto,
   GraphSyncDto,
   ImportGithubRepoDto,
-} from '@vectorgraph/shared-types';
+} from '@trchat/shared-types';
 
 @Controller('repos')
 export class ReposController {

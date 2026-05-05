@@ -11,10 +11,12 @@ import { Surface } from '../../../components/atoms/Surface';
 import { BrandLogo } from '../../../components/molecules/BrandLogo';
 import { FieldGroup } from '../../../components/molecules/FieldGroup';
 import { Notice } from '../../../components/molecules/Notice';
+import { useAuth } from '../providers/AuthProvider';
 import { cn } from '../../../lib/ui';
 
 export function SignInForm() {
   const router = useRouter();
+  const { refresh } = useAuth();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,6 +50,7 @@ export function SignInForm() {
 
       router.replace('/dashboard');
       router.refresh();
+      await refresh();
     } catch (err: any) {
       setError(err.message ?? 'Unable to sign in.');
     } finally {

@@ -1,0 +1,46 @@
+name: Release CLI
+
+on:
+  push:
+    tags:
+      - 'cli-v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (build + pack only, do not publish)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci
+
+      - name: Build CLI
+        run: npm exec -- nx run cli:build
+
+      - name: Verify package contents
+        working-directory: apps/cli
+        run: npm pack --dry-run
+
+      - name: Publish to npm (beta tag)
+        if: ${{ github.event_name == 'push' || inputs.dry_run != true }}
+        working-directory: apps/cli
+        run: npm publish --access public --tag beta
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

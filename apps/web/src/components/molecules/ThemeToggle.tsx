@@ -1,6 +1,6 @@
 'use client';
 
-import { ThemeMode } from '@vectorgraph/shared-types';
+import { ThemeMode } from '@trchat/shared-types';
 import { MonitorIcon, MoonIcon, SunIcon } from '../atoms/Icon';
 import { useTheme } from '../../features/theme/providers/ThemeProvider';
 import { cn } from '../../lib/ui';

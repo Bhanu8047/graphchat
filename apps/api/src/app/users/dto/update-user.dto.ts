@@ -6,7 +6,7 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
-import { ThemeMode } from '@vectorgraph/shared-types';
+import { ThemeMode } from '@trchat/shared-types';
 
 export class UpdateUserDto {
   @IsOptional()

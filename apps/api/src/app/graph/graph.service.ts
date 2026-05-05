@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MongoVectorService } from '@vectorgraph/vector-client';
-import { GraphNode, GraphSnapshot } from '@vectorgraph/shared-types';
+import { MongoVectorService } from '@trchat/vector-client';
+import { GraphNode, GraphSnapshot } from '@trchat/shared-types';
 
 @Injectable()
 export class GraphService {

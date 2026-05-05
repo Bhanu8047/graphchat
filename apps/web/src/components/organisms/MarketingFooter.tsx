@@ -6,13 +6,22 @@ const columns = [
   {
     title: 'Product',
     links: [
-      { href: '#features', label: 'Features' },
-      { href: '#how-it-works', label: 'How it works' },
-      { href: '#showcase', label: 'Visualization' },
+      { href: '/capabilities', label: 'Capabilities' },
+      { href: '/#features', label: 'Features' },
+      { href: '/#how-it-works', label: 'How it works' },
+      { href: '/changelog', label: 'Changelog' },
     ],
   },
   {
-    title: 'Company',
+    title: 'Developers',
+    links: [
+      { href: '/docs', label: 'Documentation' },
+      { href: '/docs#cli', label: 'CLI reference' },
+      { href: '/docs#api', label: 'API reference' },
+    ],
+  },
+  {
+    title: 'Account',
     links: [
       { href: '/auth/sign-up', label: 'Get started' },
       { href: '/auth/sign-in', label: 'Sign in' },
@@ -21,8 +30,8 @@ const columns = [
   {
     title: 'Legal',
     links: [
-      { href: '#', label: 'Privacy' },
-      { href: '#', label: 'Terms' },
+      { href: '/legal/privacy', label: 'Privacy' },
+      { href: '/legal/terms', label: 'Terms' },
     ],
   },
 ] as const;

@@ -2,7 +2,7 @@ import type {
   EmbeddingProvider,
   LLMProvider,
   SuggestResult,
-} from '@vectorgraph/shared-types';
+} from '@trchat/shared-types';
 
 export type VoyageModel =
   | 'voyage-code-3'

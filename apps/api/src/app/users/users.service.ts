@@ -4,7 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AppUser, AuthenticatedUser } from '@vectorgraph/shared-types';
+import { AppUser, AuthenticatedUser } from '@trchat/shared-types';
 import { PasswordService } from '../common/auth/password.service';
 import { UsersRepository } from './users.repository';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -35,6 +35,7 @@ export class UsersService {
       name,
       authProvider,
       themePreference: user.themePreference ?? 'system',
+      role: user.role ?? 'user',
       githubId,
       githubLogin,
       avatarUrl,

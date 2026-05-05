@@ -1,16 +1,32 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Button } from '../atoms/Button';
 import { BellIcon, MenuIcon, SearchIcon } from '../atoms/Icon';
 import { BreadcrumbTrail } from '../molecules/BreadcrumbTrail';
 import { ThemeToggle } from '../molecules/ThemeToggle';
 import { UserMenu } from '../molecules/UserMenu';
+import { CommandPalette } from './CommandPalette';
 
 type AppHeaderProps = {
   onOpenMenu: () => void;
 };
 
 export function AppHeader({ onOpenMenu }: AppHeaderProps) {
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // Global ⌘K / Ctrl+K shortcut to toggle the palette.
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setPaletteOpen((open) => !open);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-[var(--border)] bg-[var(--surface)]/85 px-4 backdrop-blur-xl sm:px-6">
       <Button
@@ -30,6 +46,7 @@ export function AppHeader({ onOpenMenu }: AppHeaderProps) {
       <div className="hidden flex-1 justify-center md:flex">
         <button
           type="button"
+          onClick={() => setPaletteOpen(true)}
           className="flex w-full max-w-md items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-2 text-sm text-[var(--muted-foreground)] transition hover:border-[var(--border-strong)] hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
           aria-label="Open search"
         >
@@ -47,6 +64,7 @@ export function AppHeader({ onOpenMenu }: AppHeaderProps) {
         <button
           type="button"
           aria-label="Open search"
+          onClick={() => setPaletteOpen(true)}
           className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--muted-foreground)] transition hover:border-[var(--border-strong)] hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] md:hidden"
         >
           <SearchIcon className="h-4 w-4" />
@@ -63,6 +81,11 @@ export function AppHeader({ onOpenMenu }: AppHeaderProps) {
         </div>
         <UserMenu />
       </div>
+
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+      />
     </header>
   );
 }

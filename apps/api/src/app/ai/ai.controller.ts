@@ -1,5 +1,5 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { AuthenticatedUser, SuggestDto } from '@vectorgraph/shared-types';
+import { AuthenticatedUser, SuggestDto } from '@trchat/shared-types';
 import { AiService } from './ai.service';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 

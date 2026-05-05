@@ -68,12 +68,15 @@ export interface RepositorySyncState {
   changedPaths?: string[];
 }
 
+export type UserRole = 'user' | 'admin';
+
 export interface AppUser {
   id: string;
   email: string;
   name: string;
   authProvider: AuthProvider;
   themePreference: ThemeMode;
+  role: UserRole;
   githubLogin?: string;
   githubId?: string;
   avatarUrl?: string;
@@ -343,4 +346,126 @@ export interface RuntimeProviderConfig {
   defaultEmbeddingProvider?: EmbeddingProvider;
   agentOptions: AgentType[];
   defaultAgent?: AgentType;
+}
+
+// ── CLI auth (sk-trchat-... API keys + JWT exchange) ──────────────────────────
+export interface ApiKey {
+  id: string;
+  keyId: string; // public prefix (24 hex chars)
+  secretHash: string; // hashed secret (64 hex chars unhashed)
+  userId: string;
+  label: string; // human label e.g. "My Laptop", "CI Pipeline"
+  scopes: string[]; // e.g. ['read', 'write', 'analyze']
+  lastUsed?: string;
+  createdAt: string;
+}
+
+export interface ApiKeySummary {
+  id: string;
+  keyId: string;
+  label: string;
+  scopes: string[];
+  lastUsed?: string;
+  createdAt: string;
+}
+
+export interface RefreshTokenRecord {
+  tokenHash: string; // hashed opaque token
+  userId: string;
+  apiKeyId: string;
+  expiresAt: Date;
+  createdAt: string;
+}
+
+export interface ApiTokenResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number; // seconds
+  token_type: 'Bearer';
+}
+
+export interface ApiAccessTokenPayload {
+  sub: string; // userId
+  apiKeyId: string;
+  scopes: string[];
+  iat?: number;
+  exp?: number;
+}
+
+// ── BYOK provider credentials ────────────────────────────────────────────────
+export type CredentialKind = LLMProvider | EmbeddingProvider;
+
+export interface ProviderCredential {
+  id: string;
+  userId: string;
+  provider: CredentialKind;
+  label: string;
+  /** Encrypted at rest (AES-256-GCM, base64 of iv|tag|ciphertext). */
+  cipherText: string;
+  /** Last 4 chars of plaintext key for masked display. */
+  hint: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProviderCredentialSummary {
+  id: string;
+  provider: CredentialKind;
+  label: string;
+  hint: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Per-user model selection ─────────────────────────────────────────────────
+export type ModelService = 'ai-assist' | 'embedding';
+
+export interface ModelSetting {
+  userId: string;
+  service: ModelService;
+  /** When false the user is opted-out of that service entirely. */
+  enabled: boolean;
+  /** LLMProvider for ai-assist, EmbeddingProvider for embedding. */
+  provider?: CredentialKind;
+  model?: string;
+  /** When true the platform will attempt to use the user's own credential. */
+  useOwnKey: boolean;
+  updatedAt: string;
+}
+
+// ── Usage tracking ───────────────────────────────────────────────────────────
+export interface UsageRecord {
+  id: string;
+  userId: string;
+  service: ModelService;
+  provider: CredentialKind;
+  model: string;
+  /** Day bucket in YYYY-MM-DD UTC. */
+  day: string;
+  /** Number of operations in this bucket. */
+  count: number;
+  /** Approximate input + output tokens summed. */
+  tokens: number;
+  updatedAt: string;
+}
+
+export interface UsageSummary {
+  service: ModelService;
+  provider?: CredentialKind;
+  model?: string;
+  day: string;
+  count: number;
+  tokens: number;
+}
+
+// ── Admin-managed rate limits ────────────────────────────────────────────────
+export interface RateLimit {
+  id: string;
+  service: ModelService;
+  /** Daily request cap per user. 0 disables. */
+  dailyLimit: number;
+  /** Per-session (rolling 60 min) cap. 0 disables. */
+  sessionLimit: number;
+  updatedAt: string;
+  updatedBy: string;
 }

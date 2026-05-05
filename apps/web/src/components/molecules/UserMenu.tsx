@@ -21,7 +21,7 @@ function initials(name?: string | null) {
 }
 
 export function UserMenu() {
-  const { user } = useAuth();
+  const { user, setUser, refresh } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -45,8 +45,10 @@ export function UserMenu() {
   const signOut = async () => {
     setOpen(false);
     await fetch('/api/auth/logout', { method: 'POST' });
+    setUser(undefined);
     router.replace('/auth/sign-in');
     router.refresh();
+    await refresh();
   };
 
   return (

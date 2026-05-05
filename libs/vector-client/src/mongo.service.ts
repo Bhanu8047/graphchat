@@ -6,7 +6,7 @@ import {
   GraphEdge,
   GraphNode,
   Repository,
-} from '@vectorgraph/shared-types';
+} from '@trchat/shared-types';
 
 type NodeDoc = ContextNode & { embedding: number[] };
 

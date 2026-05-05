@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { AuthenticatedUser, GraphSyncDto } from '@vectorgraph/shared-types';
+import { AuthenticatedUser, GraphSyncDto } from '@trchat/shared-types';
 import { GraphService } from './graph.service';
 import { ReposService } from '../repos/repos.service';
 import { CurrentUser } from '../common/auth/current-user.decorator';

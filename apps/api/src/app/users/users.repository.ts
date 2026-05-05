@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Collection } from 'mongodb';
-import { AppUser } from '@vectorgraph/shared-types';
+import { AppUser } from '@trchat/shared-types';
 import { MongoDatabaseService } from '../common/database/mongo-database.service';
 
 export type StoredUser = AppUser & { passwordHash?: string };
@@ -21,6 +21,27 @@ export class UsersRepository implements OnModuleInit {
       { githubId: 1 },
       { unique: true, sparse: true },
     );
+    // Backfill: any legacy user without a role becomes 'user'.
+    await this.collection.updateMany(
+      { role: { $exists: false } } as never,
+      { $set: { role: 'user' } } as never,
+    );
+  }
+
+  setRole(id: string, role: 'user' | 'admin') {
+    return this.collection.findOneAndUpdate(
+      { id },
+      { $set: { role, updatedAt: new Date().toISOString() } },
+      { returnDocument: 'after', projection: { _id: 0 } },
+    );
+  }
+
+  list(limit = 100) {
+    return this.collection
+      .find({}, { projection: { _id: 0, passwordHash: 0 } })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
   }
 
   create(user: StoredUser) {

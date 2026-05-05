@@ -1,4 +1,4 @@
-import { SuggestResult } from '@vectorgraph/shared-types';
+import { SuggestResult } from '@trchat/shared-types';
 
 export function buildPrompt(repoName: string, input: string): string {
   return `You are structuring repository context for AI agents.

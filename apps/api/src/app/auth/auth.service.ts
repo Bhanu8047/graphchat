@@ -3,7 +3,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AppUser, AuthenticatedUser } from '@vectorgraph/shared-types';
+import { AppUser, AuthenticatedUser } from '@trchat/shared-types';
 import { v4 as uuid } from 'uuid';
 import { PasswordService } from '../common/auth/password.service';
 import { SessionTokenService } from '../common/auth/session-token.service';
@@ -48,6 +48,7 @@ export class AuthService {
       name: dto.name.trim(),
       authProvider: 'local',
       themePreference: 'system',
+      role: 'user',
       createdAt: now,
       updatedAt: now,
       passwordHash: this.passwords.hash(dto.password),
@@ -103,6 +104,7 @@ export class AuthService {
       name: githubUser.name?.trim() || githubUser.login,
       authProvider: 'github',
       themePreference: 'system',
+      role: 'user',
       githubId: String(githubUser.id),
       githubLogin: githubUser.login,
       avatarUrl: githubUser.avatar_url,

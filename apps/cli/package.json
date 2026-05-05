@@ -1,0 +1,64 @@
+{
+  "name": "@trchat/gph",
+  "version": "0.1.0-beta.2",
+  "description": "trchat CLI (gph) — Repository context graph for AI agents (beta)",
+  "bin": {
+    "gph": "dist/main.js"
+  },
+  "main": "dist/main.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "beta"
+  },
+  "keywords": [
+    "trchat",
+    "gph",
+    "cli",
+    "knowledge-graph",
+    "ai-agents",
+    "vector-search"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/vectorgraph/vector-graph#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vectorgraph/vector-graph.git",
+    "directory": "apps/cli"
+  },
+  "nx": {
+    "name": "cli",
+    "tags": [
+      "scope:cli",
+      "type:app"
+    ],
+    "targets": {
+      "build": {
+        "executor": "nx:run-commands",
+        "cache": true,
+        "options": {
+          "command": "tsc -p tsconfig.app.json",
+          "cwd": "apps/cli"
+        },
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      }
+    }
+  },
+  "dependencies": {
+    "axios": "^1.13.5",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.2",
+    "conf": "^15.1.0",
+    "inquirer": "^13.4.2",
+    "open": "^10.2.0",
+    "ora": "^9.4.0"
+  }
+}
