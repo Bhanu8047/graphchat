@@ -44,13 +44,31 @@ gph search "authentication middleware" --budget 1500
 | `gph logout` | Revoke the refresh token and remove local credentials. |
 | `gph status` | Print the current user, server, and token expiry. |
 | `gph repos` | List repositories accessible to the authenticated user. |
-| `gph index <path>` | Push a local repository checkout to the graph service. |
+| `gph index <path>` | Parse a local repository with bundled Tree-sitter (WASM) and upload only the resulting graph metadata — source code stays on the machine. |
 | `gph search <query>` | Vector + graph search with token-budget aware filtering. |
 | `gph path <a> <b>` | Shortest path between two named symbols. |
 | `gph report` | Generate a `GRAPH_REPORT.md` audit document. |
 | `gph export` | Export the full agent-context bundle as JSON. |
 
 Run `gph <command> --help` for full flag documentation.
+
+## How `gph index` works
+
+`gph index` parses your repository **locally** using a WASM build of
+Tree-sitter shipped inside this package — no remote AST service, no source
+upload. The CLI walks the working tree honouring `.gitignore` and
+`.trchatignore`, runs the language-appropriate grammar on each supported file,
+and posts only the extracted nodes and edges to the API at
+`POST /api/graph/ingest`. The server then runs Leiden clustering and
+persistence on that metadata.
+
+**Languages parsed locally:** Python, TypeScript/TSX, JavaScript, Go, Rust,
+Java, C, C++, Ruby, C#. Files larger than 2 MB are skipped to avoid
+generated/minified artifacts.
+
+**What is sent over the wire:** node labels, AST node types, source file
+paths (relative), source line numbers, and edge relationships. **Not** the
+file contents.
 
 ## Storage
 

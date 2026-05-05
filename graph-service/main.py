@@ -27,6 +27,7 @@ from models.schemas import (
     AnalyzeResponse,
     ClusterRequest,
     ClusterResponse,
+    IngestRequest,
     QueryRequest,
     QueryResponse,
 )
@@ -96,27 +97,20 @@ def health() -> dict:
     return {"status": "ok", "service": "graph-service"}
 
 
-# ── POST /analyze ─────────────────────────────────────────────────────────────
-@app.post("/analyze", response_model=AnalyzeResponse)
-def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
-    """Full pipeline: Tree-sitter AST → NetworkX → Leiden → persist to MongoDB."""
-    start = time.time()
+def _build_and_persist(
+    repo_id: str, nodes: list[dict], edges: list[dict], start: float
+) -> AnalyzeResponse:
+    """Shared pipeline tail: build graph, cluster, persist, cache report.
 
-    safe_path = _safe_repo_path(req.repo_path)
-
-    # 1. AST extraction (zero LLM, zero network)
-    nodes, edges = extract_repo(safe_path, req.repo_id)
-
-    # 2. Build NetworkX graph
+    Used by both ``/analyze`` (server-side extraction) and ``/ingest``
+    (client-side extraction). Steps 2–6 of the original analyze flow.
+    """
     g = build_graph(nodes, edges)
-    _graph_cache[req.repo_id] = g
+    _graph_cache[repo_id] = g
 
-    # 3. Leiden clustering
-    communities = cluster(g, req.repo_id, trials=10)
-    # ``get_surprising_edges`` is computed for diagnostic logging only.
-    get_surprising_edges(g, communities)
+    communities = cluster(g, repo_id, trials=10)
+    get_surprising_edges(g, communities)  # diagnostic only
 
-    # 4. Persist to MongoDB (upsert by id)
     if nodes:
         ops = [
             UpdateOne({"id": n["id"]}, {"$set": n}, upsert=True) for n in nodes
@@ -139,13 +133,11 @@ def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
         ]
         communities_col.bulk_write(ops)
 
-    # 5. Generate + cache GRAPH_REPORT in Redis
-    repo = repos_col.find_one({"id": req.repo_id})
-    repo_name = repo.get("name", req.repo_id) if repo else req.repo_id
+    repo = repos_col.find_one({"id": repo_id})
+    repo_name = repo.get("name", repo_id) if repo else repo_id
     report_md = generate_report(nodes, edges, communities, repo_name)
-    r.setex(f"repo:{req.repo_id}:graph_report", 60 * 60 * 24, report_md)
+    r.setex(f"repo:{repo_id}:graph_report", 60 * 60 * 24, report_md)
 
-    # 6. Cache community prompts in Redis
     node_map = {n["id"]: n for n in nodes}
     for c in communities:
         c_nodes = [node_map[nid] for nid in c["nodeIds"] if nid in node_map]
@@ -155,7 +147,7 @@ def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
         r.setex(f'community:{c["id"]}:prompt', 60 * 60 * 24, prompt)
         meta = {
             "id": c["id"],
-            "repoId": req.repo_id,
+            "repoId": repo_id,
             "label": c["label"],
             "godNodeId": c["godNodeId"],
             "nodeCount": len(c["nodeIds"]),
@@ -170,13 +162,44 @@ def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
             god_node_labels.append(n["label"])
 
     return AnalyzeResponse(
-        repo_id=req.repo_id,
+        repo_id=repo_id,
         nodes_added=len(nodes),
         edges_added=len(edges),
         communities=len(communities),
         god_nodes=god_node_labels[:5],
         duration_ms=duration_ms,
     )
+
+
+# ── POST /analyze ─────────────────────────────────────────────────────────────
+@app.post("/analyze", response_model=AnalyzeResponse)
+def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
+    """Server-side pipeline: Tree-sitter on a path mounted under /repos.
+
+    Used when the graph-service has filesystem access to the repo. For SaaS
+    deployments where the CLI extracts locally, prefer ``/ingest`` instead.
+    """
+    start = time.time()
+    safe_path = _safe_repo_path(req.repo_path)
+    nodes, edges = extract_repo(safe_path, req.repo_id)
+    return _build_and_persist(req.repo_id, nodes, edges, start)
+
+
+# ── POST /ingest ──────────────────────────────────────────────────────────────
+@app.post("/ingest", response_model=AnalyzeResponse)
+def ingest(req: IngestRequest) -> AnalyzeResponse:
+    """Accept a client-extracted graph payload and run the same build/cluster/
+    persist pipeline. Source code never reaches this service.
+
+    The CLI is responsible for stamping ``confidence='EXTRACTED'`` on every
+    node/edge and using the same id/label conventions as the server extractor.
+    """
+    start = time.time()
+    if not req.nodes and not req.edges:
+        raise HTTPException(
+            status_code=400, detail="ingest payload contained no nodes or edges"
+        )
+    return _build_and_persist(req.repo_id, req.nodes, req.edges, start)
 
 
 # ── POST /cluster ─────────────────────────────────────────────────────────────

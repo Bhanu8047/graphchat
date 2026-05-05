@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { IngestGraphDto } from '@trchat/shared-types';
 import { CommunityCacheService } from './community-cache.service';
 import { GraphBridgeService } from './graph-bridge.service';
 
@@ -14,13 +15,23 @@ export class GraphSidecarController {
     private readonly cache: CommunityCacheService,
   ) {}
 
-  /** Trigger AST + Leiden analysis for a repo. */
+  /** Trigger AST + Leiden analysis for a repo (server-side path-based). */
   @Post('analyze')
   analyze(@Body() body: { repoId: string; repoPath: string }) {
     return this.bridge.analyzeRepo({
       repoId: body.repoId,
       repoPath: body.repoPath,
     });
+  }
+
+  /**
+   * Ingest a client-extracted graph payload. The CLI runs Tree-sitter
+   * locally and posts the resulting nodes/edges; source code never reaches
+   * the API. This is the preferred path for SaaS deployments.
+   */
+  @Post('ingest')
+  ingest(@Body() body: IngestGraphDto) {
+    return this.bridge.ingestGraph(body);
   }
 
   /** Re-cluster after the UI added new nodes. */

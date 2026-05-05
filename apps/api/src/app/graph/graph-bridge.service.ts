@@ -1,10 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance } from 'axios';
 import {
   AnalyzeRepoDto,
   AnalyzeRepoResult,
   GraphQueryDto,
+  IngestGraphDto,
 } from '@trchat/shared-types';
 
 /**
@@ -24,55 +30,135 @@ export class GraphBridgeService {
     });
   }
 
+  /**
+   * Surface the sidecar's real error to the caller instead of letting axios
+   * failures fall through as a generic 500. FastAPI puts its message in
+   * `detail`; if absent we keep whatever string the body had.
+   */
+  private rethrow(err: unknown, op: string): never {
+    if (axios.isAxiosError(err)) {
+      const ax = err as AxiosError<{ detail?: unknown; message?: unknown }>;
+      const status = ax.response?.status;
+      const body = ax.response?.data;
+      const detail =
+        (body && typeof body === 'object'
+          ? (body.detail ?? body.message)
+          : body) ?? ax.message;
+      const message =
+        typeof detail === 'string' ? detail : JSON.stringify(detail);
+      this.logger.warn(`${op} failed (status=${status ?? 'n/a'}): ${message}`);
+      if (status && status >= 400 && status < 600) {
+        throw new HttpException({ message, upstream: 'graph-service' }, status);
+      }
+      throw new InternalServerErrorException(
+        `graph-service unreachable: ${message}`,
+      );
+    }
+    this.logger.error(`${op} failed: ${String(err)}`);
+    throw new InternalServerErrorException(`graph-service ${op} failed`);
+  }
+
+  /**
+   * Ingest a client-extracted graph payload (CLI ran Tree-sitter locally).
+   *
+   * The body can be large (10s of MB on big repos), so we set a generous
+   * timeout and let the underlying HTTP body limit be handled by Nest's
+   * `bodyParser` config in main.ts.
+   */
+  async ingestGraph(dto: IngestGraphDto): Promise<AnalyzeRepoResult> {
+    try {
+      const { data } = await this.client.post(
+        '/ingest',
+        {
+          repo_id: dto.repoId,
+          nodes: dto.nodes,
+          edges: dto.edges,
+          languages: dto.languages ?? [],
+        },
+        { maxBodyLength: Infinity, maxContentLength: Infinity },
+      );
+      return {
+        repoId: data.repo_id,
+        nodesAdded: data.nodes_added,
+        edgesAdded: data.edges_added,
+        communities: data.communities,
+        godNodes: data.god_nodes,
+        durationMs: data.duration_ms,
+      };
+    } catch (err) {
+      this.rethrow(err, 'ingest');
+    }
+  }
+
   /** Trigger the full AST + cluster pipeline for a repo. */
   async analyzeRepo(dto: AnalyzeRepoDto): Promise<AnalyzeRepoResult> {
-    const { data } = await this.client.post('/analyze', {
-      repo_id: dto.repoId,
-      repo_path: dto.repoPath,
-      languages: dto.languages ?? [],
-    });
-    return {
-      repoId: data.repo_id,
-      nodesAdded: data.nodes_added,
-      edgesAdded: data.edges_added,
-      communities: data.communities,
-      godNodes: data.god_nodes,
-      durationMs: data.duration_ms,
-    };
+    try {
+      const { data } = await this.client.post('/analyze', {
+        repo_id: dto.repoId,
+        repo_path: dto.repoPath,
+        languages: dto.languages ?? [],
+      });
+      return {
+        repoId: data.repo_id,
+        nodesAdded: data.nodes_added,
+        edgesAdded: data.edges_added,
+        communities: data.communities,
+        godNodes: data.god_nodes,
+        durationMs: data.duration_ms,
+      };
+    } catch (err) {
+      this.rethrow(err, 'analyze');
+    }
   }
 
   /** Re-cluster the existing graph (e.g. after UI added new nodes). */
   async recluster(repoId: string): Promise<void> {
-    await this.client.post('/cluster', { repo_id: repoId });
+    try {
+      await this.client.post('/cluster', { repo_id: repoId });
+    } catch (err) {
+      this.rethrow(err, 'cluster');
+    }
   }
 
   /** Graph-expanded query — call after vector search produces seed IDs. */
   async query(dto: GraphQueryDto & { seedNodeIds: string[] }) {
-    const { data } = await this.client.post('/query', {
-      repo_id: dto.repoId,
-      query: dto.query,
-      mode: dto.mode ?? 'knn',
-      budget: dto.budget ?? 2000,
-      hops: dto.hops ?? 2,
-      seed_node_ids: dto.seedNodeIds,
-    });
-    return data;
+    try {
+      const { data } = await this.client.post('/query', {
+        repo_id: dto.repoId,
+        query: dto.query,
+        mode: dto.mode ?? 'knn',
+        budget: dto.budget ?? 2000,
+        hops: dto.hops ?? 2,
+        seed_node_ids: dto.seedNodeIds,
+      });
+      return data;
+    } catch (err) {
+      this.rethrow(err, 'query');
+    }
   }
 
   /** Fetch the pre-built GRAPH_REPORT.md for a repo. */
   async getReport(repoId: string): Promise<string> {
-    const { data } = await this.client.get(
-      `/report/${encodeURIComponent(repoId)}`,
-    );
-    return data.report;
+    try {
+      const { data } = await this.client.get(
+        `/report/${encodeURIComponent(repoId)}`,
+      );
+      return data.report;
+    } catch (err) {
+      this.rethrow(err, 'report');
+    }
   }
 
   /** Shortest path between two node labels. */
   async getPath(repoId: string, source: string, target: string) {
-    const { data } = await this.client.get('/path', {
-      params: { repo_id: repoId, source, target },
-    });
-    return data;
+    try {
+      const { data } = await this.client.get('/path', {
+        params: { repo_id: repoId, source, target },
+      });
+      return data;
+    } catch (err) {
+      this.rethrow(err, 'path');
+    }
   }
 
   async isHealthy(): Promise<boolean> {

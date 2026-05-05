@@ -10,6 +10,9 @@
     "dist",
     "README.md"
   ],
+  "scripts": {
+    "copy-wasm": "node ./scripts/copy-wasm.js"
+  },
   "engines": {
     "node": ">=18"
   },
@@ -26,10 +29,10 @@
     "vector-search"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/vectorgraph/vector-graph#readme",
+  "homepage": "https://github.com/bhanu8047/trchat#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vectorgraph/vector-graph.git",
+    "url": "https://github.com/bhanu8047/trchat.git",
     "directory": "apps/cli"
   },
   "nx": {
@@ -43,7 +46,11 @@
         "executor": "nx:run-commands",
         "cache": true,
         "options": {
-          "command": "tsc -p tsconfig.app.json",
+          "commands": [
+            "tsc -p tsconfig.app.json",
+            "node ./scripts/copy-wasm.js"
+          ],
+          "parallel": false,
           "cwd": "apps/cli"
         },
         "outputs": [
@@ -57,8 +64,15 @@
     "chalk": "^5.6.2",
     "commander": "^14.0.2",
     "conf": "^15.1.0",
+    "ignore": "^7.0.5",
     "inquirer": "^13.4.2",
     "open": "^10.2.0",
-    "ora": "^9.4.0"
+    "ora": "^9.4.0",
+    "stdin-discarder": "^0.3.2",
+    "web-tree-sitter": "^0.20.8",
+    "yoctocolors": "^2.1.2"
+  },
+  "devDependencies": {
+    "tree-sitter-wasms": "^0.1.13"
   }
 }

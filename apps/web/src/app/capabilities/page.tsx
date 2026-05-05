@@ -6,6 +6,7 @@ import {
   BoxIcon,
   DatabaseIcon,
   GraphIcon,
+  HomeIcon,
   LayersIcon,
   LinkIcon,
   NetworkIcon,
@@ -28,9 +29,10 @@ const capabilities = [
     icon: <LayersIcon className="h-5 w-5" />,
     title: 'Multi-Modal Extraction',
     description:
-      'Parses code (.py, .js, .go, .java, …), Markdown, PDFs and images. Tree-sitter extracts ASTs, call graphs and docstrings; LLMs extract concepts from prose; vision models read diagrams.',
+      'Parses code (.py, .js, .go, .java, …), Markdown, PDFs and images. Tree-sitter (via WASM) runs locally in the gph CLI to extract ASTs and call graphs; LLMs extract concepts from prose; vision models read diagrams.',
     badges: [
       { label: 'tree-sitter', tone: 'indigo' as const },
+      { label: 'WASM', tone: 'indigo' as const },
       { label: 'AST', tone: 'indigo' as const },
       { label: 'vision LLM', tone: 'neutral' as const },
       { label: 'docstrings', tone: 'neutral' as const },
@@ -47,6 +49,12 @@ const capabilities = [
           graphs — without executing or spawning a language server.
         </p>
         <p>
+          AST extraction runs <em>inside the gph CLI</em> using WASM grammars
+          shipped with the binary, so source files never leave the
+          developer&apos;s machine. Only the resulting node and edge metadata is
+          sent to the server for clustering and persistence.
+        </p>
+        <p>
           For prose files (Markdown, RST, PDF text), an LLM pass identifies key
           concepts, entities, and inter-document references and emits them as
           soft nodes into the graph. Image assets go through a vision model that
@@ -55,15 +63,76 @@ const capabilities = [
         </p>
         <ul className="mt-2 space-y-1 pl-4">
           <li className="list-disc">
-            Supported grammars: Python, JavaScript/TypeScript, Go, Java, Rust,
-            Ruby, C/C++, Kotlin, Swift
+            Supported grammars in the CLI: Python, TypeScript/TSX, JavaScript,
+            Go, Rust, Java, C, C++, Ruby, C#
           </li>
           <li className="list-disc">
-            Incremental re-parse — only files that changed since last sync are
-            re-processed
+            <code className="font-mono text-xs">.gitignore</code> and{' '}
+            <code className="font-mono text-xs">.trchatignore</code> are
+            honoured during the walk; files larger than 2 MB are skipped
           </li>
           <li className="list-disc">
             Chunk size and overlap are configurable per file type
+          </li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    icon: <HomeIcon className="h-5 w-5" />,
+    title: 'Local-First AST Extraction',
+    description:
+      'Source code never leaves your machine. The gph CLI bundles WASM grammars for ten languages and runs Tree-sitter directly on disk, sending only structured graph metadata to the API.',
+    badges: [
+      { label: 'privacy', tone: 'teal' as const },
+      { label: 'WASM grammars', tone: 'indigo' as const },
+      { label: 'no source upload', tone: 'teal' as const },
+      { label: '10 languages', tone: 'neutral' as const },
+    ],
+    detail: (
+      <div className="space-y-3">
+        <p>
+          When you run{' '}
+          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
+            gph index
+          </code>
+          , the CLI walks the working tree and parses every supported file with
+          a WASM build of Tree-sitter that ships inside the published{' '}
+          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
+            @trchat/gph
+          </code>{' '}
+          package. The pipeline produces the same node/edge shape the server
+          would produce — just on the developer&apos;s laptop instead of on a
+          shared machine.
+        </p>
+        <p>
+          The HTTPS request to{' '}
+          <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
+            POST /api/graph/ingest
+          </code>{' '}
+          contains only labels, AST node types, source file paths and line
+          numbers — never the file contents. The server runs Leiden clustering
+          and persistence on this metadata exactly as before.
+        </p>
+        <ul className="mt-2 space-y-1 pl-4">
+          <li className="list-disc">
+            Languages: Python, TypeScript, TSX, JavaScript, Go, Rust, Java, C,
+            C++, Ruby, C#
+          </li>
+          <li className="list-disc">
+            Walks honour <code className="font-mono text-xs">.gitignore</code>{' '}
+            and <code className="font-mono text-xs">.trchatignore</code> plus a
+            built-in skip list (
+            <code className="font-mono text-xs">node_modules</code>,{' '}
+            <code className="font-mono text-xs">dist</code>,{' '}
+            <code className="font-mono text-xs">.git</code>, …)
+          </li>
+          <li className="list-disc">
+            No outbound traffic during parsing — extraction is purely local;
+            only the final graph payload is sent
+          </li>
+          <li className="list-disc">
+            Works on uncommitted changes — no need to push or share a Git URL
           </li>
         </ul>
       </div>
@@ -234,7 +303,7 @@ const capabilities = [
             },
             {
               cmd: 'gph index ./src --repo my-api-id',
-              desc: 'Incrementally index a local repo path. Only changed files are re-parsed; prior state is reused.',
+              desc: 'Tree-sitter parses the repo locally inside the CLI; only the extracted nodes and edges (no source) are uploaded for clustering.',
             },
             {
               cmd: 'gph search "authentication middleware" --budget 1500',
