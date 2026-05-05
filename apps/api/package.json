@@ -1,5 +1,5 @@
 {
-  "name": "@vectorgraph/api",
+  "name": "@trchat/api",
   "version": "0.0.1",
   "private": true,
   "nx": {

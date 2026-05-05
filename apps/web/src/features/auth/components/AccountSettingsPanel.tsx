@@ -8,6 +8,7 @@ import { Input } from '../../../components/atoms/Input';
 import { Surface } from '../../../components/atoms/Surface';
 import { FieldGroup } from '../../../components/molecules/FieldGroup';
 import { Notice } from '../../../components/molecules/Notice';
+import { useConfirm } from '../../dialogs/providers/ConfirmDialogProvider';
 import { useAuth } from '../providers/AuthProvider';
 
 export function AccountSettingsPanel() {
@@ -22,6 +23,7 @@ export function AccountSettingsPanel() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const confirm = useConfirm();
 
   useEffect(() => {
     setForm((current) => ({
@@ -53,6 +55,14 @@ export function AccountSettingsPanel() {
   };
 
   const remove = async () => {
+    const ok = await confirm({
+      title: 'Delete your account?',
+      description:
+        'This permanently removes your user record and signs you out. Existing repository and graph data remains in storage but you will lose access to it. This cannot be undone.',
+      confirmLabel: 'Delete account',
+      tone: 'danger',
+    });
+    if (!ok) return;
     setDeleting(true);
     setError('');
     try {

@@ -1,5 +1,5 @@
 {
-  "name": "@vectorgraph/web",
+  "name": "@trchat/web",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -35,5 +35,10 @@
         ]
       }
     }
+  },
+  "dependencies": {
+    "@tiptap/extension-typography": "^3.22.5",
+    "@tiptap/react": "^3.22.5",
+    "@tiptap/starter-kit": "^3.22.5"
   }
 }

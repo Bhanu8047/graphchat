@@ -23,7 +23,7 @@ services:
     container_name: trchat-api
     env_file: .env.prod
     environment:
-      MONGODB_URI: mongodb://root:${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD is required}@mongo:27017/vectorgraph?authSource=admin
+      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:?MONGO_INITDB_ROOT_USERNAME is required}:${MONGO_INITDB_ROOT_PASSWORD:?MONGO_INITDB_ROOT_PASSWORD is required}@mongo:27017/${MONGO_INITDB_DATABASE:-vectorgraph}?authSource=admin
       REDIS_URL: redis://redis:6379
       WEB_URL: ${WEB_URL:-https://trchat.co}
     depends_on:
@@ -89,8 +89,9 @@ services:
     image: mongo:7
     container_name: trchat-mongo
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD is required}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:?MONGO_INITDB_ROOT_USERNAME is required}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:?MONGO_INITDB_ROOT_PASSWORD is required}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-vectorgraph}
     volumes:
       - mongo_data:/data/db
     healthcheck:
@@ -117,7 +118,7 @@ services:
     container_name: trchat-graph-service
     env_file: .env.prod
     environment:
-      MONGODB_URI: mongodb://root:${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD is required}@mongo:27017/vectorgraph?authSource=admin
+      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:?MONGO_INITDB_ROOT_USERNAME is required}:${MONGO_INITDB_ROOT_PASSWORD:?MONGO_INITDB_ROOT_PASSWORD is required}@mongo:27017/${MONGO_INITDB_DATABASE:-vectorgraph}?authSource=admin
       REDIS_URL: redis://redis:6379
     volumes:
       - repo_data:/repos

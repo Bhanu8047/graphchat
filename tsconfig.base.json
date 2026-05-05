@@ -16,7 +16,7 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@vectorgraph/source"]
+    "customConditions": ["@trchat/source"]
   },
   "exclude": ["node_modules", "tmp"]
 }

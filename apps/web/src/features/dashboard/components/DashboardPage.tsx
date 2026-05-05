@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
-import type { DashboardStats } from '@vectorgraph/shared-types';
+import type { DashboardStats } from '@trchat/shared-types';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../auth/providers/AuthProvider';
 import { Surface } from '../../../components/atoms/Surface';

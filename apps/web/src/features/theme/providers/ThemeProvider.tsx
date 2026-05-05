@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { ThemeMode } from '@vectorgraph/shared-types';
+import { ThemeMode } from '@trchat/shared-types';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../auth/providers/AuthProvider';
 

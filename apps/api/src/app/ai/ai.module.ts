@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { AiController } from './ai.controller';
-import { RuntimeConfigModule } from '../runtime/runtime-config.module';
+import { AiResolverModule } from '../ai-resolver/ai-resolver.module';
 
 @Module({
-  imports: [RuntimeConfigModule],
+  imports: [AiResolverModule],
   providers: [AiService],
   controllers: [AiController],
 })

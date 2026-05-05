@@ -54,6 +54,21 @@ compose() {
   docker compose --env-file .env.prod --env-file "$candidate_env" -f "$COMPOSE_FILE" "$@"
 }
 
+service_is_running() {
+  local service="$1"
+
+  local container_id
+  container_id="$(compose ps -q "$service" 2>/dev/null || true)"
+
+  if [ -z "$container_id" ]; then
+    return 1
+  fi
+
+  local state
+  state="$(docker inspect -f '{{.State.Status}}' "$container_id" 2>/dev/null || true)"
+  [ "$state" = "running" ]
+}
+
 has_deploy_service() {
   local wanted="$1"
 
@@ -107,6 +122,10 @@ fi
 if [ -n "${DEPLOY_SERVICES:-}" ]; then
   # DEPLOY_SERVICES is a space-delimited list of compose services to recreate.
   read -r -a deploy_services <<< "$DEPLOY_SERVICES"
+fi
+
+if [ ${#deploy_services[@]} -gt 0 ] && ! has_deploy_service nginx && ! service_is_running nginx; then
+  deploy_services+=(nginx)
 fi
 
 if [ ${#pull_services[@]} -gt 0 ]; then

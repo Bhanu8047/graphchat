@@ -1,6 +1,7 @@
 import './globals.css';
 import type { ReactNode } from 'react';
 import { AuthProvider } from '../features/auth/providers/AuthProvider';
+import { ConfirmDialogProvider } from '../features/dialogs/providers/ConfirmDialogProvider';
 import { ThemeProvider } from '../features/theme/providers/ThemeProvider';
 import { themeInitScript } from '../features/theme/themeInitScript';
 
@@ -17,7 +18,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="antialiased">
         <AuthProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <ConfirmDialogProvider>{children}</ConfirmDialogProvider>
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

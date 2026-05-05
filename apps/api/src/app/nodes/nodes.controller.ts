@@ -1,6 +1,6 @@
 import { Controller, Post, Delete, Param, Body } from '@nestjs/common';
 import { NodesService } from './nodes.service';
-import { AuthenticatedUser, CreateNodeDto } from '@vectorgraph/shared-types';
+import { AuthenticatedUser, CreateNodeDto } from '@trchat/shared-types';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 
 @Controller('nodes')

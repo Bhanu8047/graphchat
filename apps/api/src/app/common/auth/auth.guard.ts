@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { ApiAccessTokenService } from '../../auth/api-access-token.service';
 import { APP_SESSION_COOKIE } from './auth.constants';
 import { IS_PUBLIC_ROUTE } from './public.decorator';
 import { SessionTokenService } from './session-token.service';
@@ -15,6 +16,7 @@ export class AppAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly sessions: SessionTokenService,
+    private readonly apiAccessTokens: ApiAccessTokenService,
     private readonly users: UsersService,
   ) {}
 
@@ -38,13 +40,17 @@ export class AppAuthGuard implements CanActivate {
       throw new UnauthorizedException('Authentication is required.');
     }
 
-    const payload = this.sessions.verify(token);
-    if (!payload) {
+    // Try a browser session token first; fall back to a CLI API access token.
+    const userId =
+      this.sessions.verify(token)?.sub ??
+      this.apiAccessTokens.verify(token)?.sub;
+
+    if (!userId) {
       if (isPublic) return true;
       throw new UnauthorizedException('Session is invalid or expired.');
     }
 
-    const user = await this.users.findPublicById(payload.sub);
+    const user = await this.users.findPublicById(userId);
     if (!user) {
       if (isPublic) return true;
       throw new UnauthorizedException('User no longer exists.');

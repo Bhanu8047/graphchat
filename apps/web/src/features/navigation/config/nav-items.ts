@@ -9,7 +9,12 @@ import {
   SparkleIcon,
 } from '../../../components/atoms/Icon';
 
-export type NavSection = 'workspace' | 'intelligence' | 'output' | 'account';
+export type NavSection =
+  | 'workspace'
+  | 'intelligence'
+  | 'output'
+  | 'account'
+  | 'admin';
 
 export type NavigationItem = {
   href: string;
@@ -17,6 +22,8 @@ export type NavigationItem = {
   description: string;
   section: NavSection;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
+  /** When true, only renders for users with role === 'admin'. */
+  adminOnly?: boolean;
 };
 
 export const navItems: readonly NavigationItem[] = [
@@ -56,6 +63,13 @@ export const navItems: readonly NavigationItem[] = [
     icon: SparkleIcon,
   },
   {
+    href: '/usage',
+    label: 'Usage',
+    description: 'Per-model request volumes',
+    section: 'intelligence',
+    icon: SparkleIcon,
+  },
+  {
     href: '/export',
     label: 'Export',
     description: 'Agent-ready graph payloads',
@@ -65,9 +79,17 @@ export const navItems: readonly NavigationItem[] = [
   {
     href: '/settings',
     label: 'Settings',
-    description: 'Account and session controls',
+    description: 'Profile, models, keys, connections',
     section: 'account',
     icon: SettingsIcon,
+  },
+  {
+    href: '/admin',
+    label: 'Admin',
+    description: 'Rate limits & users',
+    section: 'admin',
+    icon: SettingsIcon,
+    adminOnly: true,
   },
 ];
 
@@ -79,4 +101,5 @@ export const navSections: ReadonlyArray<{
   { id: 'intelligence', label: 'Intelligence' },
   { id: 'output', label: 'Output' },
   { id: 'account', label: 'Account' },
+  { id: 'admin', label: 'Admin' },
 ];

@@ -26,12 +26,12 @@ RUN rm -rf node_modules/@vectorgraph
 COPY --from=builder /app/apps/api/dist/main.js ./dist/main.js
 
 # Compiled @vectorgraph workspace libs (required by the bundle at runtime)
-COPY --from=builder /app/libs/shared-types/dist ./node_modules/@vectorgraph/shared-types/dist
-COPY --from=builder /app/libs/shared-types/package.json ./node_modules/@vectorgraph/shared-types/package.json
-COPY --from=builder /app/libs/vector-client/dist ./node_modules/@vectorgraph/vector-client/dist
-COPY --from=builder /app/libs/vector-client/package.json ./node_modules/@vectorgraph/vector-client/package.json
-COPY --from=builder /app/libs/ai/dist ./node_modules/@vectorgraph/ai/dist
-COPY --from=builder /app/libs/ai/package.json ./node_modules/@vectorgraph/ai/package.json
+COPY --from=builder /app/libs/shared-types/dist ./node_modules/@trchat/shared-types/dist
+COPY --from=builder /app/libs/shared-types/package.json ./node_modules/@trchat/shared-types/package.json
+COPY --from=builder /app/libs/vector-client/dist ./node_modules/@trchat/vector-client/dist
+COPY --from=builder /app/libs/vector-client/package.json ./node_modules/@trchat/vector-client/package.json
+COPY --from=builder /app/libs/ai/dist ./node_modules/@trchat/ai/dist
+COPY --from=builder /app/libs/ai/package.json ./node_modules/@trchat/ai/package.json
 
 EXPOSE 3001
 CMD ["node", "dist/main.js"]

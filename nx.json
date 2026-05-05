@@ -86,5 +86,23 @@
       }
     }
   },
+  "release": {
+    "projects": ["cli"],
+    "projectsRelationship": "independent",
+    "releaseTagPattern": "cli-v{version}",
+    "version": {
+      "preVersionCommand": "npx nx run cli:build",
+      "generatorOptions": {
+        "currentVersionResolver": "git-tag",
+        "fallbackCurrentVersionResolver": "disk"
+      }
+    },
+    "changelog": {
+      "workspaceChangelog": false,
+      "projectChangelogs": {
+        "createRelease": "github"
+      }
+    }
+  },
   "analytics": true
 }
