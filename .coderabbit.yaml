@@ -1,0 +1,345 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+version: "2"
+
+language: en-US
+
+# Applied to every PR CodeRabbit reviews.
+labels:
+  - rabbit-review
+
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_instructions: >
+    Summarise the PR as a concise bullet-point list grouped by area (web, api,
+    graph-service, libs, ci, docs). Mention any security, performance, or
+    breaking-change implications. Keep it under 10 bullets.
+  high_level_summary_in_walkthrough: false
+  poem: true
+  review_status: true
+  review_details: true
+  commit_status: true
+  collapse_walkthrough: false
+  changed_files_summary: true
+  sequence_diagrams: true
+  estimate_code_review_effort: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+
+  # Auto-suggest labels based on changed paths and apply them automatically.
+  suggested_labels: true
+  auto_apply_labels: true
+  labeling_instructions:
+    - label: "area: web"
+      instructions: Apply when the PR contains changes under apps/web/.
+    - label: "area: api"
+      instructions: Apply when the PR contains changes under apps/api/.
+    - label: "area: cli"
+      instructions: Apply when the PR contains changes under apps/cli/.
+    - label: "area: graph-service"
+      instructions: Apply when the PR contains changes under graph-service/.
+    - label: "area: libs"
+      instructions: Apply when the PR contains changes under libs/.
+    - label: "area: ci"
+      instructions: Apply when the PR contains changes under .github/workflows/ or docker files.
+    - label: "area: docs"
+      instructions: Apply when the PR contains changes to .md files, docs/, or README.
+    - label: "security"
+      instructions: Apply when the PR modifies auth flows, JWT handling, cookie settings, CSP headers, secret management, or dependency versions with known CVEs.
+    - label: "breaking change"
+      instructions: Apply when the PR removes or renames public API endpoints, changes DB schemas, or alters shared-types in a backwards-incompatible way.
+    - label: "dependencies"
+      instructions: Apply when the PR only updates package.json, requirements.txt, or lock files.
+
+  suggested_reviewers: true
+
+  # Skip noise — bot bumps and explicit WIP markers.
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT MERGE"
+      - "wip"
+      - "[skip review]"
+    base_branches:
+      - main
+
+  # Ignore generated / build artefacts so review budget stays on real code.
+  path_filters:
+    - "!apps/web/.next/**"
+    - "!apps/web/out/**"
+    - "!**/dist/**"
+    - "!**/out-tsc/**"
+    - "!**/node_modules/**"
+    - "!apps/cli/scripts/copy-wasm.js"
+    - "!**/*.lock"
+    - "!pnpm-lock.yaml"
+    - "!package-lock.json"
+
+  # Per-area review guidance tuned to this monorepo's stack.
+  path_instructions:
+    - path: "apps/web/**"
+      instructions: >
+        This is a Next.js 16 App Router application using TypeScript, Tailwind
+        CSS v4, and the Nx monorepo setup. Check that: Server Components vs
+        Client Components boundaries are correct; metadata (title, description,
+        openGraph, canonical) is present on every public page; cookies are
+        httpOnly and sameSite; no secrets or API URLs are leaked to the client
+        bundle; Tailwind utility classes follow the project's design-token
+        convention (--color-* CSS variables). Flag any direct DOM manipulation
+        that bypasses React.
+    - path: "apps/api/**"
+      instructions: >
+        This is a NestJS application. Check that: all route handlers validate
+        input with class-validator DTOs; JWT verification uses the shared auth
+        guard; passwords and API keys are never logged; refresh-token rotation
+        invalidates the previous token; no raw SQL or NoSQL injection vectors
+        are present; rate-limiting is applied to auth endpoints.
+    - path: "apps/cli/**"
+      instructions: >
+        This is the gph CLI tool. Verify that: no credentials are written to
+        stdout or log files; file paths provided by the user are not used in
+        shell interpolation; WASM grammar files are referenced via the
+        copy-wasm script rather than bundled inline; error messages are
+        user-friendly and do not expose stack traces.
+    - path: "graph-service/**"
+      instructions: >
+        This is a Python FastAPI service. Check that: Pydantic models validate
+        all inputs; graph algorithms (Leiden clustering, shortest-path) handle
+        empty graphs gracefully; no pickle or eval is used; API responses do
+        not expose internal node IDs or raw database identifiers by default.
+    - path: "libs/**"
+      instructions: >
+        These are shared libraries consumed by both api and web. Any
+        interface change in shared-types is a potential breaking change —
+        flag it explicitly. Ensure no Node-specific imports leak into
+        browser-safe libs.
+    - path: "docker/**"
+      instructions: >
+        Review Dockerfiles for: pinned base image digests or at minimum pinned
+        tags; no secrets copied into the image layer; non-root USER set;
+        multi-stage build used to keep the final image lean; EXPOSE matches
+        actual service port.
+    - path: ".github/workflows/**"
+      instructions: >
+        Review GitHub Actions workflows for: no use of pull_request_target
+        with untrusted code checkout; secrets accessed only via
+        ${{ secrets.* }} and never echoed; pinned action versions (SHA or
+        tagged); no world-writable GITHUB_TOKEN permissions; deploy jobs gated
+        behind environment protection rules.
+    - path: "scripts/vps/**"
+      instructions: >
+        These are server provisioning and deploy shell scripts. Check that:
+        no plaintext credentials are embedded; all variables are quoted to
+        prevent word-splitting; errexit / nounset flags are set; SSH hardening
+        settings are not accidentally reverted.
+
+  # Finishing touches available via checkbox or @coderabbitai command.
+  finishing_touches:
+    docstrings:
+      enabled: true
+    unit_tests:
+      enabled: true
+    simplify:
+      enabled: true
+
+  # Soft pre-merge checks (warnings, not blockers).
+  pre_merge_checks:
+    title:
+      mode: warning
+      requirements: >
+        PR title must follow Conventional Commits format:
+        <type>(<optional scope>): <description>. Valid types are feat, fix,
+        docs, style, refactor, perf, test, build, ci, chore, revert.
+        Example: "feat(web): add OpenGraph image to homepage".
+    description:
+      mode: warning
+    issue_assessment:
+      mode: warning
+
+  # Static analysis tools — enable only what applies to this stack.
+  tools:
+    # TypeScript / JavaScript
+    eslint:
+      enabled: true
+    # Python
+    ruff:
+      enabled: true
+    flake8:
+      enabled: true
+    pylint:
+      enabled: true
+    # Shell scripts
+    shellcheck:
+      enabled: true
+    # Dockerfiles
+    hadolint:
+      enabled: true
+    # GitHub Actions
+    actionlint:
+      enabled: true
+    # YAML (nx.json, docker-compose, workflows)
+    yamllint:
+      enabled: true
+    # Markdown / docs
+    markdownlint:
+      enabled: true
+    # GitHub CI status integration
+    github-checks:
+      enabled: true
+      timeout_ms: 120000
+    # Secret scanning (two complementary scanners)
+    gitleaks:
+      enabled: true
+    trufflehog:
+      enabled: true
+    # Security / vulnerability scanning
+    opengrep:
+      enabled: true
+    semgrep:
+      enabled: true
+    osvScanner:
+      enabled: true
+    trivy:
+      enabled: true
+    # .env file hygiene
+    dotenvLint:
+      enabled: true
+    # LanguageTool — grammar/spell check for docs and comments
+    languagetool:
+      enabled: true
+      disabled_categories:
+        - TYPOS
+        - TYPOGRAPHY
+        - CASING
+    # Disable tools with no matching language in this repo
+    biome:
+      enabled: false
+    oxc:
+      enabled: false
+    golangci-lint:
+      enabled: false
+    rubocop:
+      enabled: false
+    brakeman:
+      enabled: false
+    phpstan:
+      enabled: false
+    phpmd:
+      enabled: false
+    phpcs:
+      enabled: false
+    swiftlint:
+      enabled: false
+    detekt:
+      enabled: false
+    clang:
+      enabled: false
+    cppcheck:
+      enabled: false
+    buf:
+      enabled: false
+    regal:
+      enabled: false
+    tflint:
+      enabled: false
+    checkov:
+      enabled: false
+    circleci:
+      enabled: false
+    clippy:
+      enabled: false
+    sqlfluff:
+      enabled: false
+    fortitudeLint:
+      enabled: false
+    luacheck:
+      enabled: false
+    blinter:
+      enabled: false
+    shopifyThemeCheck:
+      enabled: false
+    smartyLint:
+      enabled: false
+    emberTemplateLint:
+      enabled: false
+    psscriptanalyzer:
+      enabled: false
+    pmd:
+      enabled: false
+    htmlhint:
+      enabled: false
+    stylelint:
+      enabled: false
+    checkmake:
+      enabled: false
+    prismaLint:
+      enabled: false
+    ast-grep:
+      essential_rules: true
+
+chat:
+  auto_reply: true
+  art: true
+  allow_non_org_members: true
+
+knowledge_base:
+  web_search:
+    enabled: true
+  # Read CLAUDE.md, AGENTS.md, and CONTRIBUTING.md as coding guidelines.
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "**/CLAUDE.md"
+      - "**/AGENTS.md"
+      - "CONTRIBUTING.md"
+      - ".github/copilot-instructions.md"
+  learnings:
+    scope: local
+  issues:
+    scope: local
+  pull_requests:
+    scope: local
+
+code_generation:
+  docstrings:
+    language: en-US
+    path_instructions:
+      - path: "apps/api/**/*.ts"
+        instructions: >
+          Use JSDoc-style docstrings. Include @param and @returns tags.
+          Keep descriptions one sentence unless a param needs clarification.
+      - path: "graph-service/**/*.py"
+        instructions: >
+          Use Google-style docstrings. Include Args, Returns, and Raises
+          sections where applicable.
+  unit_tests:
+    path_instructions:
+      - path: "apps/web/**"
+        instructions: >
+          Use Jest + React Testing Library. Test component rendering and
+          user interactions. Mock next/navigation and next/headers.
+      - path: "apps/api/**"
+        instructions: >
+          Use Jest with NestJS testing utilities (@nestjs/testing). Use
+          supertest for e2e-style controller tests. Mock external services.
+      - path: "graph-service/**"
+        instructions: >
+          Use pytest. Mock HTTP calls with respx or httpx mocking. Test
+          edge cases for empty graphs and single-node graphs.
+
+issue_enrichment:
+  auto_enrich:
+    enabled: true
+  planning:
+    enabled: true
+    auto_planning:
+      enabled: true
+      labels:
+        - "feature"
+        - "enhancement"
+        - "bug"

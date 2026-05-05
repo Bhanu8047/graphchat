@@ -38,9 +38,9 @@ jobs:
         working-directory: apps/cli
         run: npm pack --dry-run
 
-      - name: Publish to npm (beta tag)
-        if: ${{ github.event_name == 'push' || inputs.dry_run != true }}
+      - name: Publish to npm
+        if: ${{ inputs.dry_run != true }}
         working-directory: apps/cli
-        run: npm publish --access public --tag beta
+        run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -15,7 +15,14 @@ function parseAllowedOrigins(): string[] {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Client-extracted graph ingest payloads can be tens of MB on large repos.
+  // Default 100kb is too small; cap at 50MB to avoid trivial DoS via huge bodies.
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: true,
+    rawBody: false,
+  });
+  app.useBodyParser('json', { limit: '50mb' });
+  app.useBodyParser('urlencoded', { limit: '50mb', extended: true });
   // Required so secure cookies, rate limiting, and X-Forwarded-* work
   // correctly behind nginx/Cloudflare.
   app.set('trust proxy', 1);

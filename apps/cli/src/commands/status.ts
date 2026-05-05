@@ -17,11 +17,11 @@ export function statusCommand(): Command {
     .description('Show connection status and indexed repositories')
     .action(async () => {
       const creds = loadCredentials();
-      printSeparator('TRCHAT STATUS');
+      printSeparator('GRAPHCHAT STATUS');
 
       if (!creds) {
         console.log(chalk.red('● Not logged in'));
-        console.log(`  Run: ${chalk.cyan('gph login --key sk-trchat-...')}`);
+        console.log(`  Run: ${chalk.cyan('gph login --key sk-graphchat-...')}`);
         return;
       }
 

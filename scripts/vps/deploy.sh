@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-/opt/trchat}"
+APP_DIR="${APP_DIR:-/opt/graphchat}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
 MAX_HEALTH_CHECK_ATTEMPTS="${MAX_HEALTH_CHECK_ATTEMPTS:-30}"
 HEALTH_CHECK_TIMEOUT_SECONDS=$((MAX_HEALTH_CHECK_ATTEMPTS * 5))

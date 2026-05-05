@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { MongoVectorService } from '@trchat/vector-client';
-import { AgentExportPayload, NodeType } from '@trchat/shared-types';
+import { MongoVectorService } from '@graphchat/vector-client';
+import { AgentExportPayload, NodeType } from '@graphchat/shared-types';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()

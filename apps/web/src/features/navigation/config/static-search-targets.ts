@@ -126,12 +126,12 @@ export const staticSearchTargets: readonly StaticSearchTarget[] = [
     icon: SettingsIcon,
   },
   {
-    id: 'settings-trchat-keys',
-    label: 'trchat API keys',
-    description: 'CLI authentication keys (sk-trchat-…)',
-    href: '/settings/trchat-keys',
+    id: 'settings-graphchat-keys',
+    label: 'graphchat API keys',
+    description: 'CLI authentication keys (sk-graphchat-…)',
+    href: '/settings/graphchat-keys',
     group: 'Settings',
-    keywords: ['trchat keys', 'cli', 'gph', 'token', 'sk-trchat'],
+    keywords: ['graphchat keys', 'cli', 'gph', 'token', 'sk-graphchat'],
     icon: SettingsIcon,
   },
   {

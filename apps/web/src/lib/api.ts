@@ -100,7 +100,7 @@ export const api = {
     deleteMe: () =>
       apiFetch(`${BASE}/users/me`, { method: 'DELETE' }).then(json),
   },
-  trchatKeys: {
+  graphchatKeys: {
     list: () => apiFetch(`${BASE}/auth/keys`).then(json),
     create: (body: { label: string; scopes?: string[] }) =>
       apiFetch(`${BASE}/auth/keys`, {

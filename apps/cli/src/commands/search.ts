@@ -59,7 +59,7 @@ export function searchCommand(): Command {
           }
 
           if (opts.agent) {
-            console.log(`# TRCHAT Search Results\nQuery: "${query}"\n`);
+            console.log(`# GRAPHCHAT Search Results\nQuery: "${query}"\n`);
             data.forEach((r, i) => {
               console.log(
                 `## [${i + 1}] ${r.node.label} (${r.node.type}) — ${(r.score * 100).toFixed(0)}%`,

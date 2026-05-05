@@ -66,6 +66,6 @@ jobs:
 
       - name: Build affected apps
         env:
-          NEXT_PUBLIC_APP_URL: https://trchat.co
-          NEXT_PUBLIC_API_URL: https://api.trchat.co/api
+          NEXT_PUBLIC_APP_URL: https://graphchat.co
+          NEXT_PUBLIC_API_URL: https://api.graphchat.co/api
         run: npm exec -- nx affected -t build --exclude=ai,shared-types,vector-client --base="${{ steps.shas.outputs.base }}" --head="${{ steps.shas.outputs.head }}" --outputStyle=static

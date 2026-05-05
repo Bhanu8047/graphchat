@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { ProviderCredentialSummary } from '@trchat/shared-types';
+import { ProviderCredentialSummary } from '@graphchat/shared-types';
 import { Badge } from '../../../components/atoms/Badge';
 import { Button } from '../../../components/atoms/Button';
 import { Input } from '../../../components/atoms/Input';

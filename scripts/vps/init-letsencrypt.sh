@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-/opt/trchat}"
-CERT_NAME="${CERT_NAME:-trchat.co}"
-DOMAINS="${DOMAINS:-trchat.co api.trchat.co}"
+APP_DIR="${APP_DIR:-/opt/graphchat}"
+CERT_NAME="${CERT_NAME:-graphchat.co}"
+DOMAINS="${DOMAINS:-graphchat.co api.graphchat.co}"
 
 : "${EMAIL:?Set EMAIL to the Lets Encrypt registration email address.}"
 
@@ -26,8 +26,8 @@ server {
 }
 EOF
 
-docker rm -f trchat-certbot-nginx >/dev/null 2>&1 || true
-docker run -d --name trchat-certbot-nginx \
+docker rm -f graphchat-certbot-nginx >/dev/null 2>&1 || true
+docker run -d --name graphchat-certbot-nginx \
   -p 80:80 \
   -v "$APP_DIR/certbot/www:/var/www/certbot:z" \
   -v "$tmp_conf:/etc/nginx/conf.d/default.conf:ro,z" \
@@ -51,7 +51,7 @@ docker run --rm \
   --non-interactive \
   "${domain_args[@]}"
 
-docker rm -f trchat-certbot-nginx >/dev/null
+docker rm -f graphchat-certbot-nginx >/dev/null
 rm -f "$tmp_conf"
 
 echo "Issued certificate $CERT_NAME for: $DOMAINS"

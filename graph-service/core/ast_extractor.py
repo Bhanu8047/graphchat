@@ -43,7 +43,7 @@ LANG_MAP: dict[str, Language] = {
     ".cs": Language(tscsharp.language()),
 }
 
-# Default ignore patterns (augmented by ``.trchatignore`` on the NestJS side)
+# Default ignore patterns (augmented by ``.graphchatignore`` on the NestJS side)
 DEFAULT_IGNORE = {
     "node_modules",
     "dist",

@@ -1,4 +1,4 @@
-# TRCHAT — Agent Implementation Prompt
+# GRAPHCHAT — Agent Implementation Prompt
 ## Priority 3 & 4: CLI Tool + Advanced Graph Features
 
 > **Read this entire document before writing a single line of code.**
@@ -122,7 +122,7 @@ export interface TokenResponse {
 }
 
 export interface GenerateKeyResponse {
-  key:        string;         // shown ONCE: sk-trchat-{keyId}.{secret}
+  key:        string;         // shown ONCE: sk-graphchat-{keyId}.{secret}
   keyId:      string;
   label:      string;
   createdAt:  string;
@@ -204,7 +204,7 @@ export class AuthService implements OnModuleInit {
 
     const keyId = crypto.randomBytes(12).toString('hex');   // 24 chars
     const secret = crypto.randomBytes(24).toString('hex');  // 48 chars
-    const fullKey = `sk-trchat-${keyId}.${secret}`;
+    const fullKey = `sk-graphchat-${keyId}.${secret}`;
 
     const apiKey: ApiKey = {
       id:         uuid(),
@@ -222,8 +222,8 @@ export class AuthService implements OnModuleInit {
   }
 
   async exchangeApiKey(rawKey: string): Promise<TokenResponse> {
-    // Format: sk-trchat-{keyId}.{secret}
-    const match = rawKey.match(/^sk-trchat-([a-f0-9]{24})\.([a-f0-9]{48})$/);
+    // Format: sk-graphchat-{keyId}.{secret}
+    const match = rawKey.match(/^sk-graphchat-([a-f0-9]{24})\.([a-f0-9]{48})$/);
     if (!match) throw new UnauthorizedException('Invalid API key format');
 
     const [, keyId, secret] = match;
@@ -499,7 +499,7 @@ npm install -D @types/inquirer pkg
 - `axios` — HTTP client with interceptors
 - `chalk` — terminal colors
 - `ora` — spinners
-- `conf` — persistent config in `~/.config/trchat/`
+- `conf` — persistent config in `~/.config/graphchat/`
 - `inquirer` — interactive prompts
 - `open` — open browser for OAuth (future)
 - `pkg` — compile to standalone binary
@@ -512,7 +512,7 @@ Create this exact structure under `apps/cli/src/`:
 apps/cli/src/
 ├── main.ts                  Commander entry point
 ├── commands/
-│   ├── login.ts             gph login --key sk-trchat-...
+│   ├── login.ts             gph login --key sk-graphchat-...
 │   ├── logout.ts            gph logout
 │   ├── status.ts            gph status
 │   ├── repos.ts             gph repos [list|add|delete]
@@ -525,8 +525,8 @@ apps/cli/src/
 │   ├── report.ts            gph report --repo <id>
 │   └── watch.ts             gph watch ./src
 └── lib/
-    ├── credentials.ts       ~/.trchat/credentials (chmod 0600)
-    ├── config.ts            ~/.trchat/config.json
+    ├── credentials.ts       ~/.graphchat/credentials (chmod 0600)
+    ├── config.ts            ~/.graphchat/config.json
     ├── api-client.ts        axios with auto-refresh
     ├── output.ts            consistent pretty-print helpers
     └── token-counter.ts     rough token estimator
@@ -539,23 +539,23 @@ import Conf from 'conf';
 import { homedir } from 'os';
 import { join } from 'path';
 
-export interface TrchatConfig {
+export interface GraphchatConfig {
   serverUrl:  string;
   teamId?:    string;
   defaultRepo?: string;
 }
 
-const conf = new Conf<TrchatConfig>({
-  projectName: 'trchat',
+const conf = new Conf<GraphchatConfig>({
+  projectName: 'graphchat',
   defaults: {
     serverUrl: 'https://yourdomain.com',
   },
 });
 
 export const config = {
-  get: <K extends keyof TrchatConfig>(key: K): TrchatConfig[K] => conf.get(key),
-  set: <K extends keyof TrchatConfig>(key: K, val: TrchatConfig[K]) => conf.set(key, val),
-  getAll: (): TrchatConfig => conf.store,
+  get: <K extends keyof GraphchatConfig>(key: K): GraphchatConfig[K] => conf.get(key),
+  set: <K extends keyof GraphchatConfig>(key: K, val: GraphchatConfig[K]) => conf.set(key, val),
+  getAll: (): GraphchatConfig => conf.store,
   clear: () => conf.clear(),
 };
 ```
@@ -567,8 +567,8 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync, chmodSync } from 'f
 import { join } from 'path';
 import { homedir } from 'os';
 
-const TRCHAT_DIR  = join(homedir(), '.trchat');
-const CREDS_FILE  = join(TRCHAT_DIR, 'credentials');
+const GRAPHCHAT_DIR  = join(homedir(), '.graphchat');
+const CREDS_FILE  = join(GRAPHCHAT_DIR, 'credentials');
 
 export interface Credentials {
   access_token:  string;
@@ -579,8 +579,8 @@ export interface Credentials {
 }
 
 export function saveCredentials(creds: Credentials): void {
-  if (!existsSync(TRCHAT_DIR)) {
-    mkdirSync(TRCHAT_DIR, { recursive: true, mode: 0o700 });
+  if (!existsSync(GRAPHCHAT_DIR)) {
+    mkdirSync(GRAPHCHAT_DIR, { recursive: true, mode: 0o700 });
   }
   writeFileSync(CREDS_FILE, JSON.stringify(creds, null, 2), { mode: 0o600 });
 }
@@ -621,7 +621,7 @@ export function createClient(requireAuth = true): AxiosInstance {
   const server = creds?.server ?? config.get('serverUrl');
 
   if (requireAuth && !creds) {
-    console.error(chalk.red('Not logged in. Run: gph login --key sk-trchat-...'));
+    console.error(chalk.red('Not logged in. Run: gph login --key sk-graphchat-...'));
     process.exit(1);
   }
 
@@ -647,7 +647,7 @@ export function createClient(requireAuth = true): AxiosInstance {
           return client.request(original);
         } catch {
           deleteCredentials();
-          console.error(chalk.red('Session expired. Run: gph login --key sk-trchat-...'));
+          console.error(chalk.red('Session expired. Run: gph login --key sk-graphchat-...'));
           process.exit(1);
         }
       }
@@ -773,20 +773,20 @@ import { printSuccess, printError } from '../lib/output';
 
 export function loginCommand(): Command {
   return new Command('login')
-    .description('Authenticate with your TRCHAT server using an API key')
-    .option('-k, --key <api_key>', 'Your TRCHAT API key (sk-trchat-...)')
+    .description('Authenticate with your GRAPHCHAT server using an API key')
+    .option('-k, --key <api_key>', 'Your GRAPHCHAT API key (sk-graphchat-...)')
     .option('-s, --server <url>', 'Server URL (default: from config)')
     .action(async (opts) => {
       const server = opts.server ?? config.get('serverUrl');
 
       if (!opts.key) {
-        printError('API key required', 'Use: gph login --key sk-trchat-...');
+        printError('API key required', 'Use: gph login --key sk-graphchat-...');
         printError('Generate a key at: ' + chalk.cyan(`${server}/dashboard/keys`));
         process.exit(1);
       }
 
-      if (!opts.key.startsWith('sk-trchat-')) {
-        printError('Invalid key format', 'Key must start with sk-trchat-');
+      if (!opts.key.startsWith('sk-graphchat-')) {
+        printError('Invalid key format', 'Key must start with sk-graphchat-');
         process.exit(1);
       }
 
@@ -845,11 +845,11 @@ export function statusCommand(): Command {
     .description('Show connection status and indexed repositories')
     .action(async () => {
       const creds = loadCredentials();
-      printSeparator('TRCHAT STATUS');
+      printSeparator('GRAPHCHAT STATUS');
 
       if (!creds) {
         console.log(chalk.red('● Not logged in'));
-        console.log(`  Run: ${chalk.cyan('gph login --key sk-trchat-...')}`);
+        console.log(`  Run: ${chalk.cyan('gph login --key sk-graphchat-...')}`);
         return;
       }
 
@@ -1024,7 +1024,7 @@ export function searchCommand(): Command {
 
         if (opts.agent) {
           // Compact format for pasting into AI chat
-          console.log(`# TRCHAT Search Results\nQuery: "${query}"\n`);
+          console.log(`# GRAPHCHAT Search Results\nQuery: "${query}"\n`);
           data.forEach((r: any, i: number) => {
             console.log(`## [${i+1}] ${r.node.label} (${r.node.type}) — ${(r.score*100).toFixed(0)}%`);
             console.log(r.node.content);
@@ -1398,11 +1398,11 @@ const program = new Command();
 
 program
   .name('gph')
-  .description(chalk.bold('TRCHAT') + ' — Repository context graph for AI agents')
+  .description(chalk.bold('GRAPHCHAT') + ' — Repository context graph for AI agents')
   .version('1.0.0')
   .addHelpText('after', `
 ${chalk.dim('Examples:')}
-  ${chalk.cyan('gph login --key sk-trchat-...')}
+  ${chalk.cyan('gph login --key sk-graphchat-...')}
   ${chalk.cyan('gph index ./src --repo my-api-id')}
   ${chalk.cyan('gph search "authentication middleware" --budget 1500')}
   ${chalk.cyan('gph query "what calls validateToken?" --repo my-api-id --mode knn')}
@@ -1470,14 +1470,14 @@ program.parse(process.argv);
 
 ```json
 {
-  "name": "@trchat/cli",
+  "name": "@graphchat/cli",
   "version": "1.0.0",
-  "description": "TRCHAT CLI — Repository context graph for AI agents",
+  "description": "GRAPHCHAT CLI — Repository context graph for AI agents",
   "bin": {
     "gph": "./main.js"
   },
   "main": "main.js",
-  "keywords": ["trchat", "cli", "knowledge-graph", "ai-agents", "vector-search"],
+  "keywords": ["graphchat", "cli", "knowledge-graph", "ai-agents", "vector-search"],
   "license": "MIT"
 }
 ```
@@ -1522,7 +1522,7 @@ export class WatchService implements OnModuleDestroy {
 
     const watcher = chokidar.watch(repoPath, {
       ignoreInitial: true,
-      ignored: /(node_modules|dist|\.git|\.next|__pycache__|\.trchat)/,
+      ignored: /(node_modules|dist|\.git|\.next|__pycache__|\.graphchat)/,
       persistent: true,
     });
 
@@ -1627,13 +1627,13 @@ import stat
 from pathlib import Path
 
 HOOK_SCRIPT_TEMPLATE = """#!/bin/sh
-# TRCHAT auto-reindex hook
+# GRAPHCHAT auto-reindex hook
 # Installed by: gph watch --on-commit
 curl -s -X POST http://localhost:3001/api/graph/analyze \\
   -H "Content-Type: application/json" \\
   -d '{{"repoId": "{repo_id}", "repoPath": "{repo_path}"}}' \\
   -o /dev/null
-echo "[TRCHAT] Graph re-indexed"
+echo "[GRAPHCHAT] Graph re-indexed"
 """
 
 def install_hooks(repo_path: str, repo_id: str) -> dict:
@@ -1651,7 +1651,7 @@ def install_hooks(repo_path: str, repo_id: str) -> dict:
         hook_path = hooks_dir / hook_name
         existing_content = hook_path.read_text() if hook_path.exists() else ''
 
-        if 'TRCHAT' in existing_content:
+        if 'GRAPHCHAT' in existing_content:
             # Already installed
             installed.append(str(hook_path))
             continue
@@ -1676,10 +1676,10 @@ def uninstall_hooks(repo_path: str) -> dict:
         hook_path = git_dir / hook_name
         if hook_path.exists():
             content = hook_path.read_text()
-            if 'TRCHAT' in content:
-                # Remove only TRCHAT lines
+            if 'GRAPHCHAT' in content:
+                # Remove only GRAPHCHAT lines
                 lines = content.split('\n')
-                filtered = [l for l in lines if 'TRCHAT' not in l and 'graph/analyze' not in l]
+                filtered = [l for l in lines if 'GRAPHCHAT' not in l and 'graph/analyze' not in l]
                 hook_path.write_text('\n'.join(filtered))
                 removed.append(str(hook_path))
     return {'removed': removed}
@@ -1991,7 +1991,7 @@ def export_wiki(repo_id: str):
 
     # index.md — entry point
     index_lines = [
-        f'# TRCHAT Knowledge Wiki',
+        f'# GRAPHCHAT Knowledge Wiki',
         f'Repo: {repo_id}',
         f'Generated: {datetime.utcnow().isoformat()}Z',
         f'',
@@ -2112,9 +2112,9 @@ Step 1 — Auth system (required before CLI)
          -H "Authorization: Bearer {token_from_login}" \
          -H "Content-Type: application/json" \
          -d '{"label":"My Laptop"}'
-       # → returns { key: "sk-trchat-...", keyId, label }
+       # → returns { key: "sk-graphchat-...", keyId, label }
        curl -X POST http://localhost:3001/api/auth/exchange \
-         -d '{"api_key":"sk-trchat-..."}'
+         -d '{"api_key":"sk-graphchat-..."}'
        # → returns { access_token, refresh_token, expires_in }
 
 Step 2 — CLI scaffold
@@ -2144,7 +2144,7 @@ Step 2 — CLI scaffold
   2x ✅ Verify:
        nx build cli
        node dist/apps/cli/main.js --help
-       node dist/apps/cli/main.js login --key sk-trchat-{your_key}
+       node dist/apps/cli/main.js login --key sk-graphchat-{your_key}
        node dist/apps/cli/main.js status
        node dist/apps/cli/main.js search "authentication" --budget 500
        node dist/apps/cli/main.js query "what calls validateToken?" --repo {id} --mode knn
@@ -2179,7 +2179,7 @@ Step 4 — Binary distribution
   4a npm run cli:build
   4b npm run cli:binary:linux   # requires bun installed on build machine
   4c ✅ ./dist/gph-linux-x64 --help
-  4d ✅ ./dist/gph-linux-x64 login --key sk-trchat-{key}
+  4d ✅ ./dist/gph-linux-x64 login --key sk-graphchat-{key}
   4e ✅ ./dist/gph-linux-x64 search "auth flow" --budget 1000
 ```
 
@@ -2191,7 +2191,7 @@ Step 4 — Binary distribution
 Auth
   [ ] POST /api/auth/register creates a user, returns id + teamId
   [ ] POST /api/auth/login returns access_token + refresh_token
-  [ ] POST /api/auth/keys (authenticated) returns sk-trchat-... key (shown once)
+  [ ] POST /api/auth/keys (authenticated) returns sk-graphchat-... key (shown once)
   [ ] POST /api/auth/exchange with valid key returns token pair
   [ ] POST /api/auth/refresh with valid refresh token returns new access_token
   [ ] All repo/node/search/ai/export/graph routes return 401 without JWT
@@ -2199,7 +2199,7 @@ Auth
 
 CLI — Core
   [ ] gph --help shows all commands
-  [ ] gph login --key sk-trchat-... saves credentials to ~/.trchat/credentials (chmod 0600)
+  [ ] gph login --key sk-graphchat-... saves credentials to ~/.graphchat/credentials (chmod 0600)
   [ ] gph logout revokes refresh token and deletes credentials file
   [ ] gph status shows server, token validity, and repo list
   [ ] gph repos list shows all repositories
@@ -2243,20 +2243,20 @@ After shipping, users install the CLI with:
 
 ```bash
 # Option 1: npm (requires Node.js)
-npm install -g @trchat/cli
+npm install -g @graphchat/cli
 
 # Option 2: standalone binary (no Node.js required)
 curl -fsSL https://yourdomain.com/downloads/gph-linux-x64 -o gph
 chmod +x gph && sudo mv gph /usr/local/bin/
 
 # Option 3: bun (fastest)
-bun install -g @trchat/cli
+bun install -g @graphchat/cli
 ```
 
 Then authenticate:
 
 ```bash
-gph login --key sk-trchat-{your_key} --server https://yourdomain.com
+gph login --key sk-graphchat-{your_key} --server https://yourdomain.com
 gph status
 gph index ./my-repo --repo {repo-id}
 gph search "how does auth work?" --budget 2000

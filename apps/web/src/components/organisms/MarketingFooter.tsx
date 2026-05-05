@@ -70,7 +70,7 @@ export function MarketingFooter() {
       <div className="border-t border-[var(--border)]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-6 sm:px-6 lg:px-8">
           <div className="text-xs text-[var(--muted-foreground)]">
-            © {new Date().getFullYear()} trchat. All rights reserved.
+            © {new Date().getFullYear()} graphchat. All rights reserved.
           </div>
           <ThemeToggle />
         </div>

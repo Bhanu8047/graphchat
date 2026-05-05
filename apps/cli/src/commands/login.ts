@@ -8,23 +8,23 @@ import { printError, printSuccess } from '../lib/output.js';
 
 export function loginCommand(): Command {
   return new Command('login')
-    .description('Authenticate with your TRCHAT server using an API key')
-    .option('-k, --key <api_key>', 'Your TRCHAT API key (sk-trchat-...)')
+    .description('Authenticate with your GRAPHCHAT server using an API key')
+    .option('-k, --key <api_key>', 'Your GRAPHCHAT API key (sk-graphchat-...)')
     .option('-s, --server <url>', 'Server URL (default: from config)')
     .action(async (opts: { key?: string; server?: string }) => {
       const server = opts.server ?? config.get('serverUrl');
 
       if (!opts.key) {
-        printError('API key required', 'Use: gph login --key sk-trchat-...');
+        printError('API key required', 'Use: gph login --key sk-graphchat-...');
         printError(
           'Generate a key at: ' +
-            chalk.cyan(`${server}/settings/trchat-keys`),
+            chalk.cyan(`${server}/settings/graphchat-keys`),
         );
         process.exit(1);
       }
 
-      if (!opts.key.startsWith('sk-trchat-')) {
-        printError('Invalid key format', 'Key must start with sk-trchat-');
+      if (!opts.key.startsWith('sk-graphchat-')) {
+        printError('Invalid key format', 'Key must start with sk-graphchat-');
         process.exit(1);
       }
 

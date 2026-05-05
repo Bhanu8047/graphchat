@@ -1,5 +1,9 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { AuthenticatedUser, SuggestDto } from '@trchat/shared-types';
+import {
+  AuthenticatedUser,
+  ExplainDto,
+  SuggestDto,
+} from '@graphchat/shared-types';
 import { AiService } from './ai.service';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 
@@ -11,5 +15,11 @@ export class AiController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.svc.suggest(dto, user.id);
+  }
+  @Post('explain') explain(
+    @Body() dto: ExplainDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.svc.explain(dto, user.id);
   }
 }

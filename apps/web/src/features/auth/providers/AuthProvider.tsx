@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { AuthSessionResponse } from '@trchat/shared-types';
+import { AuthSessionResponse } from '@graphchat/shared-types';
 
 type AuthContextValue = {
   user: AuthSessionResponse['user'];

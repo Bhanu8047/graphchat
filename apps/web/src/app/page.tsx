@@ -15,7 +15,7 @@ import { MarketingShell } from '../components/templates/MarketingShell';
 import { cn } from '../lib/ui';
 
 export const metadata = {
-  title: 'trchat — Persistent repository graphs for AI agents',
+  title: 'graphchat — Persistent repository graphs for AI agents',
   description:
     'Build, store, and query branch-specific repository graphs. Give AI agents structured context instead of raw repository dumps.',
 };
@@ -180,10 +180,10 @@ export default function MarketingHomePage() {
               Get started
             </Link>
             <Link
-              href="#how-it-works"
+              href="/capabilities"
               className={buttonStyles({ tone: 'secondary', size: 'lg' })}
             >
-              Our philosophy
+              Our capabilities
             </Link>
           </div>
         </div>

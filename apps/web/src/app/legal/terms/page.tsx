@@ -3,8 +3,8 @@ import { Badge } from '../../../components/atoms/Badge';
 import { MarketingShell } from '../../../components/templates/MarketingShell';
 
 export const metadata = {
-  title: 'Terms of Service — trchat',
-  description: 'Terms governing your use of the trchat service.',
+  title: 'Terms of Service — graphchat',
+  description: 'Terms governing your use of the graphchat service.',
 };
 
 const EFFECTIVE_DATE = 'May 5, 2026';
@@ -56,13 +56,13 @@ export default function TermsPage() {
       {/* Body */}
       <section className="mx-auto max-w-3xl px-4 py-12 pb-24 sm:px-6 lg:px-8">
         <P>
-          By accessing or using trchat (&quot;the service&quot;) you agree to
+          By accessing or using graphchat (&quot;the service&quot;) you agree to
           these Terms of Service. If you do not agree, do not use the service.
         </P>
 
         <H2>1. Open-source software</H2>
         <P>
-          trchat is open-source software released under the{' '}
+          graphchat is open-source software released under the{' '}
           <strong className="font-medium text-[var(--foreground)]">
             MIT License
           </strong>
@@ -81,7 +81,7 @@ export default function TermsPage() {
         <H2>2. Your data and your ownership</H2>
         <P>
           <strong className="font-medium text-[var(--foreground)]">
-            You own all data you bring to trchat.
+            You own all data you bring to graphchat.
           </strong>{' '}
           Repository content, graph nodes, embeddings, and exports belong to you
           or to the rights holders of the repositories you connect. By using the
@@ -107,15 +107,15 @@ export default function TermsPage() {
         <UL
           items={[
             'You are responsible for maintaining the confidentiality of your password and any API keys you generate.',
-            'API keys (sk-trchat-…) are shown once at creation. Store them securely; we cannot recover them.',
-            'You must notify us immediately at security@trchat.co if you suspect unauthorised access to your account.',
+            'API keys (sk-graphchat-…) are shown once at creation. Store them securely; we cannot recover them.',
+            'You must notify us immediately at security@graphchat.co if you suspect unauthorised access to your account.',
             'You may not share your account or API keys with others in a way that circumvents per-user rate limits or access controls.',
             'You may create multiple API keys with different scopes for different use-cases (CI, local CLI, agent workflows).',
           ]}
         />
 
         <H2>4. Acceptable use</H2>
-        <P>You may use trchat for any lawful purpose. You must not:</P>
+        <P>You may use graphchat for any lawful purpose. You must not:</P>
         <UL
           items={[
             'Connect repositories or data you do not have the right to access or index.',
@@ -134,8 +134,8 @@ export default function TermsPage() {
 
         <H2>5. Third-party services</H2>
         <P>
-          trchat integrates with GitHub for repository access and OAuth sign-in.
-          Your use of GitHub is subject to{' '}
+          graphchat integrates with GitHub for repository access and OAuth
+          sign-in. Your use of GitHub is subject to{' '}
           <a
             href="https://docs.github.com/en/site-policy/github-terms/github-terms-of-service"
             target="_blank"
@@ -171,10 +171,10 @@ export default function TermsPage() {
 
         <H2>8. Disclaimer of warranties</H2>
         <P>
-          To the maximum extent permitted by applicable law, trchat is provided
-          &quot;as is&quot; and &quot;as available&quot;, without warranty of
-          any kind, express or implied, including but not limited to warranties
-          of merchantability, fitness for a particular purpose, or
+          To the maximum extent permitted by applicable law, graphchat is
+          provided &quot;as is&quot; and &quot;as available&quot;, without
+          warranty of any kind, express or implied, including but not limited to
+          warranties of merchantability, fitness for a particular purpose, or
           non-infringement. This is standard for open-source software under the
           MIT License.
         </P>
@@ -202,10 +202,10 @@ export default function TermsPage() {
 
         <H2>10. Indemnification</H2>
         <P>
-          You agree to indemnify and hold harmless trchat and its contributors
-          from any claim, loss, or damage arising from: (a) your use of the
-          service in violation of these Terms; (b) data you submit to the
-          service; or (c) your violation of any third-party rights.
+          You agree to indemnify and hold harmless graphchat and its
+          contributors from any claim, loss, or damage arising from: (a) your
+          use of the service in violation of these Terms; (b) data you submit to
+          the service; or (c) your violation of any third-party rights.
         </P>
 
         <H2>11. Termination</H2>
@@ -243,10 +243,10 @@ export default function TermsPage() {
         <P>
           Questions about these Terms:{' '}
           <a
-            href="mailto:legal@trchat.co"
+            href="mailto:legal@graphchat.co"
             className="text-[var(--primary)] underline underline-offset-2"
           >
-            legal@trchat.co
+            legal@graphchat.co
           </a>
         </P>
 

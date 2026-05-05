@@ -4,8 +4,8 @@ This repository deploys production images from GitHub Actions to a Docker Compos
 
 ## Architecture
 
-- `https://trchat.co` routes to the Next.js web container on port `3000`.
-- `https://api.trchat.co` routes to the Nest API container on port `3001`.
+- `https://graphchat.co` routes to the Next.js web container on port `3000`.
+- `https://api.graphchat.co` routes to the Nest API container on port `3001`.
 - MongoDB and Redis are private Docker services and do not publish host ports.
 - GitHub Actions builds immutable GHCR images tagged with the Git SHA and deploys those exact tags over SSH.
 
@@ -14,10 +14,10 @@ This repository deploys production images from GitHub Actions to a Docker Compos
 Create these records before requesting certificates:
 
 ```text
-A     trchat.co       <VPS_PUBLIC_IPV4>
-A     api.trchat.co   <VPS_PUBLIC_IPV4>
-AAAA  trchat.co       <VPS_PUBLIC_IPV6>   # optional, only if the VPS has IPv6
-AAAA  api.trchat.co   <VPS_PUBLIC_IPV6>   # optional, only if the VPS has IPv6
+A     graphchat.co       <VPS_PUBLIC_IPV4>
+A     api.graphchat.co   <VPS_PUBLIC_IPV4>
+AAAA  graphchat.co       <VPS_PUBLIC_IPV6>   # optional, only if the VPS has IPv6
+AAAA  api.graphchat.co   <VPS_PUBLIC_IPV6>   # optional, only if the VPS has IPv6
 ```
 
 ## GitHub secrets
@@ -26,13 +26,13 @@ Add these repository secrets:
 
 ```text
 VPS_HOST      # VPS IP address or hostname
-VPS_USER      # SSH user that can run Docker in /opt/trchat
+VPS_USER      # SSH user that can run Docker in /opt/graphchat
 VPS_SSH_KEY   # private key for VPS_USER
 VPS_PORT      # optional; defaults to 22 if unset
-PROD_ENV_FILE # full contents of /opt/trchat/.env.prod
+PROD_ENV_FILE # full contents of /opt/graphchat/.env.prod
 ```
 
-The workflow uses the built-in `GITHUB_TOKEN` for GHCR push/pull during automated deploys and writes `/opt/trchat/.env.prod` from the `PROD_ENV_FILE` repository secret. For manual pulls or rollbacks from another shell, log in to GHCR with a read-capable token first if the package is private.
+The workflow uses the built-in `GITHUB_TOKEN` for GHCR push/pull during automated deploys and writes `/opt/graphchat/.env.prod` from the `PROD_ENV_FILE` repository secret. For manual pulls or rollbacks from another shell, log in to GHCR with a read-capable token first if the package is private.
 
 ## VPS environment
 
@@ -41,13 +41,13 @@ Store the full production env file contents in the `PROD_ENV_FILE` repository se
 ```bash
 MONGO_ROOT_PASSWORD=replace-with-a-long-random-password
 # Comma-separated list of allowed browser origins for the API CORS allowlist.
-WEB_URL=https://trchat.co,https://www.trchat.co
-NEXT_PUBLIC_APP_URL=https://trchat.co
-NEXT_PUBLIC_API_URL=https://api.trchat.co/api
-APP_SESSION_COOKIE_DOMAIN=.trchat.co
+WEB_URL=https://graphchat.co,https://www.graphchat.co
+NEXT_PUBLIC_APP_URL=https://graphchat.co
+NEXT_PUBLIC_API_URL=https://api.graphchat.co/api
+APP_SESSION_COOKIE_DOMAIN=.graphchat.co
 # Hosts the web edge middleware will accept; everything else is 308'd to APP_CANONICAL_HOST or rejected with 421.
-APP_TRUSTED_HOSTS=trchat.co,www.trchat.co
-APP_CANONICAL_HOST=trchat.co
+APP_TRUSTED_HOSTS=graphchat.co,www.graphchat.co
+APP_CANONICAL_HOST=graphchat.co
 
 GITHUB_CLIENT_ID=your_github_oauth_client_id
 GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
@@ -56,7 +56,7 @@ VOYAGE_BASE_URL=https://api.voyageai.com/v1
 
 `MONGO_ROOT_PASSWORD` is used both to initialize MongoDB and to compose the API's private `MONGODB_URI`.
 
-`APP_SESSION_COOKIE_DOMAIN` is required when the web app and API are on different subdomains. Without it, the browser stores `vectorgraph_session` only on the web host and authenticated requests to the API return `401 Authentication is required.` For `trchat.co` plus `api.trchat.co`, set it to `.trchat.co`.
+`APP_SESSION_COOKIE_DOMAIN` is required when the web app and API are on different subdomains. Without it, the browser stores `vectorgraph_session` only on the web host and authenticated requests to the API return `401 Authentication is required.` For `graphchat.co` plus `api.graphchat.co`, set it to `.graphchat.co`.
 
 ### Host and origin hardening
 
@@ -70,7 +70,7 @@ The nginx reverse proxy ([docker/nginx/nginx.conf](docker/nginx/nginx.conf)) add
 
 ## One-time VPS bootstrap
 
-Run the `Bootstrap VPS` GitHub Actions workflow once for a fresh CentOS 9 VPS. It uploads the CentOS bootstrap script, installs Docker and the required system services, and uploads the deployment bundle into `/opt/trchat`.
+Run the `Bootstrap VPS` GitHub Actions workflow once for a fresh CentOS 9 VPS. It uploads the CentOS bootstrap script, installs Docker and the required system services, and uploads the deployment bundle into `/opt/graphchat`.
 
 The bootstrap scripts now also harden SSH by writing an explicit `sshd` drop-in and a dedicated `fail2ban` SSH jail. By default they:
 
@@ -92,19 +92,19 @@ Equivalent manual bootstrap commands:
 
 ```bash
 scp scripts/vps/bootstrap-centos.sh <VPS_USER>@<VPS_HOST>:/tmp/bootstrap-centos.sh
-ssh <VPS_USER>@<VPS_HOST> 'sudo APP_DIR=/opt/trchat DEPLOY_USER=<VPS_USER> bash /tmp/bootstrap-centos.sh'
+ssh <VPS_USER>@<VPS_HOST> 'sudo APP_DIR=/opt/graphchat DEPLOY_USER=<VPS_USER> bash /tmp/bootstrap-centos.sh'
 ```
 
 To move SSH off the default port during bootstrap:
 
 ```bash
-ssh <VPS_USER>@<VPS_HOST> 'sudo APP_DIR=/opt/trchat DEPLOY_USER=<VPS_USER> SSH_PORT=2222 bash /tmp/bootstrap-centos.sh'
+ssh <VPS_USER>@<VPS_HOST> 'sudo APP_DIR=/opt/graphchat DEPLOY_USER=<VPS_USER> SSH_PORT=2222 bash /tmp/bootstrap-centos.sh'
 ```
 
 If you still need password auth for the first bootstrap session, make that explicit and turn it back off immediately after keys are confirmed:
 
 ```bash
-ssh <VPS_USER>@<VPS_HOST> 'sudo APP_DIR=/opt/trchat DEPLOY_USER=<VPS_USER> SSH_PASSWORD_AUTH=yes bash /tmp/bootstrap-centos.sh'
+ssh <VPS_USER>@<VPS_HOST> 'sudo APP_DIR=/opt/graphchat DEPLOY_USER=<VPS_USER> SSH_PASSWORD_AUTH=yes bash /tmp/bootstrap-centos.sh'
 ```
 
 After bootstrap, log out and back in once so Docker group membership applies for the deploy user.
@@ -112,16 +112,16 @@ After bootstrap, log out and back in once so Docker group membership applies for
 If you bootstrap manually instead of using the workflow, upload the deployment directory contents after that:
 
 ```bash
-ssh <VPS_USER>@<VPS_HOST> 'mkdir -p /opt/trchat'
-scp docker-compose.prod.yml <VPS_USER>@<VPS_HOST>:/opt/trchat/
-scp -r docker scripts <VPS_USER>@<VPS_HOST>:/opt/trchat/
-ssh <VPS_USER>@<VPS_HOST> 'cd /opt/trchat && chmod +x scripts/vps/*.sh'
+ssh <VPS_USER>@<VPS_HOST> 'mkdir -p /opt/graphchat'
+scp docker-compose.prod.yml <VPS_USER>@<VPS_HOST>:/opt/graphchat/
+scp -r docker scripts <VPS_USER>@<VPS_HOST>:/opt/graphchat/
+ssh <VPS_USER>@<VPS_HOST> 'cd /opt/graphchat && chmod +x scripts/vps/*.sh'
 ```
 
 After DNS points at the VPS and port 80 is reachable, issue the first Let's Encrypt certificate:
 
 ```bash
-ssh <VPS_USER>@<VPS_HOST> 'cd /opt/trchat && EMAIL=admin@trchat.co ./scripts/vps/init-letsencrypt.sh'
+ssh <VPS_USER>@<VPS_HOST> 'cd /opt/graphchat && EMAIL=admin@graphchat.co ./scripts/vps/init-letsencrypt.sh'
 ```
 
 ## Deploy flow
@@ -132,16 +132,16 @@ Merging to `main` runs:
 2. CD: builds and pushes:
    - `ghcr.io/bhanu8047/vector-graph-api:<git-sha>`
    - `ghcr.io/bhanu8047/vector-graph-web:<git-sha>`
-3. CD uploads the Compose/nginx/scripts bundle to `/opt/trchat`.
-4. CD runs `/opt/trchat/scripts/vps/deploy.sh` with exact image tags.
-5. CD verifies `https://trchat.co` and `https://api.trchat.co/api/health`.
+3. CD uploads the Compose/nginx/scripts bundle to `/opt/graphchat`.
+4. CD runs `/opt/graphchat/scripts/vps/deploy.sh` with exact image tags.
+5. CD verifies `https://graphchat.co` and `https://api.graphchat.co/api/health`.
 
 ## Manual initial deploy
 
 The normal initial deploy is a merge to `main` after bootstrap and certificate issuance. If you need to deploy manually, log in to GHCR on the VPS and run:
 
 ```bash
-cd /opt/trchat
+cd /opt/graphchat
 API_IMAGE=ghcr.io/bhanu8047/vector-graph-api:<git-sha> \
 WEB_IMAGE=ghcr.io/bhanu8047/vector-graph-web:<git-sha> \
 ./scripts/vps/deploy.sh
@@ -149,16 +149,16 @@ WEB_IMAGE=ghcr.io/bhanu8047/vector-graph-web:<git-sha> \
 
 ## Rollback
 
-The deploy script preserves the previous image tags in `/opt/trchat/.deploy/previous.env`. Roll back with:
+The deploy script preserves the previous image tags in `/opt/graphchat/.deploy/previous.env`. Roll back with:
 
 ```bash
-ssh <VPS_USER>@<VPS_HOST> 'cd /opt/trchat && ./scripts/vps/rollback.sh'
+ssh <VPS_USER>@<VPS_HOST> 'cd /opt/graphchat && ./scripts/vps/rollback.sh'
 ```
 
 ## Health checks
 
 - Container health: API `http://127.0.0.1:3001/api/health`, web `http://127.0.0.1:3000/api/health`.
-- Public smoke tests: `https://trchat.co` and `https://api.trchat.co/api/health`.
+- Public smoke tests: `https://graphchat.co` and `https://api.graphchat.co/api/health`.
 
 ## Immediate SSH incident response
 
@@ -176,7 +176,7 @@ sudo journalctl -u ssh --since '2 hours ago' || sudo journalctl -u sshd --since 
 
 ```bash
 sudo install -d -m 0755 /etc/ssh/sshd_config.d
-sudo tee /etc/ssh/sshd_config.d/99-trchat-hardening.conf >/dev/null <<'EOF'
+sudo tee /etc/ssh/sshd_config.d/99-graphchat-hardening.conf >/dev/null <<'EOF'
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 PermitRootLogin prohibit-password

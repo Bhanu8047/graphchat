@@ -1,4 +1,4 @@
-import { SuggestResult } from '@trchat/shared-types';
+import { SuggestResult } from '@graphchat/shared-types';
 
 export function buildPrompt(repoName: string, input: string): string {
   return `You are structuring repository context for AI agents.

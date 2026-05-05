@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 import { BrandLogo } from '../molecules/BrandLogo';
 import { ThemeToggle } from '../molecules/ThemeToggle';
@@ -163,6 +163,8 @@ function GuestNav() {
 
 export function MarketingHeader() {
   const { authenticated, loading } = useAuth();
+  const pathname = usePathname();
+  const hideCapabilities = pathname === '/' || pathname === '/capabilities';
   const [scrolled, setScrolled] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
@@ -226,15 +228,17 @@ export function MarketingHeader() {
             <SearchIcon className="h-4 w-4" />
           </button>
           <ThemeToggle />
-          <Link
-            href="/capabilities"
-            className={cn(
-              buttonStyles({ tone: 'ghost', size: 'sm' }),
-              'hidden sm:inline-flex',
-            )}
-          >
-            Capabilities
-          </Link>
+          {!hideCapabilities ? (
+            <Link
+              href="/capabilities"
+              className={cn(
+                buttonStyles({ tone: 'ghost', size: 'sm' }),
+                'hidden sm:inline-flex',
+              )}
+            >
+              Capabilities
+            </Link>
+          ) : null}
           <Link
             href="/docs"
             className={cn(

@@ -76,7 +76,8 @@ export function ConnectionsPage() {
           Connected accounts
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Link third-party providers used by trchat to import code and identity.
+          Link third-party providers used by graphchat to import code and
+          identity.
         </p>
       </Surface>
 

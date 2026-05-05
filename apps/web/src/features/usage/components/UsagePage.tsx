@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ModelService, RateLimit, UsageRecord } from '@trchat/shared-types';
+import { ModelService, RateLimit, UsageRecord } from '@graphchat/shared-types';
 import { Badge } from '../../../components/atoms/Badge';
 import { Surface } from '../../../components/atoms/Surface';
 import { Notice } from '../../../components/molecules/Notice';
