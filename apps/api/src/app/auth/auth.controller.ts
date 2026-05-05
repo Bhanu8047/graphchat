@@ -13,11 +13,13 @@ import { Public } from '../common/auth/public.decorator';
 import { AuthenticatedUser } from '@graphchat/shared-types';
 import { ApiKeysService } from './api-keys.service';
 import { AuthService } from './auth.service';
+import { CliAuthService } from './cli-auth.service';
 import {
   CreateApiKeyDto,
   ExchangeApiKeyDto,
   RefreshTokenDto,
 } from './dto/api-key.dto';
+import { CliApproveDto, CliPollDto } from './dto/cli-auth.dto';
 import { GithubAuthDto } from './dto/github-auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -30,6 +32,7 @@ export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly apiKeys: ApiKeysService,
+    private readonly cliAuth: CliAuthService,
   ) {}
 
   @Public()
@@ -51,6 +54,21 @@ export class AuthController {
   @Post('github')
   github(@Body() dto: GithubAuthDto) {
     return this.auth.github(dto);
+  }
+
+  /**
+   * Authed: link a GitHub identity to the currently signed-in user.
+   * Unlike `POST /auth/github`, this does NOT mint a new session — it only
+   * attaches the GitHub account to the existing one so connecting from
+   * Settings doesn't kick the user out of their current account.
+   */
+  @Throttle(AUTH_THROTTLE)
+  @Post('github/link')
+  githubLink(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: GithubAuthDto,
+  ) {
+    return this.auth.linkGithub(user.id, dto);
   }
 
   @Get('session')
@@ -108,6 +126,34 @@ export class AuthController {
   @Post('refresh')
   refresh(@Body() dto: RefreshTokenDto) {
     return this.apiKeys.refreshAccess(dto.refresh_token);
+  }
+
+  // ── CLI web-auth (device-code) flow ─────────────────────────────────────────
+
+  /** Public: CLI starts a device-code session. Returns the user_code to show. */
+  @Public()
+  @Throttle(AUTH_THROTTLE)
+  @Post('cli/start')
+  cliStart() {
+    return this.cliAuth.start();
+  }
+
+  /** Authed (browser session): user approves a pending CLI code. */
+  @Post('cli/approve')
+  @HttpCode(204)
+  async cliApprove(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CliApproveDto,
+  ) {
+    await this.cliAuth.approve(dto.user_code, user.id);
+  }
+
+  /** Public: CLI polls with the device_code until the user approves. */
+  @Public()
+  @Throttle(AUTH_THROTTLE)
+  @Post('cli/poll')
+  cliPoll(@Body() dto: CliPollDto) {
+    return this.cliAuth.poll(dto.device_code);
   }
 
   /** Public: revoke a refresh token (CLI logout). Best-effort. */

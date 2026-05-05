@@ -298,12 +298,16 @@ const capabilities = [
         <div className="space-y-2">
           {[
             {
-              cmd: 'gph login --key sk-graphchat-...',
-              desc: 'Exchange an API key for JWT tokens — stored locally, auto-refreshed before expiry. One-time setup.',
+              cmd: 'gph login',
+              desc: 'Browser-based sign-in: opens a one-time approval page tied to your graphchat session and auto-mints a CLI-scoped API key. For headless setups: gph login --key sk-graphchat-...',
             },
             {
-              cmd: 'gph index ./src --repo my-api-id',
-              desc: 'Tree-sitter parses the repo locally inside the CLI; only the extracted nodes and edges (no source) are uploaded for clustering.',
+              cmd: 'gph use',
+              desc: 'Pick the active repository once — every subsequent command (index, export, query, watch, …) drops the --repo flag. Run `gph use --clear` to unselect.',
+            },
+            {
+              cmd: 'gph index ./src',
+              desc: 'Tree-sitter parses the repo locally inside the CLI; only the extracted nodes and edges (no source) are uploaded for clustering. Uses your selected repo, or pass --repo <id> to override.',
             },
             {
               cmd: 'gph search "authentication middleware" --budget 1500',
@@ -354,14 +358,14 @@ const capabilities = [
   },
   {
     icon: <CheckIcon className="h-5 w-5" />,
-    title: 'API Key + JWT Auth for CLI',
+    title: 'Browser + API Key Auth for CLI',
     description:
-      'Scoped API keys (sk-graphchat-…) are minted in the dashboard and exchanged for short-lived JWT access + refresh tokens. The CLI auto-renews tokens invisibly — no repeated logins.',
+      '`gph login` opens your browser for a one-time device-code approval against your existing graphchat session (auto-mints a CLI-scoped API key), or pass --key sk-graphchat-… for headless setups. Either path yields short-lived JWTs that auto-renew invisibly — no repeated logins.',
     badges: [
+      { label: 'browser flow', tone: 'indigo' as const },
       { label: 'sk-graphchat-…', tone: 'indigo' as const },
       { label: 'JWT exchange', tone: 'teal' as const },
       { label: 'auto-refresh', tone: 'teal' as const },
-      { label: 'scopes', tone: 'neutral' as const },
     ],
     detail: (
       <div className="space-y-3">

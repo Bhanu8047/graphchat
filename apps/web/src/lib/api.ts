@@ -24,7 +24,10 @@ export const api = {
   graph: {
     get: (repoId: string) => apiFetch(`${BASE}/graphs/${repoId}`).then(json),
     syncGithub: (repoId: string, body?: any) =>
-      apiFetch(`${BASE}/graphs/${repoId}/sync/github`, {
+      // Routed through a Next proxy so the user's GitHub access token
+      // (httpOnly cookie) is attached to the API call. Required to sync
+      // private repositories without re-prompting for auth.
+      fetch(`/api/github/sync/${repoId}`, {
         method: 'POST',
         headers: h,
         body: JSON.stringify(body ?? {}),

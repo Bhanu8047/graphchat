@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import ora from 'ora';
 import { createClient } from '../lib/api-client.js';
 import { printError } from '../lib/output.js';
+import { resolveRepoId } from '../lib/repo.js';
 
 interface ExplainResponse {
   label: string;
@@ -14,13 +15,14 @@ export function explainCommand(): Command {
   return new Command('explain')
     .description('AI-generated explanation of a node in graph context')
     .argument('<label>', 'Node label to explain')
-    .requiredOption('-r, --repo <id>', 'Repo ID')
-    .action(async (label: string, opts: { repo: string }) => {
+    .option('-r, --repo <id>', 'Repo ID (defaults to selected repo)')
+    .action(async (label: string, opts: { repo?: string }) => {
+      const repoId = resolveRepoId(opts.repo);
       const client = createClient();
       const spinner = ora(`Explaining ${chalk.cyan(label)}…`).start();
       try {
         const { data } = await client.post<ExplainResponse>('/ai/explain', {
-          repoId: opts.repo,
+          repoId,
           label,
         });
         spinner.stop();
