@@ -1,6 +1,6 @@
 {
   "name": "@trchat/gph",
-  "version": "0.1.0-beta.0",
+  "version": "v0.1.0-beta.0",
   "description": "trchat CLI (gph) — Repository context graph for AI agents (beta)",
   "bin": {
     "gph": "dist/main.js"
@@ -34,7 +34,10 @@
   },
   "nx": {
     "name": "cli",
-    "tags": ["scope:cli", "type:app"],
+    "tags": [
+      "scope:cli",
+      "type:app"
+    ],
     "targets": {
       "build": {
         "executor": "nx:run-commands",
@@ -43,7 +46,9 @@
           "command": "tsc -p tsconfig.app.json",
           "cwd": "apps/cli"
         },
-        "outputs": ["{projectRoot}/dist"]
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
       }
     }
   },
