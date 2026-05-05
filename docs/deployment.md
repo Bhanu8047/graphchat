@@ -40,10 +40,14 @@ Store the full production env file contents in the `PROD_ENV_FILE` repository se
 
 ```bash
 MONGO_ROOT_PASSWORD=replace-with-a-long-random-password
-WEB_URL=https://trchat.co
+# Comma-separated list of allowed browser origins for the API CORS allowlist.
+WEB_URL=https://trchat.co,https://www.trchat.co
 NEXT_PUBLIC_APP_URL=https://trchat.co
 NEXT_PUBLIC_API_URL=https://api.trchat.co/api
 APP_SESSION_COOKIE_DOMAIN=.trchat.co
+# Hosts the web edge middleware will accept; everything else is 308'd to APP_CANONICAL_HOST or rejected with 421.
+APP_TRUSTED_HOSTS=trchat.co,www.trchat.co
+APP_CANONICAL_HOST=trchat.co
 
 GITHUB_CLIENT_ID=your_github_oauth_client_id
 GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
@@ -53,6 +57,16 @@ VOYAGE_BASE_URL=https://api.voyageai.com/v1
 `MONGO_ROOT_PASSWORD` is used both to initialize MongoDB and to compose the API's private `MONGODB_URI`.
 
 `APP_SESSION_COOKIE_DOMAIN` is required when the web app and API are on different subdomains. Without it, the browser stores `vectorgraph_session` only on the web host and authenticated requests to the API return `401 Authentication is required.` For `trchat.co` plus `api.trchat.co`, set it to `.trchat.co`.
+
+### Host and origin hardening
+
+The web edge middleware ([apps/web/middleware.ts](apps/web/middleware.ts)) and the API CORS allowlist ([apps/api/src/main.ts](apps/api/src/main.ts)) read three env vars to defend against spoof clones that point unrelated DNS at the deployed app:
+
+- `WEB_URL` — comma-separated list of browser origins the API will accept on cross-origin requests. Non-browser callers (the `gph` CLI, server-to-server) send no `Origin` header and are unaffected.
+- `APP_TRUSTED_HOSTS` — comma-separated list of `Host` headers the Next middleware will serve. Localhost variants are always allowed for healthchecks.
+- `APP_CANONICAL_HOST` — the host untrusted requests get 308-redirected to. If unset, untrusted hosts return `421 Misdirected Request` instead.
+
+The nginx reverse proxy ([docker/nginx/nginx.conf](docker/nginx/nginx.conf)) additionally has `default_server` blocks on 80 and 443 that return `444` for any unknown `Host`, so spoof domains that resolve to the VPS IP and bare-IP scans are dropped before the app sees them. Keep these three lists in sync when adding a new public hostname.
 
 ## One-time VPS bootstrap
 
