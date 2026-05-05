@@ -158,6 +158,21 @@ if has_deploy_service web; then
   wait_for_service_health web "node -e \"fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""
 fi
 
+if has_deploy_service nginx; then
+  echo "Waiting for nginx to bind port 80..."
+  for attempt in $(seq 1 "$MAX_HEALTH_CHECK_ATTEMPTS"); do
+    if compose exec -T nginx nginx -t >/dev/null 2>&1; then
+      break
+    fi
+    if [ "$attempt" -eq "$MAX_HEALTH_CHECK_ATTEMPTS" ]; then
+      echo "nginx failed to start after $HEALTH_CHECK_TIMEOUT_SECONDS seconds. Logs:" >&2
+      compose logs nginx --tail=50 >&2
+      exit 1
+    fi
+    sleep 5
+  done
+fi
+
 if [ -f "$current_env" ]; then
   cp "$current_env" .deploy/previous.env
 fi
