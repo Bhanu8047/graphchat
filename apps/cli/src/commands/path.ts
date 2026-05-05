@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import { createClient } from '../lib/api-client.js';
 import { printError } from '../lib/output.js';
+import { resolveRepoId } from '../lib/repo.js';
 
 interface PathResponse {
   path: Array<{ id: string; label: string; type: string }>;
@@ -13,13 +14,14 @@ export function pathCommand(): Command {
     .description('Find shortest graph path between two node labels')
     .argument('<source>', 'Source node label')
     .argument('<target>', 'Target node label')
-    .requiredOption('-r, --repo <id>', 'Repo ID')
+    .option('-r, --repo <id>', 'Repo ID (defaults to selected repo)')
     .action(
-      async (source: string, target: string, opts: { repo: string }) => {
+      async (source: string, target: string, opts: { repo?: string }) => {
+        const repoId = resolveRepoId(opts.repo);
         const client = createClient();
         try {
           const { data } = await client.get<PathResponse>('/graph/path', {
-            params: { repoId: opts.repo, source, target },
+            params: { repoId, source, target },
           });
           if (!data.path?.length) {
             console.log(chalk.dim('No path found.'));

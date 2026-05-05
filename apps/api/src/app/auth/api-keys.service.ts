@@ -80,6 +80,20 @@ export class ApiKeysService {
     return { apiKey, fullKey };
   }
 
+  /**
+   * Mint a new API key for the user and immediately issue an access + refresh
+   * token pair without round-tripping through the public exchange path.
+   * Used by the CLI web-auth (device-code) flow on approval.
+   */
+  async createAndIssue(
+    userId: string,
+    label: string,
+    scopes: string[] = ['read', 'write', 'analyze'],
+  ): Promise<ApiTokenResponse> {
+    const { apiKey } = await this.create(userId, label, scopes);
+    return this.issueTokenPair(apiKey);
+  }
+
   list(userId: string): Promise<ApiKeySummary[]> {
     return this.keys.listByUser(userId) as unknown as Promise<ApiKeySummary[]>;
   }

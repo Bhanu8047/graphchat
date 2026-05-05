@@ -17,9 +17,9 @@ export const cliCommands: readonly CliCommandDoc[] = [
     cmd: 'gph login',
     flags: ['--key <api_key>', '--server <url>'],
     description:
-      'Authenticate the CLI with your graphchat server using an API key (prefix sk-graphchat-). Exchanges the key for a JWT access + refresh token pair stored locally. The token is auto-refreshed before expiry.',
+      'Authenticate the CLI. With no flags, opens your browser to confirm a one-time code and signs you in via your existing graphchat session — a CLI-scoped API key is auto-created on approval. Pass --key sk-graphchat-... for headless setups (CI, Docker). Tokens are stored locally and auto-refreshed before expiry.',
     example:
-      'gph login --key sk-graphchat-abc123\ngph login --key sk-graphchat-abc123 --server https://your.graphchat.host',
+      'gph login\ngph login --key sk-graphchat-abc123\ngph login --server https://your.graphchat.host',
   },
   {
     cmd: 'gph logout',
@@ -39,16 +39,24 @@ export const cliCommands: readonly CliCommandDoc[] = [
     cmd: 'gph repos',
     flags: ['--json'],
     description:
-      'Lists all repositories accessible to the current user. Returns repo ID, name, branch, last sync time, and node count.',
-    example: 'gph repos\ngph repos --json',
+      'Lists all repositories accessible to the current user. The currently selected repo (see `gph use`) is marked with a `*`. Subcommands: `gph repos add --name <name> [--select]` to create one, `gph repos delete <id>` to remove (clears the selection if it was the active repo).',
+    example:
+      'gph repos\ngph repos add --name my-api --select\ngph repos delete my-api-id',
+  },
+  {
+    cmd: 'gph use [id]',
+    flags: ['--clear'],
+    description:
+      'Selects the active repository for subsequent commands so you can drop the `--repo` flag from `gph index`, `gph export`, `gph query`, `gph explain`, `gph path`, `gph watch`, and `gph report`. With no `id`, opens an interactive picker. `--clear` removes the selection. The selection is also cleared automatically if the selected repo is deleted via `gph repos delete`.',
+    example:
+      'gph use\ngph use cebd9df0-b5d7-4090-ac3d-353ee2be3f86\ngph use --clear',
   },
   {
     cmd: 'gph index <path>',
-    flags: ['--repo <id>', '--branch <name>'],
+    flags: ['--repo <id>'],
     description:
-      'Indexes a local repository path and pushes it to the graph service. The path is resolved to an absolute path; only files within it are included. Reuses prior state so only changed files are re-processed.',
-    example:
-      'gph index ./src --repo my-api-id\ngph index . --repo backend --branch main',
+      'Indexes a local repository path and pushes it to the graph service. The path is resolved to an absolute path; only files within it are included. Reuses prior state so only changed files are re-processed. `--repo` is optional — defaults to the repo selected via `gph use`.',
+    example: 'gph index ./src\ngph index ./src --repo my-api-id',
   },
   {
     cmd: 'gph search <query>',

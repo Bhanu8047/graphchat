@@ -5,6 +5,8 @@ import { ApiKeysRepository } from './api-keys.repository';
 import { ApiKeysService } from './api-keys.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { CliAuthService } from './cli-auth.service';
+import { CliSessionsRepository } from './cli-sessions.repository';
 import { RefreshTokensRepository } from './refresh-tokens.repository';
 import { UsersModule } from '../users/users.module';
 import { SessionTokenService } from '../common/auth/session-token.service';
@@ -17,6 +19,8 @@ import { SessionTokenService } from '../common/auth/session-token.service';
     ApiAccessTokenService,
     ApiKeysRepository,
     ApiKeysService,
+    CliAuthService,
+    CliSessionsRepository,
     RefreshTokensRepository,
   ],
   controllers: [AuthController],

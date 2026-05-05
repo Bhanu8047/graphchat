@@ -392,6 +392,8 @@ export default function DocsPage() {
                   id: 'cli',
                   children: [
                     { label: 'gph login', id: 'cli-login' },
+                    { label: 'gph repos', id: 'cli-repos' },
+                    { label: 'gph use', id: 'cli-use' },
                     { label: 'gph index', id: 'cli-index' },
                     { label: 'gph search', id: 'cli-search' },
                     { label: 'gph query', id: 'cli-query' },
@@ -455,7 +457,7 @@ export default function DocsPage() {
                   {
                     step: '2',
                     title: 'Index a repository',
-                    body: 'Generate an API key in the dashboard, run gph login, then gph index ./your-repo --repo <id>. Only changed files are processed on subsequent runs.',
+                    body: 'Run gph login (opens your browser to authorize), pick a repo with gph use, then gph index ./your-repo. Only changed files are processed on subsequent runs.',
                   },
                   {
                     step: '3',
@@ -493,7 +495,7 @@ export default function DocsPage() {
               </p>
               <CodeBlock>
                 {
-                  '# Global install (beta)\nnpm install -g @graphchat/gph@beta\n\n# Or run without installing\nnpx -p @graphchat/gph@beta gph login --key sk-graphchat-...'
+                  '# Global install (beta)\nnpm install -g @graphchat/gph@beta\n\n# Sign in via your browser (recommended)\ngph login\n\n# Or, headless:\ngph login --key sk-graphchat-...'
                 }
               </CodeBlock>
               <p className="mt-4 text-sm leading-7 text-[var(--muted-foreground)]">
@@ -528,19 +530,30 @@ export default function DocsPage() {
                 </Surface>
                 <Surface padding="lg">
                   <h3 className="font-semibold text-[var(--foreground)]">
-                    CLI / API key
+                    CLI
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-[var(--muted-foreground)]">
-                    Generate an API key (<Pill>sk-graphchat-…</Pill>) in the
-                    dashboard under Settings → API Keys. Run{' '}
-                    <Pill>gph login --key sk-graphchat-…</Pill>. The CLI
-                    exchanges the key for a short-lived JWT access token and a
-                    refresh token that auto-renews it.
+                    Run <Pill>gph login</Pill> — the CLI opens your browser to
+                    confirm a one-time code against your existing graphchat
+                    session and auto-creates a CLI-scoped API key on approval.
+                    For headless setups, mint an API key (
+                    <Pill>sk-graphchat-…</Pill>) under Settings → API Keys and
+                    run <Pill>gph login --key sk-graphchat-…</Pill>. Either path
+                    yields a short-lived JWT access token plus a refresh token
+                    that auto-renews it.
                   </p>
                 </Surface>
               </div>
               <h3 className="mt-6 font-semibold text-[var(--foreground)]">
-                API key exchange flow
+                Browser (device-code) flow
+              </h3>
+              <CodeBlock>
+                {
+                  '# 1. Run:\ngph login\n\n# Internally:\n# POST /api/auth/cli/start  → { device_code, user_code, verify_url_complete, ... }\n# Browser opens verify_url_complete; you press “Authorize CLI”.\n# CLI polls POST /api/auth/cli/poll { device_code } until approved,\n# then receives { access_token, refresh_token, expires_in }.\n\n# A CLI-scoped API key is created on your account on approval —\n# revoke it any time under Settings → API Keys.'
+                }
+              </CodeBlock>
+              <h3 className="mt-6 font-semibold text-[var(--foreground)]">
+                API key exchange flow (headless)
               </h3>
               <CodeBlock>
                 {

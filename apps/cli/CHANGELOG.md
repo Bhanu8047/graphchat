@@ -1,3 +1,14 @@
+## 0.1.0-beta.6 (2026-05-05)
+
+### 🩹 Fixes
+
+- **cli:** fix cli login, add browser login and use cmd ([504cb07](https://github.com/Bhanu8047/vector-graph/commit/504cb07))
+- **cli:package:** fix repo URL for provenance ([c1e5c2a](https://github.com/Bhanu8047/vector-graph/commit/c1e5c2a))
+
+### ❤️ Thank You
+
+- Bhanu Pratap @Bhanu8047
+
 ## 0.1.0-beta.5 (2026-05-05)
 
 This was a version bump only for cli to align it with other projects, there were no code changes.

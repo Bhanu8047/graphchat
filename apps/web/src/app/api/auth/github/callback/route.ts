@@ -75,6 +75,46 @@ export async function GET(request: NextRequest) {
     maxAge: 60 * 60 * 24 * 30,
   });
 
+  // If the user is already signed in, link the GitHub account to the current
+  // user instead of swapping their session. Otherwise, fall through to the
+  // sign-in / sign-up flow which mints a new session.
+  const existingSession = cookieStore.get(appSessionCookie)?.value;
+  if (existingSession) {
+    const linkResponse = await fetch(
+      `${getServerApiBaseUrl()}/auth/github/link`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `${appSessionCookie}=${existingSession}`,
+        },
+        body: JSON.stringify({ accessToken: payload.access_token }),
+      },
+    );
+
+    if (linkResponse.ok) {
+      redirectUrl.pathname = '/settings/connections';
+      redirectUrl.searchParams.set('githubAuth', 'connected');
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // 401 — the existing session is stale; fall through to sign-in below.
+    if (linkResponse.status !== 401) {
+      const linkPayload = (await linkResponse.json().catch(() => null)) as {
+        message?: string;
+      } | null;
+      redirectUrl.pathname = '/settings/connections';
+      redirectUrl.searchParams.set(
+        'githubAuth',
+        linkResponse.status === 409 ? 'already-linked' : 'link-error',
+      );
+      if (linkPayload?.message) {
+        redirectUrl.searchParams.set('githubMessage', linkPayload.message);
+      }
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
   const authResponse = await fetch(`${getServerApiBaseUrl()}/auth/github`, {
     method: 'POST',
     headers: {

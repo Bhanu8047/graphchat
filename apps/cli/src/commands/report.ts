@@ -3,18 +3,20 @@ import { writeFileSync } from 'node:fs';
 import ora from 'ora';
 import { createClient } from '../lib/api-client.js';
 import { printError, printSuccess } from '../lib/output.js';
+import { resolveRepoId } from '../lib/repo.js';
 
 export function reportCommand(): Command {
   return new Command('report')
     .description('Print or save the GRAPH_REPORT.md for a repo')
-    .requiredOption('-r, --repo <id>', 'Repo ID')
+    .option('-r, --repo <id>', 'Repo ID (defaults to selected repo)')
     .option('-o, --out <path>', 'Output file (defaults to stdout)')
-    .action(async (opts: { repo: string; out?: string }) => {
+    .action(async (opts: { repo?: string; out?: string }) => {
+      const repoId = resolveRepoId(opts.repo);
       const client = createClient();
       const spinner = opts.out ? ora('Fetching report…').start() : null;
       try {
         const { data } = await client.get<{ report: string }>(
-          `/graph/report/${opts.repo}`,
+          `/graph/report/${repoId}`,
         );
         spinner?.stop();
         const md = data.report ?? '';

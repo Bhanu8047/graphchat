@@ -5,6 +5,7 @@ import ora from 'ora';
 import { createClient } from '../lib/api-client.js';
 import { extractRepo } from '../lib/extract/index.js';
 import { printError, printSuccess } from '../lib/output.js';
+import { resolveRepoId } from '../lib/repo.js';
 
 interface AnalyzeResult {
   nodesAdded?: number;
@@ -21,8 +22,9 @@ export function indexCommand(): Command {
         'Source code never leaves your machine.',
     )
     .argument('<path>', 'Path to repository')
-    .requiredOption('-r, --repo <id>', 'Repo ID to index into')
-    .action(async (path: string, opts: { repo: string }) => {
+    .option('-r, --repo <id>', 'Repo ID (defaults to selected repo)')
+    .action(async (path: string, opts: { repo?: string }) => {
+      const repoId = resolveRepoId(opts.repo);
       const repoPath = resolve(path);
       const client = createClient();
 
@@ -32,7 +34,7 @@ export function indexCommand(): Command {
       try {
         const extracted = await extractRepo({
           repoPath,
-          repoId: opts.repo,
+          repoId: repoId,
           onFile: (rel) => {
             lastFile = rel;
             spinner.text = `Parsing ${chalk.dim(rel)}`;
@@ -45,7 +47,7 @@ export function indexCommand(): Command {
           `from ${extracted.filesParsed} files (${localMs}ms). Uploading…`;
 
         const { data } = await client.post<AnalyzeResult>('/graph/ingest', {
-          repoId: opts.repo,
+          repoId: repoId,
           nodes: extracted.nodes,
           edges: extracted.edges,
         });

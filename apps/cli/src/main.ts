@@ -12,6 +12,7 @@ import { reportCommand } from './commands/report.js';
 import { reposCommand } from './commands/repos.js';
 import { searchCommand } from './commands/search.js';
 import { statusCommand } from './commands/status.js';
+import { useCommand } from './commands/use.js';
 import { watchCommand } from './commands/watch.js';
 
 const program = new Command();
@@ -27,8 +28,11 @@ program
     'after',
     `
 ${chalk.dim('Examples:')}
-  ${chalk.cyan('gph login --key sk-graphchat-...')}
+  ${chalk.cyan('gph login')}                       ${chalk.dim('# browser login')}
+  ${chalk.cyan('gph login --key sk-graphchat-...')} ${chalk.dim('# headless')}
   ${chalk.cyan('gph repos')}
+  ${chalk.cyan('gph use')}                          ${chalk.dim('# pick the active repo')}
+  ${chalk.cyan('gph index ./src')}                  ${chalk.dim('# uses selected repo')}
   ${chalk.cyan('gph index ./src --repo my-api-id')}
   ${chalk.cyan('gph search "authentication middleware" --budget 1500')}
   ${chalk.cyan('gph query "how does login work?" --repo my-api-id --hops 2')}
@@ -45,6 +49,7 @@ program.addCommand(loginCommand());
 program.addCommand(logoutCommand());
 program.addCommand(statusCommand());
 program.addCommand(reposCommand());
+program.addCommand(useCommand());
 program.addCommand(indexCommand());
 program.addCommand(searchCommand());
 program.addCommand(queryCommand());
