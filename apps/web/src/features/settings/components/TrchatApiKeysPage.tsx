@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { ApiKeySummary } from '@vectorgraph/shared-types';
+import { ApiKeySummary } from '@trchat/shared-types';
 import { Badge } from '../../../components/atoms/Badge';
 import { Button } from '../../../components/atoms/Button';
 import { Input } from '../../../components/atoms/Input';

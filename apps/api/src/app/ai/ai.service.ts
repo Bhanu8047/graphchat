@@ -6,9 +6,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { suggestContextNode } from '@vectorgraph/ai';
-import { SuggestDto } from '@vectorgraph/shared-types';
-import { MongoVectorService } from '@vectorgraph/vector-client';
+import { suggestContextNode } from '@trchat/ai';
+import { SuggestDto } from '@trchat/shared-types';
+import { MongoVectorService } from '@trchat/vector-client';
 import { AiResolverService } from '../ai-resolver/ai-resolver.service';
 
 @Injectable()

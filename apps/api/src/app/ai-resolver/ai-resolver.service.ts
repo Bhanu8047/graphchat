@@ -5,13 +5,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EmbeddingConfig, LLMConfig } from '@vectorgraph/ai';
+import { EmbeddingConfig, LLMConfig } from '@trchat/ai';
 import {
   CredentialKind,
   EmbeddingProvider,
   LLMProvider,
   ModelService,
-} from '@vectorgraph/shared-types';
+} from '@trchat/shared-types';
 import { CredentialsService } from '../credentials/credentials.service';
 import { ModelSettingsService } from '../model-settings/model-settings.service';
 import { RateLimitsService } from '../rate-limits/rate-limits.service';

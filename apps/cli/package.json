@@ -1,12 +1,22 @@
 {
-  "name": "@vectorgraph/cli",
-  "version": "0.0.1",
-  "private": true,
-  "description": "TRCHAT CLI — Repository context graph for AI agents",
+  "name": "@trchat/gph",
+  "version": "0.1.0-beta.0",
+  "description": "trchat CLI (gph) — Repository context graph for AI agents (beta)",
   "bin": {
-    "gph": "./main.js"
+    "gph": "dist/main.js"
   },
-  "main": "main.js",
+  "main": "dist/main.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "beta"
+  },
   "keywords": [
     "trchat",
     "gph",
@@ -16,12 +26,19 @@
     "vector-search"
   ],
   "license": "MIT",
+  "homepage": "https://github.com/vectorgraph/vector-graph#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vectorgraph/vector-graph.git",
+    "directory": "apps/cli"
+  },
   "nx": {
     "name": "cli",
     "tags": ["scope:cli", "type:app"],
     "targets": {
       "build": {
         "executor": "nx:run-commands",
+        "cache": true,
         "options": {
           "command": "tsc -p tsconfig.app.json",
           "cwd": "apps/cli"

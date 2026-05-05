@@ -17,7 +17,7 @@ export interface Credentials {
 }
 
 const TRCHAT_DIR = join(homedir(), '.trchat');
-const CREDS_FILE = join(TRCHAT_DIR, 'credentials');
+const CREDS_FILE = join(TRCHAT_DIR, 'credentials.json');
 
 function ensureDir(): void {
   if (!existsSync(TRCHAT_DIR)) {

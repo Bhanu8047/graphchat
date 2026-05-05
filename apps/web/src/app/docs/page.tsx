@@ -91,28 +91,12 @@ const cliCommands = [
       'gph search "authentication middleware" --budget 1500\ngph search "JWT guard" --repo backend --confidence EXTRACTED --agent',
   },
   {
-    cmd: 'gph query <question>',
-    flags: ['--repo <id>', '--mode <knn|dfs>', '--json'],
-    description:
-      'Natural-language query resolved via vector similarity (knn) or depth-first graph traversal (dfs) from the best matching entry-point. Returns the reachable subgraph as structured context.',
-    example:
-      'gph query "what calls validateToken?" --repo my-api-id\ngph query "which modules import AuthService?" --mode dfs --repo backend',
-  },
-  {
     cmd: 'gph path <source> <target>',
     flags: ['--repo <id>'],
     description:
       'Finds the shortest path between two named symbols in the graph and prints every hop. Useful for understanding how middleware or dependency chains connect.',
     example:
       'gph path AuthService JwtGuard --repo my-api-id\ngph path ResponseInterceptor DatabaseService --repo backend',
-  },
-  {
-    cmd: 'gph explain <label>',
-    flags: ['--repo <id>'],
-    description:
-      'Generates an AI explanation of a graph node: its community membership, confidence tier, inbound callers, outbound callees, and a plain-English summary of what it does.',
-    example:
-      'gph explain JwtGuard --repo my-api-id\ngph explain AuthService --repo backend',
   },
   {
     cmd: 'gph report',
@@ -129,14 +113,6 @@ const cliCommands = [
       'Exports a full agent context payload for a named repo as a structured JSON bundle. The bundle includes graph metadata, communities, nodes, and edges — ready to feed into any LLM session.',
     example:
       'gph export --repo my-api-id --out context.json\ngph export --repo backend --out ./context/backend.json',
-  },
-  {
-    cmd: 'gph watch <path>',
-    flags: ['--repo <id>', '--on-commit', '--stop'],
-    description:
-      'Watches a repository path and re-indexes on changes. --on-commit installs git post-commit/post-checkout hooks for automatic re-index on every commit instead of running a polling watcher. --stop cancels the active server-side watcher.',
-    example:
-      'gph watch ./src --repo my-api-id\ngph watch . --repo backend --on-commit\ngph watch . --repo backend --stop',
   },
 ] as const;
 
@@ -557,7 +533,7 @@ export default function DocsPage() {
               </p>
               <CodeBlock>
                 {
-                  '# Global install\nnpm install -g @trchat/gph\n\n# Or run without installing\nnpx @trchat/gph login --key sk-trchat-...'
+                  '# Global install (beta)\nnpm install -g @trchat/gph@beta\n\n# Or run without installing\nnpx -p @trchat/gph@beta gph login --key sk-trchat-...'
                 }
               </CodeBlock>
               <p className="mt-4 text-sm leading-7 text-[var(--muted-foreground)]">

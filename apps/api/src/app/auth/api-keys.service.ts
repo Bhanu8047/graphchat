@@ -9,7 +9,7 @@ import {
   ApiKeySummary,
   ApiTokenResponse,
   RefreshTokenRecord,
-} from '@vectorgraph/shared-types';
+} from '@trchat/shared-types';
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 import { v4 as uuid } from 'uuid';
 import { ApiAccessTokenService } from './api-access-token.service';

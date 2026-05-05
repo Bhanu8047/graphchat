@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ModelService, ModelSetting } from '@vectorgraph/shared-types';
+import { ModelService, ModelSetting } from '@trchat/shared-types';
 import { ModelSettingsRepository } from './model-settings.repository';
 import { UpsertModelSettingDto } from './dto/upsert-model-setting.dto';
 

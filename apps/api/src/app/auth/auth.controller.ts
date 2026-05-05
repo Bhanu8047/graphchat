@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import { Public } from '../common/auth/public.decorator';
-import { AuthenticatedUser } from '@vectorgraph/shared-types';
+import { AuthenticatedUser } from '@trchat/shared-types';
 import { ApiKeysService } from './api-keys.service';
 import { AuthService } from './auth.service';
 import {

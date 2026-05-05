@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Collection } from 'mongodb';
-import { ApiKey } from '@vectorgraph/shared-types';
+import { ApiKey } from '@trchat/shared-types';
 import { MongoDatabaseService } from '../common/database/mongo-database.service';
 
 @Injectable()

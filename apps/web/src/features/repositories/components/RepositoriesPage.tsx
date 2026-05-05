@@ -6,7 +6,7 @@ import {
   AgentType,
   GithubBranchListResponse,
   RuntimeProviderConfig,
-} from '@vectorgraph/shared-types';
+} from '@trchat/shared-types';
 import { Button, buttonStyles } from '../../../components/atoms/Button';
 import { Input } from '../../../components/atoms/Input';
 import { Select } from '../../../components/atoms/Select';

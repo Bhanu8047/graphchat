@@ -17,7 +17,8 @@ export function loginCommand(): Command {
       if (!opts.key) {
         printError('API key required', 'Use: gph login --key sk-trchat-...');
         printError(
-          'Generate a key at: ' + chalk.cyan(`${server}/dashboard/keys`),
+          'Generate a key at: ' +
+            chalk.cyan(`${server}/settings/trchat-keys`),
         );
         process.exit(1);
       }

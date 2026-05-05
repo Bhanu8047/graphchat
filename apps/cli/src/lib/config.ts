@@ -10,7 +10,8 @@ export interface GphConfig {
 
 const conf = new Conf<GphConfig>({
   projectName: 'trchat',
-  cwd: join(homedir(), '.config', 'trchat'),
+  cwd: join(homedir(), '.trchat'),
+  configName: 'config',
   defaults: {
     serverUrl: process.env.TRCHAT_SERVER ?? 'http://localhost:3001',
   },

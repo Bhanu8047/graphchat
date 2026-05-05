@@ -13,7 +13,7 @@ import {
   EdgeConfidence,
   NodeType,
   SearchQueryDto as ISearchQueryDto,
-} from '@vectorgraph/shared-types';
+} from '@trchat/shared-types';
 
 /**
  * Validated DTO for `GET /api/search`.

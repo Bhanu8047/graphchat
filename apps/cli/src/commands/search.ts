@@ -43,11 +43,13 @@ export function searchCommand(): Command {
         const client = createClient();
         const spinner = ora(`Searching for ${chalk.cyan(query)}…`).start();
         try {
-          const { data } = await client.post<SearchResult[]>('/search', {
-            query,
-            repoId: opts.repo,
-            budget: opts.budget,
-            confidence: opts.confidence,
+          const { data } = await client.get<SearchResult[]>('/search', {
+            params: {
+              q: query,
+              repoId: opts.repo,
+              budget: opts.budget,
+              minConfidence: opts.confidence,
+            },
           });
           spinner.stop();
 

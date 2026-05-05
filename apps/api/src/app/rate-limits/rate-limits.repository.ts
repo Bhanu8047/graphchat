@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Collection } from 'mongodb';
-import { RateLimit } from '@vectorgraph/shared-types';
+import { RateLimit } from '@trchat/shared-types';
 import { MongoDatabaseService } from '../common/database/mongo-database.service';
 
 const DEFAULTS: Omit<RateLimit, 'updatedAt' | 'updatedBy'>[] = [

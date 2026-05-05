@@ -6,9 +6,9 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { RedisVectorService } from '@vectorgraph/vector-client';
-import { getEmbedding } from '@vectorgraph/ai';
-import { VectorSearchResult } from '@vectorgraph/shared-types';
+import { RedisVectorService } from '@trchat/vector-client';
+import { getEmbedding } from '@trchat/ai';
+import { VectorSearchResult } from '@trchat/shared-types';
 import { AiResolverService } from '../ai-resolver/ai-resolver.service';
 import { SearchQueryDto } from './dto/search-query.dto';
 import {

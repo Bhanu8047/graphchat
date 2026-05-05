@@ -5,7 +5,7 @@ import {
   AnalyzeRepoDto,
   AnalyzeRepoResult,
   GraphQueryDto,
-} from '@vectorgraph/shared-types';
+} from '@trchat/shared-types';
 
 /**
  * Thin HTTP bridge from NestJS to the Python `graph-service` (FastAPI on :5000).

@@ -7,7 +7,7 @@ import {
   Param,
   Put,
 } from '@nestjs/common';
-import { AuthenticatedUser } from '@vectorgraph/shared-types';
+import { AuthenticatedUser } from '@trchat/shared-types';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import { CredentialsService } from './credentials.service';
 import { UpsertCredentialDto } from './dto/upsert-credential.dto';
