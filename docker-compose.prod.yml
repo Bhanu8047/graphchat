@@ -25,7 +25,7 @@ services:
     environment:
       MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:?MONGO_INITDB_ROOT_USERNAME is required}:${MONGO_INITDB_ROOT_PASSWORD:?MONGO_INITDB_ROOT_PASSWORD is required}@mongo:27017/${MONGO_INITDB_DATABASE:-vectorgraph}?authSource=admin
       REDIS_URL: redis://redis:6379
-      WEB_URL: ${WEB_URL:-https://trchat.co}
+      WEB_URL: ${WEB_URL:-https://trchat.co,https://www.trchat.co}
     depends_on:
       redis:
         condition: service_healthy
@@ -56,6 +56,8 @@ services:
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://trchat.co}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.trchat.co/api}
       APP_SESSION_COOKIE_DOMAIN: ${APP_SESSION_COOKIE_DOMAIN:-.trchat.co}
+      APP_TRUSTED_HOSTS: ${APP_TRUSTED_HOSTS:-trchat.co,www.trchat.co}
+      APP_CANONICAL_HOST: ${APP_CANONICAL_HOST:-trchat.co}
     depends_on:
       api:
         condition: service_healthy

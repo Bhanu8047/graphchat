@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ReposModule } from './repos/repos.module';
 import { NodesModule } from './nodes/nodes.module';
 import { SearchModule } from './search/search.module';
@@ -28,6 +29,13 @@ import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      // Default ceiling for every endpoint — well above normal UI/CLI use,
+      // tight enough to stop credential stuffing or scraping bursts.
+      { name: 'default', ttl: 60_000, limit: 120 },
+      // Tighter bucket explicitly applied to auth endpoints via @Throttle.
+      { name: 'auth', ttl: 60_000, limit: 10 },
+    ]),
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
     EncryptionModule,
@@ -53,6 +61,7 @@ import { AdminModule } from './admin/admin.module';
   providers: [
     SessionTokenService,
     ApiAccessTokenService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: AppAuthGuard },
     { provide: APP_GUARD, useClass: AdminGuard },
   ],
