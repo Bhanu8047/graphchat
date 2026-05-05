@@ -7,6 +7,7 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import { Public } from '../common/auth/public.decorator';
 import { AuthenticatedUser } from '@trchat/shared-types';
@@ -21,6 +22,9 @@ import { GithubAuthDto } from './dto/github-auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
+// Strict per-IP throttle for credential-bearing endpoints.
+const AUTH_THROTTLE = { auth: { limit: 10, ttl: 60_000 } };
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -29,18 +33,21 @@ export class AuthController {
   ) {}
 
   @Public()
+  @Throttle(AUTH_THROTTLE)
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.auth.register(dto);
   }
 
   @Public()
+  @Throttle(AUTH_THROTTLE)
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.auth.login(dto);
   }
 
   @Public()
+  @Throttle(AUTH_THROTTLE)
   @Post('github')
   github(@Body() dto: GithubAuthDto) {
     return this.auth.github(dto);
@@ -89,6 +96,7 @@ export class AuthController {
 
   /** Public: trade an API key for a fresh access + refresh token pair. */
   @Public()
+  @Throttle(AUTH_THROTTLE)
   @Post('exchange')
   exchange(@Body() dto: ExchangeApiKeyDto) {
     return this.apiKeys.exchange(dto.api_key);
@@ -96,6 +104,7 @@ export class AuthController {
 
   /** Public: trade a refresh token for a new access token. */
   @Public()
+  @Throttle(AUTH_THROTTLE)
   @Post('refresh')
   refresh(@Body() dto: RefreshTokenDto) {
     return this.apiKeys.refreshAccess(dto.refresh_token);
