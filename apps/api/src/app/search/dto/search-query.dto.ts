@@ -13,7 +13,7 @@ import {
   EdgeConfidence,
   NodeType,
   SearchQueryDto as ISearchQueryDto,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 
 /**
  * Validated DTO for `GET /api/search`.

@@ -312,6 +312,45 @@ export interface AnalyzeRepoResult {
   durationMs: number;
 }
 
+/**
+ * Client-extracted graph payload sent by the CLI.
+ *
+ * The CLI runs Tree-sitter locally and ships only the resulting node/edge
+ * shape — source code never leaves the dev's machine. Each entry must already
+ * carry `confidence: 'EXTRACTED'` and the canonical id/label conventions used
+ * by the server-side extractor.
+ */
+export interface IngestGraphDto {
+  repoId: string;
+  nodes: ExtractedNode[];
+  edges: ExtractedEdge[];
+  languages?: string[];
+}
+
+export interface ExtractedNode {
+  id: string;
+  repoId: string;
+  type: string;
+  label: string;
+  content: string;
+  tags: string[];
+  confidence: 'EXTRACTED';
+  sourceFile: string;
+  sourceLine: number;
+  updatedAt: string;
+}
+
+export interface ExtractedEdge {
+  id: string;
+  repoId: string;
+  sourceId: string;
+  targetLabel: string;
+  type: string;
+  confidence: 'EXTRACTED';
+  weight: number;
+  createdAt: string;
+}
+
 export interface GraphQueryDto {
   repoId: string;
   query: string;
@@ -339,6 +378,18 @@ export interface SuggestDto {
   input: string;
 }
 
+export interface ExplainDto {
+  repoId: string;
+  label: string;
+}
+
+export interface ExplainResponse {
+  label: string;
+  type: string;
+  explanation: string;
+  related: Array<{ label: string; type: string }>;
+}
+
 export interface RuntimeProviderConfig {
   llmProviders: LLMProvider[];
   defaultLlmProvider?: LLMProvider;
@@ -348,7 +399,7 @@ export interface RuntimeProviderConfig {
   defaultAgent?: AgentType;
 }
 
-// ── CLI auth (sk-trchat-... API keys + JWT exchange) ──────────────────────────
+// ── CLI auth (sk-graphchat-... API keys + JWT exchange) ──────────────────────────
 export interface ApiKey {
   id: string;
   keyId: string; // public prefix (24 hex chars)

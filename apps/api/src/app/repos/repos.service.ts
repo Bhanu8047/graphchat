@@ -8,8 +8,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { getEmbeddings, EmbeddingConfig } from '@trchat/ai';
-import { MongoVectorService, RedisVectorService } from '@trchat/vector-client';
+import { getEmbeddings, EmbeddingConfig } from '@graphchat/ai';
+import {
+  MongoVectorService,
+  RedisVectorService,
+} from '@graphchat/vector-client';
 import {
   ContextNode,
   CreateRepoDto,
@@ -23,7 +26,7 @@ import {
   NodeType,
   Repository,
   RepositorySyncState,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 import { v4 as uuid } from 'uuid';
 import { RuntimeConfigService } from '../runtime/runtime-config.service';
 import { GraphBridgeService } from '../graph/graph-bridge.service';

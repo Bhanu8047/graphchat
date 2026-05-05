@@ -1,4 +1,4 @@
-import { VECTOR_DIMENSION } from '@trchat/shared-types';
+import { VECTOR_DIMENSION } from '@graphchat/shared-types';
 import { EmbeddingConfig, EmbeddingProvider } from './types';
 import { voyageEmbed } from './providers/voyage.embed';
 import { openaiEmbed } from './providers/openai.embed';

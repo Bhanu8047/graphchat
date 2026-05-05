@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Patch } from '@nestjs/common';
 import { CurrentUser } from '../common/auth/current-user.decorator';
-import { AuthenticatedUser } from '@trchat/shared-types';
+import { AuthenticatedUser } from '@graphchat/shared-types';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 

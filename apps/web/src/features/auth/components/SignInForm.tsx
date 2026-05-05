@@ -13,7 +13,15 @@ import { FieldGroup } from '../../../components/molecules/FieldGroup';
 import { Notice } from '../../../components/molecules/Notice';
 import { useAuth } from '../providers/AuthProvider';
 import { cn } from '../../../lib/ui';
-
+/**
+ * Only allow internal absolute paths through the `?next=` redirect to
+ * prevent open-redirect attacks (e.g. `?next=//evil.example`).
+ */
+function safeNext(next: string | null): string | null {
+  if (!next) return null;
+  if (!next.startsWith('/') || next.startsWith('//')) return null;
+  return next;
+}
 export function SignInForm() {
   const router = useRouter();
   const { refresh } = useAuth();
@@ -48,7 +56,7 @@ export function SignInForm() {
         );
       }
 
-      router.replace('/dashboard');
+      router.replace(safeNext(searchParams.get('next')) ?? '/dashboard');
       router.refresh();
       await refresh();
     } catch (err: any) {
@@ -68,7 +76,7 @@ export function SignInForm() {
         <Surface tone="hero" padding="xl">
           <BrandLogo className="w-fit" priority />
           <Badge tone="accent" className="mt-5">
-            trchat
+            graphchat
           </Badge>
           <h1 className="mt-4 font-display text-4xl leading-[1.02] text-foreground sm:text-5xl">
             Persistent repository graphs for humans and AI agents

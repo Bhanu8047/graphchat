@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   ProviderCredential,
   ProviderCredentialSummary,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 import { v4 as uuid } from 'uuid';
 import { EncryptionService } from '../common/encryption/encryption.service';
 import { CredentialsRepository } from './credentials.repository';

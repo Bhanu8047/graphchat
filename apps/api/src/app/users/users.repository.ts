@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Collection } from 'mongodb';
-import { AppUser } from '@trchat/shared-types';
+import { AppUser } from '@graphchat/shared-types';
 import { MongoDatabaseService } from '../common/database/mongo-database.service';
 
 export type StoredUser = AppUser & { passwordHash?: string };

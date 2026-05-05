@@ -18,6 +18,16 @@ class AnalyzeResponse(BaseModel):
     duration_ms: int
 
 
+class IngestRequest(BaseModel):
+    """Client-extracted graph payload — used when AST extraction runs in the CLI
+    instead of on the server. Source code never reaches the service."""
+
+    repo_id: str
+    nodes: list[dict]
+    edges: list[dict]
+    languages: list[str] = Field(default_factory=list)
+
+
 class ClusterRequest(BaseModel):
     repo_id: str
 

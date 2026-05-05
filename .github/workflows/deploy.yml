@@ -29,7 +29,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  DEPLOY_DIR: /opt/trchat
+  DEPLOY_DIR: /opt/graphchat
 
 jobs:
   deploy:
@@ -197,8 +197,8 @@ jobs:
           push: true
           tags: ${{ steps.images.outputs.web }}
           build-args: |
-            NEXT_PUBLIC_APP_URL=https://trchat.co
-            NEXT_PUBLIC_API_URL=https://api.trchat.co/api
+            NEXT_PUBLIC_APP_URL=https://graphchat.co
+            NEXT_PUBLIC_API_URL=https://api.graphchat.co/api
 
       - uses: docker/build-push-action@v6
         if: steps.changes.outputs.graph_service_changed == 'true'
@@ -219,7 +219,7 @@ jobs:
       - name: Prepare deployment bundle
         if: steps.changes.outputs.should_deploy == 'true'
         run: |
-          tar -czf /tmp/trchat-deploy.tgz \
+          tar -czf /tmp/graphchat-deploy.tgz \
             docker-compose.prod.yml \
             docker/nginx \
             scripts/vps/deploy.sh \
@@ -238,8 +238,8 @@ jobs:
           : "${VPS_SSH_KEY:?VPS_SSH_KEY secret is required}"
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/trchat_deploy_key
-          chmod 600 ~/.ssh/trchat_deploy_key
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/graphchat_deploy_key
+          chmod 600 ~/.ssh/graphchat_deploy_key
           ssh-keyscan -p "${VPS_PORT:-22}" "$VPS_HOST" >> ~/.ssh/known_hosts
 
       - name: Upload deployment files
@@ -249,9 +249,9 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
-          ssh -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "mkdir -p '${DEPLOY_DIR}'"
-          scp -i ~/.ssh/trchat_deploy_key -P "${VPS_PORT:-22}" /tmp/trchat-deploy.tgz "$VPS_USER@$VPS_HOST:${DEPLOY_DIR}/trchat-deploy.tgz"
-          ssh -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '${DEPLOY_DIR}' && tar -xzf trchat-deploy.tgz && chmod 600 .env.prod && chmod +x scripts/vps/deploy.sh"
+          ssh -i ~/.ssh/graphchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "mkdir -p '${DEPLOY_DIR}'"
+          scp -i ~/.ssh/graphchat_deploy_key -P "${VPS_PORT:-22}" /tmp/graphchat-deploy.tgz "$VPS_USER@$VPS_HOST:${DEPLOY_DIR}/graphchat-deploy.tgz"
+          ssh -i ~/.ssh/graphchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "cd '${DEPLOY_DIR}' && tar -xzf graphchat-deploy.tgz && chmod 600 .env.prod && chmod +x scripts/vps/deploy.sh"
 
       - name: Deploy exact images
         if: steps.changes.outputs.should_deploy == 'true'
@@ -283,11 +283,11 @@ jobs:
             remote_prefix="${remote_env[*]} "
           fi
 
-          ssh -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
+          ssh -i ~/.ssh/graphchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
             "cd '${DEPLOY_DIR}' && echo '${{ github.token }}' | docker login '${REGISTRY}' -u '${{ github.actor }}' --password-stdin && ${remote_prefix}./scripts/vps/deploy.sh"
 
       - name: Verify public endpoints
         if: steps.changes.outputs.should_deploy == 'true'
         run: |
-          curl --fail --silent --show-error --retry 12 --retry-delay 5 https://trchat.co >/dev/null
-          curl --fail --silent --show-error --retry 12 --retry-delay 5 https://api.trchat.co/api/health
+          curl --fail --silent --show-error --retry 12 --retry-delay 5 https://graphchat.co >/dev/null
+          curl --fail --silent --show-error --retry 12 --retry-delay 5 https://api.graphchat.co/api/health

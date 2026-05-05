@@ -5,7 +5,7 @@ import ignore from 'ignore';
 
 /**
  * Builds an ignore filter for a repo path.
- * Reads `.trchatignore` from the repo root and adds it on top of a built-in
+ * Reads `.graphchatignore` from the repo root and adds it on top of a built-in
  * default set. Returns a predicate `(relativePath) => true` when the path
  * should be ignored.
  */
@@ -31,7 +31,7 @@ export class IgnoreService {
       'yarn.lock',
     ]);
 
-    const ignorePath = join(repoPath, '.trchatignore');
+    const ignorePath = join(repoPath, '.graphchatignore');
     if (existsSync(ignorePath)) {
       const raw = readFileSync(ignorePath, 'utf8');
       const lines = raw

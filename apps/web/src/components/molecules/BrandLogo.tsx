@@ -23,7 +23,7 @@ export function BrandLogo({
         'group inline-flex items-center gap-2.5 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]',
         className,
       )}
-      aria-label="trchat home"
+      aria-label="graphchat home"
     >
       <Image
         src="/logo.svg"
@@ -36,7 +36,7 @@ export function BrandLogo({
       />
       {!iconOnly ? (
         <span className="font-display text-[1.35rem] font-semibold leading-none tracking-tight">
-          <span className="text-[var(--foreground)]">tr</span>
+          <span className="text-[var(--foreground)]">graph</span>
           <span className="gradient-text-hero">chat</span>
           <span
             aria-hidden

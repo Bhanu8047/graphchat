@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { ApiKeySummary } from '@trchat/shared-types';
+import { ApiKeySummary } from '@graphchat/shared-types';
 import { Badge } from '../../../components/atoms/Badge';
 import { Button } from '../../../components/atoms/Button';
 import { Input } from '../../../components/atoms/Input';
@@ -14,7 +14,7 @@ import { api } from '../../../lib/api';
 
 const SCOPES = ['read', 'write', 'analyze'];
 
-export function TrchatApiKeysPage() {
+export function GraphchatApiKeysPage() {
   const [items, setItems] = useState<ApiKeySummary[]>([]);
   const [label, setLabel] = useState('');
   const [scopes, setScopes] = useState<string[]>([...SCOPES]);
@@ -24,7 +24,7 @@ export function TrchatApiKeysPage() {
   const confirm = useConfirm();
 
   const refresh = () =>
-    api.trchatKeys
+    api.graphchatKeys
       .list()
       .then(setItems)
       .catch(() => setError('Failed to load keys.'));
@@ -39,7 +39,7 @@ export function TrchatApiKeysPage() {
     setError('');
     setRevealed(null);
     try {
-      const result = await api.trchatKeys.create({ label, scopes });
+      const result = await api.graphchatKeys.create({ label, scopes });
       setRevealed(result.key);
       setLabel('');
       await refresh();
@@ -52,14 +52,14 @@ export function TrchatApiKeysPage() {
 
   const remove = async (id: string) => {
     const ok = await confirm({
-      title: 'Revoke trchat key?',
+      title: 'Revoke graphchat key?',
       description:
         'CLI sessions using this key will stop working immediately. This cannot be undone.',
       confirmLabel: 'Revoke',
       tone: 'danger',
     });
     if (!ok) return;
-    await api.trchatKeys.delete(id);
+    await api.graphchatKeys.delete(id);
     await refresh();
   };
 
@@ -75,12 +75,12 @@ export function TrchatApiKeysPage() {
       <Surface tone="soft" padding="lg">
         <Badge>CLI</Badge>
         <h2 className="mt-2 font-display text-3xl text-foreground">
-          trchat API keys
+          graphchat API keys
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Personal access tokens for the <code>trchat</code> CLI. The plaintext
-          key is shown <strong>once</strong> at creation — copy it before
-          leaving this page.
+          Personal access tokens for the <code>graphchat</code> CLI. The
+          plaintext key is shown <strong>once</strong> at creation — copy it
+          before leaving this page.
         </p>
       </Surface>
 
@@ -135,7 +135,7 @@ export function TrchatApiKeysPage() {
         <h3 className="font-display text-xl text-foreground">Existing keys</h3>
         {items.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">
-            No keys yet. Each key prefix (sk-trchat-…) is shown for
+            No keys yet. Each key prefix (sk-graphchat-…) is shown for
             identification.
           </p>
         ) : (
@@ -149,7 +149,7 @@ export function TrchatApiKeysPage() {
                         {item.label}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        sk-trchat-{item.keyId} · scopes:{' '}
+                        sk-graphchat-{item.keyId} · scopes:{' '}
                         {item.scopes.join(', ')} · created{' '}
                         {new Date(item.createdAt).toLocaleString()}
                         {item.lastUsed
@@ -159,7 +159,7 @@ export function TrchatApiKeysPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <CopyButton
-                        value={`sk-trchat-${item.keyId}`}
+                        value={`sk-graphchat-${item.keyId}`}
                         label="Copy ID"
                       />
                       <Button tone="danger" onClick={() => remove(item.id)}>

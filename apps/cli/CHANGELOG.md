@@ -1,3 +1,27 @@
+## 0.1.0-beta.4 (2026-05-05)
+
+### 🩹 Fixes
+
+- **cli:** remove project ref from config to allow the standalone build ([38892e4](https://github.com/Bhanu8047/vector-graph/commit/38892e4))
+
+### ❤️ Thank You
+
+- Bhanu Pratap @Bhanu8047
+
+## 0.1.0-beta.3 (2026-05-05)
+
+### 🚀 Features
+
+- **api/cli:** add web-tree-sitter & tree-sitter-wasms, fix index cmd gor gph cli ([d4ad4ee](https://github.com/Bhanu8047/vector-graph/commit/d4ad4ee))
+
+### 🩹 Fixes
+
+- **cli:walker:** fix unused value lint error ([711631f](https://github.com/Bhanu8047/vector-graph/commit/711631f))
+
+### ❤️ Thank You
+
+- Bhanu Pratap @Bhanu8047
+
 ## 0.1.0-beta.2 (2026-05-05)
 
 This was a version bump only for cli to align it with other projects, there were no code changes.

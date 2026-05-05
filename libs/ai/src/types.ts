@@ -2,7 +2,7 @@ import type {
   EmbeddingProvider,
   LLMProvider,
   SuggestResult,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 
 export type VoyageModel =
   | 'voyage-code-3'

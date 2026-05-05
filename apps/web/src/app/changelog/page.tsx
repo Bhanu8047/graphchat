@@ -6,9 +6,9 @@ import { MarketingShell } from '../../components/templates/MarketingShell';
 import { cn } from '../../lib/ui';
 
 export const metadata = {
-  title: 'Changelog — trchat',
+  title: 'Changelog — graphchat',
   description:
-    'What is new in trchat — feature releases, improvements, and fixes.',
+    'What is new in graphchat — feature releases, improvements, and fixes.',
 };
 
 type ChangeType = 'feature' | 'improvement' | 'fix' | 'security';
@@ -232,7 +232,7 @@ export default function ChangelogPage() {
         <div className="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 sm:py-28">
           <Badge>Changelog</Badge>
           <h1 className="mt-4 font-display text-4xl font-medium leading-tight tracking-tight text-balance text-[var(--foreground)] sm:text-5xl">
-            What&apos;s new in trchat
+            What&apos;s new in graphchat
           </h1>
           <p className="mt-5 text-base leading-7 text-[var(--muted-foreground)] sm:text-lg">
             A running log of features, improvements, and fixes — newest first.

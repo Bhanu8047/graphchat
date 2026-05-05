@@ -6,7 +6,7 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
-import { ThemeMode } from '@trchat/shared-types';
+import { ThemeMode } from '@graphchat/shared-types';
 
 export class UpdateUserDto {
   @IsOptional()

@@ -2,15 +2,15 @@ import * as path from 'node:path';
 import type { NextConfig } from 'next';
 
 const aliases: Record<string, string> = {
-  '@trchat/shared-types': path.resolve(
+  '@graphchat/shared-types': path.resolve(
     __dirname,
     '../../libs/shared-types/src/index.ts',
   ),
-  '@trchat/vector-client': path.resolve(
+  '@graphchat/vector-client': path.resolve(
     __dirname,
     '../../libs/vector-client/src/index.ts',
   ),
-  '@trchat/ai': path.resolve(__dirname, '../../libs/ai/src/index.ts'),
+  '@graphchat/ai': path.resolve(__dirname, '../../libs/ai/src/index.ts'),
 };
 
 // Conservative defaults; tighten in production via APP_TRUSTED_HOSTS / CSP.
@@ -36,9 +36,9 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
   transpilePackages: [
-    '@trchat/shared-types',
-    '@trchat/vector-client',
-    '@trchat/ai',
+    '@graphchat/shared-types',
+    '@graphchat/vector-client',
+    '@graphchat/ai',
   ],
   async headers() {
     return [

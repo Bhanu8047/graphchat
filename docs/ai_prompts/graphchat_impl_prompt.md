@@ -1,4 +1,4 @@
-# TRCHAT — Agent Implementation Prompt
+# GRAPHCHAT — Agent Implementation Prompt
 ## Priority 1 & 2: Token Minimization + Python Graph Sidecar
 
 > **Read this entire document before writing a single line of code.**
@@ -30,7 +30,7 @@ vectorgraph/
 
 ```
 Priority 1 — Token minimization inside existing NestJS + shared libs
-  - .trchatignore support
+  - .graphchatignore support
   - Edge confidence tiers (EXTRACTED / INFERRED / SPECULATIVE)
   - --budget query param on search
   - Community context Redis cache
@@ -224,7 +224,7 @@ export interface GraphQueryDto {
 
 ## 2. Priority 1 — Token Minimization (NestJS changes)
 
-### 2a. .trchatignore Support
+### 2a. .graphchatignore Support
 
 **New file: `apps/api/src/app/shared/ignore.service.ts`**
 
@@ -238,7 +238,7 @@ import ignore from 'ignore'; // npm install ignore
 export class IgnoreService {
   /**
    * Build an ignore filter for a repo path.
-   * Reads .trchatignore from repo root, falls back to defaults.
+   * Reads .graphchatignore from repo root, falls back to defaults.
    * Returns a function: (relativePath: string) => boolean (true = should ignore)
    */
   buildFilter(repoPath: string): (relativePath: string) => boolean {
@@ -261,8 +261,8 @@ export class IgnoreService {
       'yarn.lock',
     ]);
 
-    // Load .trchatignore if present
-    const ignorePath = join(repoPath, '.trchatignore');
+    // Load .graphchatignore if present
+    const ignorePath = join(repoPath, '.graphchatignore');
     if (existsSync(ignorePath)) {
       const raw = readFileSync(ignorePath, 'utf8');
       // Strip inline comments (vendor/ # legacy deps → vendor/)
@@ -717,7 +717,7 @@ LANG_MAP = {
     '.cs':   Language(tscsharp.language()),
 }
 
-# Default ignore patterns (augmented by .trchatignore on NestJS side)
+# Default ignore patterns (augmented by .graphchatignore on NestJS side)
 DEFAULT_IGNORE = {
     'node_modules', 'dist', 'build', '.next', 'coverage',
     '.git', '.nx', '__pycache__', '.pytest_cache', 'vendor',
@@ -1287,7 +1287,7 @@ def get_surprising_edges(G: nx.DiGraph, communities: list[dict]) -> list[dict]:
 ```python
 """
 Graph query engine: BFS, DFS, and KNN-seeded expansion.
-Used by the CLI trchat query command (Priority 3) and the API.
+Used by the CLI graphchat query command (Priority 3) and the API.
 """
 import networkx as nx
 from .graph_builder import get_node_neighbors
@@ -1453,7 +1453,7 @@ def generate_report(nodes: list[dict], edges: list[dict],
 
 ```python
 """
-TRCHAT Graph Service — FastAPI application.
+GRAPHCHAT Graph Service — FastAPI application.
 Port 5000. Internal only (not exposed via Nginx).
 Called by NestJS GraphBridgeService.
 """
@@ -1504,7 +1504,7 @@ async def lifespan(app: FastAPI):
     yield
     print('[graph-service] Shutting down...')
 
-app = FastAPI(title='TRCHAT Graph Service', lifespan=lifespan)
+app = FastAPI(title='GRAPHCHAT Graph Service', lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['*'], allow_headers=['*'])
 
 

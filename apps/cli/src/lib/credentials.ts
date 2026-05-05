@@ -16,12 +16,12 @@ export interface Credentials {
   savedAt: number; // ms epoch
 }
 
-const TRCHAT_DIR = join(homedir(), '.trchat');
-const CREDS_FILE = join(TRCHAT_DIR, 'credentials.json');
+const GRAPHCHAT_DIR = join(homedir(), '.graphchat');
+const CREDS_FILE = join(GRAPHCHAT_DIR, 'credentials.json');
 
 function ensureDir(): void {
-  if (!existsSync(TRCHAT_DIR)) {
-    mkdirSync(TRCHAT_DIR, { recursive: true, mode: 0o700 });
+  if (!existsSync(GRAPHCHAT_DIR)) {
+    mkdirSync(GRAPHCHAT_DIR, { recursive: true, mode: 0o700 });
   }
 }
 

@@ -6,7 +6,7 @@ import {
   GraphEdge,
   GraphNode,
   Repository,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 
 type NodeDoc = ContextNode & { embedding: number[] };
 
@@ -313,6 +313,52 @@ export class MongoVectorService {
     ) as unknown as Promise<ContextNode | null>;
   }
 
+  async findNodeByLabelForOwner(
+    repoId: string,
+    label: string,
+    ownerId: string,
+  ): Promise<ContextNode | null> {
+    return this.nodeCol.findOne(
+      {
+        repoId,
+        ownerId,
+        // Case-insensitive exact match. Avoids accidental partial matches.
+        label: { $regex: `^${escapeRegex(label)}$`, $options: 'i' },
+      },
+      { projection: { _id: 0, embedding: 0 } },
+    ) as unknown as Promise<ContextNode | null>;
+  }
+
+  async getContextNeighbors(
+    repoId: string,
+    nodeId: string,
+    limit = 8,
+  ): Promise<ContextNode[]> {
+    const edges = await this.contextEdgeCol
+      .find(
+        { repoId, $or: [{ sourceId: nodeId }, { targetId: nodeId }] },
+        { projection: { _id: 0, sourceId: 1, targetId: 1, weight: 1 } },
+      )
+      .sort({ weight: -1 })
+      .limit(limit * 2)
+      .toArray();
+
+    const neighborIds = Array.from(
+      new Set(
+        edges.map((e) => (e.sourceId === nodeId ? e.targetId : e.sourceId)),
+      ),
+    ).slice(0, limit);
+
+    if (!neighborIds.length) return [];
+
+    return this.nodeCol
+      .find(
+        { repoId, id: { $in: neighborIds } },
+        { projection: { _id: 0, embedding: 0 } },
+      )
+      .toArray() as unknown as Promise<ContextNode[]>;
+  }
+
   async getContextMap(repoId: string): Promise<Map<string, ContextNode[]>> {
     const nodes = await this.getNodes(repoId);
     const map = new Map<string, ContextNode[]>();
@@ -375,4 +421,8 @@ export class MongoVectorService {
       score,
     }));
   }
+}
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

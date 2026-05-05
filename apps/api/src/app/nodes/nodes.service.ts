@@ -1,12 +1,15 @@
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MongoVectorService, RedisVectorService } from '@trchat/vector-client';
-import { getEmbedding, EmbeddingConfig } from '@trchat/ai';
+import {
+  MongoVectorService,
+  RedisVectorService,
+} from '@graphchat/vector-client';
+import { getEmbedding, EmbeddingConfig } from '@graphchat/ai';
 import {
   ContextNode,
   CreateNodeDto,
   EmbeddingProvider,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 import { v4 as uuid } from 'uuid';
 import { RuntimeConfigService } from '../runtime/runtime-config.service';
 import { SearchService } from '../search/search.service';

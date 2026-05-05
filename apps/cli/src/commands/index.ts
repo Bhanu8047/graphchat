@@ -3,45 +3,74 @@ import { Command } from 'commander';
 import { resolve } from 'node:path';
 import ora from 'ora';
 import { createClient } from '../lib/api-client.js';
+import { extractRepo } from '../lib/extract/index.js';
 import { printError, printSuccess } from '../lib/output.js';
 
 interface AnalyzeResult {
-  nodes_added?: number;
-  edges_added?: number;
+  nodesAdded?: number;
+  edgesAdded?: number;
   communities?: number;
-  god_nodes?: string[];
-  duration_ms?: number;
+  godNodes?: string[];
+  durationMs?: number;
 }
 
 export function indexCommand(): Command {
   return new Command('index')
-    .description('Index a repository (runs AST analysis + clustering)')
+    .description(
+      'Index a repository: runs Tree-sitter locally, then sends the graph to the API. ' +
+        'Source code never leaves your machine.',
+    )
     .argument('<path>', 'Path to repository')
     .requiredOption('-r, --repo <id>', 'Repo ID to index into')
     .action(async (path: string, opts: { repo: string }) => {
-      const client = createClient();
       const repoPath = resolve(path);
-      const spinner = ora(`Indexing ${chalk.cyan(repoPath)}…`).start();
+      const client = createClient();
+
+      const spinner = ora(`Scanning ${chalk.cyan(repoPath)}…`).start();
+      let lastFile = '';
+      const t0 = Date.now();
       try {
-        const { data } = await client.post<AnalyzeResult>('/graph/analyze', {
-          repoId: opts.repo,
+        const extracted = await extractRepo({
           repoPath,
+          repoId: opts.repo,
+          onFile: (rel) => {
+            lastFile = rel;
+            spinner.text = `Parsing ${chalk.dim(rel)}`;
+          },
+        });
+        const localMs = Date.now() - t0;
+
+        spinner.text =
+          `Extracted ${extracted.nodes.length} nodes, ${extracted.edges.length} edges ` +
+          `from ${extracted.filesParsed} files (${localMs}ms). Uploading…`;
+
+        const { data } = await client.post<AnalyzeResult>('/graph/ingest', {
+          repoId: opts.repo,
+          nodes: extracted.nodes,
+          edges: extracted.edges,
         });
         spinner.stop();
+
         printSuccess(
-          `Indexed ${data.nodes_added ?? 0} nodes, ${data.edges_added ?? 0} edges, ` +
-            `${data.communities ?? 0} communities in ${data.duration_ms ?? 0}ms`,
+          `Indexed ${data.nodesAdded ?? 0} nodes, ${data.edgesAdded ?? 0} edges, ` +
+            `${data.communities ?? 0} communities (server ${data.durationMs ?? 0}ms, local ${localMs}ms)`,
         );
-        if (data.god_nodes?.length) {
-          console.log(`  God nodes: ${data.god_nodes.join(', ')}`);
+        if (data.godNodes?.length) {
+          console.log(`  God nodes: ${data.godNodes.join(', ')}`);
         }
       } catch (e) {
         spinner.stop();
         const err = e as {
-          response?: { data?: { message?: string } };
+          response?: { data?: { message?: string; detail?: string } };
           message?: string;
         };
-        printError('Index failed', err.response?.data?.message ?? err.message);
+        const detail =
+          err.response?.data?.message ??
+          err.response?.data?.detail ??
+          err.message ??
+          'unknown error';
+        const where = lastFile ? ` (last file: ${lastFile})` : '';
+        printError('Index failed', `${detail}${where}`);
         process.exit(1);
       }
     });

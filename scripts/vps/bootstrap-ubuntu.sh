@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-/opt/trchat}"
+APP_DIR="${APP_DIR:-/opt/graphchat}"
 DEPLOY_USER="${DEPLOY_USER:-${SUDO_USER:-$USER}}"
 SSH_PORT="${SSH_PORT:-22}"
 SSH_PASSWORD_AUTH="${SSH_PASSWORD_AUTH:-no}"
@@ -47,7 +47,7 @@ systemctl enable --now docker
 usermod -aG docker "$DEPLOY_USER"
 
 install -m 0755 -d /etc/ssh/sshd_config.d
-cat >/etc/ssh/sshd_config.d/99-trchat-hardening.conf <<EOF
+cat >/etc/ssh/sshd_config.d/99-graphchat-hardening.conf <<EOF
 Port $SSH_PORT
 PasswordAuthentication $SSH_PASSWORD_AUTH
 KbdInteractiveAuthentication no
@@ -103,7 +103,7 @@ dpkg-reconfigure -f noninteractive unattended-upgrades
 install -d -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$APP_DIR"
 install -d -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$APP_DIR/certbot/www"
 
-cat >/etc/cron.d/trchat-certbot <<EOF
+cat >/etc/cron.d/graphchat-certbot <<EOF
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 15 3 * * * root APP_DIR=$APP_DIR $APP_DIR/scripts/vps/renew-certs.sh

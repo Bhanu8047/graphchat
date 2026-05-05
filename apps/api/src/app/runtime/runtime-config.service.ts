@@ -5,7 +5,7 @@ import {
   EmbeddingProvider,
   LLMProvider,
   RuntimeProviderConfig,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 
 @Injectable()
 export class RuntimeConfigService {

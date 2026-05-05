@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-/opt/trchat}"
+APP_DIR="${APP_DIR:-/opt/graphchat}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
-LOG_FILE="${LOG_FILE:-/var/log/trchat-certbot.log}"
+LOG_FILE="${LOG_FILE:-/var/log/graphchat-certbot.log}"
 
 cd "$APP_DIR"
 

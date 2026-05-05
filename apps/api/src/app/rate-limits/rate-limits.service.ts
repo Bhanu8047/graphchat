@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ModelService, RateLimit } from '@trchat/shared-types';
+import { ModelService, RateLimit } from '@graphchat/shared-types';
 import { UpsertRateLimitDto } from './dto/upsert-rate-limit.dto';
 import { RateLimitsRepository } from './rate-limits.repository';
 

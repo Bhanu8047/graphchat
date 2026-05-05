@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
-import { GraphSnapshot } from '@trchat/shared-types';
+import { GraphSnapshot } from '@graphchat/shared-types';
 import { Button } from '../../../components/atoms/Button';
 import { Surface } from '../../../components/atoms/Surface';
 import { Notice } from '../../../components/molecules/Notice';

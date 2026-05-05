@@ -20,7 +20,7 @@ export function createClient(requireAuth = true): AxiosInstance {
 
   if (requireAuth && !creds) {
     console.error(
-      chalk.red('Not logged in. Run: gph login --key sk-trchat-...'),
+      chalk.red('Not logged in. Run: gph login --key sk-graphchat-...'),
     );
     process.exit(1);
   }
@@ -79,7 +79,7 @@ export function createClient(requireAuth = true): AxiosInstance {
         } catch {
           deleteCredentials();
           console.error(
-            chalk.red('Session expired. Run: gph login --key sk-trchat-...'),
+            chalk.red('Session expired. Run: gph login --key sk-graphchat-...'),
           );
           process.exit(1);
         }

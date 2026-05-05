@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { AuthenticatedUser } from '@trchat/shared-types';
+import { AuthenticatedUser } from '@graphchat/shared-types';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import { UsageService } from './usage.service';
 
