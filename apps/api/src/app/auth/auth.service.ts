@@ -3,7 +3,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AppUser, AuthenticatedUser } from '@trchat/shared-types';
+import { AppUser, AuthenticatedUser } from '@graphchat/shared-types';
 import { v4 as uuid } from 'uuid';
 import { PasswordService } from '../common/auth/password.service';
 import { SessionTokenService } from '../common/auth/session-token.service';

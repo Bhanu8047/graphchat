@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Put } from '@nestjs/common';
-import { AuthenticatedUser } from '@trchat/shared-types';
+import { AuthenticatedUser } from '@graphchat/shared-types';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import { UpsertModelSettingDto } from './dto/upsert-model-setting.dto';
 import { ModelSettingsService } from './model-settings.service';

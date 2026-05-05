@@ -3,7 +3,7 @@ import {
   AuthenticatedUser,
   ExplainDto,
   SuggestDto,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 import { AiService } from './ai.service';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 

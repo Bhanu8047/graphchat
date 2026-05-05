@@ -21,8 +21,8 @@ interface IngestResult {
   durationMs?: number;
 }
 
-const HOOK_MARKER = '# >>> trchat-gph hook >>>';
-const HOOK_MARKER_END = '# <<< trchat-gph hook <<<';
+const HOOK_MARKER = '# >>> graphchat-gph hook >>>';
+const HOOK_MARKER_END = '# <<< graphchat-gph hook <<<';
 const HOOK_NAMES = ['post-commit', 'post-checkout', 'post-merge'] as const;
 
 export function watchCommand(): Command {

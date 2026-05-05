@@ -3,7 +3,7 @@ import {
   ContextNode,
   EdgeConfidence,
   VECTOR_DIMENSION,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 
 export class RedisVectorService {
   private client = createClient({

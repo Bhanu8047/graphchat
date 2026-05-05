@@ -3,7 +3,7 @@ import {
   DashboardRecentRepo,
   DashboardStats,
   Repository,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 import { MongoDatabaseService } from '../common/database/mongo-database.service';
 
 @Injectable()

@@ -3,8 +3,8 @@ import { Badge } from '../../../components/atoms/Badge';
 import { MarketingShell } from '../../../components/templates/MarketingShell';
 
 export const metadata = {
-  title: 'Privacy Policy — trchat',
-  description: 'How trchat stores and protects your data.',
+  title: 'Privacy Policy — graphchat',
+  description: 'How graphchat stores and protects your data.',
 };
 
 const EFFECTIVE_DATE = 'May 5, 2026';
@@ -62,11 +62,11 @@ export default function PrivacyPage() {
       {/* Body */}
       <section className="mx-auto max-w-3xl px-4 py-12 pb-24 sm:px-6 lg:px-8">
         <P>
-          trchat (&quot;we&quot;, &quot;our&quot;, or &quot;the service&quot;)
-          is an open-source tool that builds and stores repository knowledge
-          graphs so that you — and the AI agents you authorise — can query
-          structured context efficiently. This policy explains what data we
-          store, why, and what we never do with it.
+          graphchat (&quot;we&quot;, &quot;our&quot;, or &quot;the
+          service&quot;) is an open-source tool that builds and stores
+          repository knowledge graphs so that you — and the AI agents you
+          authorise — can query structured context efficiently. This policy
+          explains what data we store, why, and what we never do with it.
         </P>
         <P>
           <strong className="font-semibold text-[var(--foreground)]">
@@ -110,7 +110,7 @@ export default function PrivacyPage() {
         <P>
           API keys (
           <code className="rounded bg-[var(--surface-muted)] px-1 font-mono text-xs">
-            sk-trchat-…
+            sk-graphchat-…
           </code>
           ) are stored as bcrypt hashes only. The plaintext key is shown once at
           creation and is not stored anywhere in our system. JWT access and
@@ -145,11 +145,11 @@ export default function PrivacyPage() {
 
         <H2>3. Open-source transparency</H2>
         <P>
-          trchat is open-source software. The full server-side code — including
-          every data-access path — is publicly available for inspection. You can
-          verify exactly what queries run against your data and where results
-          go. If you find a discrepancy between this policy and the code, please
-          file an issue in the repository.
+          graphchat is open-source software. The full server-side code —
+          including every data-access path — is publicly available for
+          inspection. You can verify exactly what queries run against your data
+          and where results go. If you find a discrepancy between this policy
+          and the code, please file an issue in the repository.
         </P>
 
         <H2>4. Data sharing</H2>
@@ -157,7 +157,7 @@ export default function PrivacyPage() {
         <UL
           items={[
             'GitHub OAuth: if you choose GitHub sign-in, GitHub shares your public email and user ID with us per their OAuth flow. We do not send your repository data back to GitHub beyond the standard API calls needed to list branches you explicitly select.',
-            'Infrastructure providers: your data is hosted on servers running the trchat software. Infrastructure providers have no access to application-layer data.',
+            'Infrastructure providers: your data is hosted on servers running the graphchat software. Infrastructure providers have no access to application-layer data.',
             'Legal obligation: if required by a valid court order we may disclose the minimum data necessary, and we will notify you in advance where legally permitted.',
           ]}
         />
@@ -168,10 +168,10 @@ export default function PrivacyPage() {
           delete individual repositories — and all associated graph data — from
           the dashboard at any time. To delete your entire account, email{' '}
           <a
-            href="mailto:privacy@trchat.co"
+            href="mailto:privacy@graphchat.co"
             className="text-[var(--primary)] underline underline-offset-2"
           >
-            privacy@trchat.co
+            privacy@graphchat.co
           </a>
           . We will permanently erase all data within 30 days.
         </P>
@@ -197,10 +197,10 @@ export default function PrivacyPage() {
           disclose it responsibly by opening a security advisory in the
           repository or emailing{' '}
           <a
-            href="mailto:security@trchat.co"
+            href="mailto:security@graphchat.co"
             className="text-[var(--primary)] underline underline-offset-2"
           >
-            security@trchat.co
+            security@graphchat.co
           </a>
           .
         </P>
@@ -219,7 +219,7 @@ export default function PrivacyPage() {
 
         <H2>8. Children</H2>
         <P>
-          trchat is not directed at children under 13. We do not knowingly
+          graphchat is not directed at children under 13. We do not knowingly
           collect data from anyone under 13. If you believe we have
           inadvertently done so, contact us and we will delete it promptly.
         </P>
@@ -236,10 +236,10 @@ export default function PrivacyPage() {
         <P>Questions about this policy or data requests:</P>
         <P>
           <a
-            href="mailto:privacy@trchat.co"
+            href="mailto:privacy@graphchat.co"
             className="text-[var(--primary)] underline underline-offset-2"
           >
-            privacy@trchat.co
+            privacy@graphchat.co
           </a>
         </P>
 

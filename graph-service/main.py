@@ -1,4 +1,4 @@
-"""TRCHAT Graph Service — FastAPI application.
+"""GRAPHCHAT Graph Service — FastAPI application.
 
 Port 5000. Internal only (not exposed via Nginx). Called by NestJS via the
 ``GraphBridgeService``.
@@ -82,7 +82,7 @@ async def lifespan(app: FastAPI):
     print("[graph-service] Shutting down...")
 
 
-app = FastAPI(title="TRCHAT Graph Service", lifespan=lifespan)
+app = FastAPI(title="GRAPHCHAT Graph Service", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

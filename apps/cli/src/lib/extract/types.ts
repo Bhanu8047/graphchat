@@ -1,4 +1,4 @@
-import type { ExtractedEdge, ExtractedNode } from '@trchat/shared-types';
+import type { ExtractedEdge, ExtractedNode } from '@graphchat/shared-types';
 
 export type Lang =
   | 'python'

@@ -10,7 +10,7 @@ on:
       app_dir:
         description: Target application directory on the VPS
         required: false
-        default: /opt/trchat
+        default: /opt/graphchat
         type: string
       ssh_port:
         description: SSH port that should be configured on the VPS after bootstrap
@@ -42,7 +42,7 @@ jobs:
   bootstrap:
     runs-on: ubuntu-latest
     env:
-      APP_DIR: ${{ inputs.app_dir || '/opt/trchat' }}
+      APP_DIR: ${{ inputs.app_dir || '/opt/graphchat' }}
       TARGET_SSH_PORT: ${{ inputs.ssh_port || '22' }}
       SSH_PASSWORD_AUTH: ${{ inputs.ssh_password_auth || 'no' }}
       SSH_PERMIT_ROOT_LOGIN: ${{ inputs.ssh_permit_root_login || 'prohibit-password' }}
@@ -58,7 +58,7 @@ jobs:
 
       - name: Prepare deployment bundle
         run: |
-          tar -czf /tmp/trchat-deploy.tgz \
+          tar -czf /tmp/graphchat-deploy.tgz \
             docker-compose.prod.yml \
             docker/nginx \
             scripts/vps \
@@ -76,9 +76,9 @@ jobs:
           : "${VPS_SSH_KEY:?VPS_SSH_KEY secret is required}"
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          printf '%s\n' "$VPS_SSH_KEY" | tr -d '\r' > ~/.ssh/trchat_deploy_key
-          chmod 600 ~/.ssh/trchat_deploy_key
-          ssh-keygen -y -f ~/.ssh/trchat_deploy_key >/dev/null
+          printf '%s\n' "$VPS_SSH_KEY" | tr -d '\r' > ~/.ssh/graphchat_deploy_key
+          chmod 600 ~/.ssh/graphchat_deploy_key
+          ssh-keygen -y -f ~/.ssh/graphchat_deploy_key >/dev/null
           ssh-keyscan -p "${VPS_PORT:-22}" "$VPS_HOST" >> ~/.ssh/known_hosts
 
       - name: Upload bootstrap script
@@ -87,7 +87,7 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
-          scp -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -P "${VPS_PORT:-22}" \
+          scp -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/graphchat_deploy_key -P "${VPS_PORT:-22}" \
             scripts/vps/bootstrap-centos.sh "$VPS_USER@$VPS_HOST:/tmp/bootstrap-centos.sh"
 
       - name: Bootstrap CentOS 9 host
@@ -98,7 +98,7 @@ jobs:
           DEPLOY_USER_INPUT: ${{ inputs.deploy_user }}
         run: |
           deploy_user="${DEPLOY_USER_INPUT:-$VPS_USER}"
-          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/graphchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
             "if [ \"\$(id -u)\" -eq 0 ]; then APP_DIR='${APP_DIR}' DEPLOY_USER='${deploy_user}' SSH_PORT='${TARGET_SSH_PORT}' SSH_PASSWORD_AUTH='${SSH_PASSWORD_AUTH}' SSH_PERMIT_ROOT_LOGIN='${SSH_PERMIT_ROOT_LOGIN}' bash /tmp/bootstrap-centos.sh; else sudo -n APP_DIR='${APP_DIR}' DEPLOY_USER='${deploy_user}' SSH_PORT='${TARGET_SSH_PORT}' SSH_PASSWORD_AUTH='${SSH_PASSWORD_AUTH}' SSH_PERMIT_ROOT_LOGIN='${SSH_PERMIT_ROOT_LOGIN}' bash /tmp/bootstrap-centos.sh; fi"
 
       - name: Trust post-bootstrap SSH port
@@ -112,14 +112,14 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${TARGET_SSH_PORT}" "$VPS_USER@$VPS_HOST" "mkdir -p '${APP_DIR}'"
-          scp -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -P "${TARGET_SSH_PORT}" /tmp/trchat-deploy.tgz "$VPS_USER@$VPS_HOST:${APP_DIR}/trchat-deploy.tgz"
-          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${TARGET_SSH_PORT}" "$VPS_USER@$VPS_HOST" "cd '${APP_DIR}' && tar -xzf trchat-deploy.tgz && chmod 600 .env.prod && chmod +x scripts/vps/*.sh"
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/graphchat_deploy_key -p "${TARGET_SSH_PORT}" "$VPS_USER@$VPS_HOST" "mkdir -p '${APP_DIR}'"
+          scp -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/graphchat_deploy_key -P "${TARGET_SSH_PORT}" /tmp/graphchat-deploy.tgz "$VPS_USER@$VPS_HOST:${APP_DIR}/graphchat-deploy.tgz"
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/graphchat_deploy_key -p "${TARGET_SSH_PORT}" "$VPS_USER@$VPS_HOST" "cd '${APP_DIR}' && tar -xzf graphchat-deploy.tgz && chmod 600 .env.prod && chmod +x scripts/vps/*.sh"
 
       - name: Verify Docker install
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/trchat_deploy_key -p "${TARGET_SSH_PORT}" "$VPS_USER@$VPS_HOST" \
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/graphchat_deploy_key -p "${TARGET_SSH_PORT}" "$VPS_USER@$VPS_HOST" \
             "if [ \"\$(id -u)\" -eq 0 ]; then docker --version && docker compose version; else sudo -n docker --version && sudo -n docker compose version; fi"

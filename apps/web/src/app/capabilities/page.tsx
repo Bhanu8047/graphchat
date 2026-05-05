@@ -19,9 +19,9 @@ import { CapabilityCard } from '../../components/molecules/CapabilityCard';
 import { MarketingShell } from '../../components/templates/MarketingShell';
 
 export const metadata = {
-  title: 'Capabilities — trchat',
+  title: 'Capabilities — graphchat',
   description:
-    'Deep dive into the extraction pipeline, graph algorithms, edge confidence model, and caching architecture powering trchat.',
+    'Deep dive into the extraction pipeline, graph algorithms, edge confidence model, and caching architecture powering graphchat.',
 };
 
 const capabilities = [
@@ -68,7 +68,7 @@ const capabilities = [
           </li>
           <li className="list-disc">
             <code className="font-mono text-xs">.gitignore</code> and{' '}
-            <code className="font-mono text-xs">.trchatignore</code> are
+            <code className="font-mono text-xs">.graphchatignore</code> are
             honoured during the walk; files larger than 2 MB are skipped
           </li>
           <li className="list-disc">
@@ -99,7 +99,7 @@ const capabilities = [
           , the CLI walks the working tree and parses every supported file with
           a WASM build of Tree-sitter that ships inside the published{' '}
           <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
-            @trchat/gph
+            @graphchat/gph
           </code>{' '}
           package. The pipeline produces the same node/edge shape the server
           would produce — just on the developer&apos;s laptop instead of on a
@@ -121,8 +121,8 @@ const capabilities = [
           </li>
           <li className="list-disc">
             Walks honour <code className="font-mono text-xs">.gitignore</code>{' '}
-            and <code className="font-mono text-xs">.trchatignore</code> plus a
-            built-in skip list (
+            and <code className="font-mono text-xs">.graphchatignore</code> plus
+            a built-in skip list (
             <code className="font-mono text-xs">node_modules</code>,{' '}
             <code className="font-mono text-xs">dist</code>,{' '}
             <code className="font-mono text-xs">.git</code>, …)
@@ -289,7 +289,7 @@ const capabilities = [
           <strong className="font-semibold text-[var(--foreground)]">
             gph
           </strong>{' '}
-          is the trchat command-line tool. Every command authenticates via a
+          is the graphchat command-line tool. Every command authenticates via a
           short-lived JWT (auto-refreshed) and speaks directly to the graph API,
           returning a budget-trimmed, structured context slice ready to paste
           into an agent prompt.
@@ -298,7 +298,7 @@ const capabilities = [
         <div className="space-y-2">
           {[
             {
-              cmd: 'gph login --key sk-trchat-...',
+              cmd: 'gph login --key sk-graphchat-...',
               desc: 'Exchange an API key for JWT tokens — stored locally, auto-refreshed before expiry. One-time setup.',
             },
             {
@@ -356,9 +356,9 @@ const capabilities = [
     icon: <CheckIcon className="h-5 w-5" />,
     title: 'API Key + JWT Auth for CLI',
     description:
-      'Scoped API keys (sk-trchat-…) are minted in the dashboard and exchanged for short-lived JWT access + refresh tokens. The CLI auto-renews tokens invisibly — no repeated logins.',
+      'Scoped API keys (sk-graphchat-…) are minted in the dashboard and exchanged for short-lived JWT access + refresh tokens. The CLI auto-renews tokens invisibly — no repeated logins.',
     badges: [
-      { label: 'sk-trchat-…', tone: 'indigo' as const },
+      { label: 'sk-graphchat-…', tone: 'indigo' as const },
       { label: 'JWT exchange', tone: 'teal' as const },
       { label: 'auto-refresh', tone: 'teal' as const },
       { label: 'scopes', tone: 'neutral' as const },
@@ -377,7 +377,7 @@ const capabilities = [
           </code>
           ). The plaintext (
           <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
-            sk-trchat-…
+            sk-graphchat-…
           </code>
           ) is shown once and never stored — only its bcrypt hash lives in the
           database.
@@ -385,7 +385,7 @@ const capabilities = [
         <p>
           Running{' '}
           <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
-            gph login --key sk-trchat-…
+            gph login --key sk-graphchat-…
           </code>{' '}
           calls{' '}
           <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
@@ -394,7 +394,7 @@ const capabilities = [
           , which validates the key hash and returns a short-lived JWT access
           token plus a refresh token. Both are stored in{' '}
           <code className="rounded bg-[var(--surface)] px-1 py-0.5 font-mono text-xs">
-            ~/.trchat/credentials.json
+            ~/.graphchat/credentials.json
           </code>
           .
         </p>
@@ -657,7 +657,7 @@ export default function CapabilitiesPage() {
             Core Capabilities
           </h1>
           <p className="mt-5 text-base leading-7 text-[var(--muted-foreground)] sm:text-lg">
-            trchat unifies static analysis, semantic extraction and graph
+            graphchat unifies static analysis, semantic extraction and graph
             clustering into a single skill that any AI coding assistant can
             invoke. Click <em>Read more</em> on any card to see the underlying
             algorithms and design decisions.

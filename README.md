@@ -4,26 +4,26 @@ Production VPS deployment is documented in [docs/deployment.md](docs/deployment.
 
 ## CI/CD deployment environment
 
-The deployment workflow publishes immutable Docker images to GHCR and deploys them to `/opt/trchat` on the VPS. Add these repository secrets before merging deployment changes to `main`:
+The deployment workflow publishes immutable Docker images to GHCR and deploys them to `/opt/graphchat` on the VPS. Add these repository secrets before merging deployment changes to `main`:
 
 ```text
 VPS_HOST      # VPS IP address or hostname
-VPS_USER      # SSH user that can run Docker in /opt/trchat
+VPS_USER      # SSH user that can run Docker in /opt/graphchat
 VPS_SSH_KEY   # private SSH key for VPS_USER
 VPS_PORT      # optional; defaults to 22
-PROD_ENV_FILE # full contents of /opt/trchat/.env.prod
+PROD_ENV_FILE # full contents of /opt/graphchat/.env.prod
 ```
 
-The workflow uses GitHub's built-in `GITHUB_TOKEN` to push and pull GHCR images, and writes `/opt/trchat/.env.prod` from the `PROD_ENV_FILE` repository secret during deploy. No separate GHCR secret is required for the automated workflow.
+The workflow uses GitHub's built-in `GITHUB_TOKEN` to push and pull GHCR images, and writes `/opt/graphchat/.env.prod` from the `PROD_ENV_FILE` repository secret during deploy. No separate GHCR secret is required for the automated workflow.
 
 Set `PROD_ENV_FILE` to the full production env file contents, for example:
 
 ```bash
 MONGO_ROOT_PASSWORD=replace-with-a-long-random-password
-WEB_URL=https://trchat.co
-NEXT_PUBLIC_APP_URL=https://trchat.co
-NEXT_PUBLIC_API_URL=https://api.trchat.co/api
-APP_SESSION_COOKIE_DOMAIN=.trchat.co
+WEB_URL=https://graphchat.co
+NEXT_PUBLIC_APP_URL=https://graphchat.co
+NEXT_PUBLIC_API_URL=https://api.graphchat.co/api
+APP_SESSION_COOKIE_DOMAIN=.graphchat.co
 
 GITHUB_CLIENT_ID=your_github_oauth_client_id
 GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
@@ -32,7 +32,7 @@ VOYAGE_BASE_URL=https://api.voyageai.com/v1
 
 Optional provider variables can also be added to `.env.prod` as needed: `VOYAGE_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `OLLAMA_BASE_URL`, `LLM_PROVIDER`, and `EMBEDDING_PROVIDER`.
 
-When the web app and API live on different subdomains in production, set `APP_SESSION_COOKIE_DOMAIN` to the shared parent domain so the browser sends `vectorgraph_session` to both hosts. For the current deployment, use `.trchat.co`. Leave it unset for localhost development.
+When the web app and API live on different subdomains in production, set `APP_SESSION_COOKIE_DOMAIN` to the shared parent domain so the browser sends `vectorgraph_session` to both hosts. For the current deployment, use `.graphchat.co`. Leave it unset for localhost development.
 
 ## GitHub Web Login
 

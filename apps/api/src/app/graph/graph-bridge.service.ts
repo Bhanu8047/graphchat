@@ -11,7 +11,7 @@ import {
   AnalyzeRepoResult,
   GraphQueryDto,
   IngestGraphDto,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 
 /**
  * Thin HTTP bridge from NestJS to the Python `graph-service` (FastAPI on :5000).

@@ -267,7 +267,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Search trchat"
+        aria-label="Search graphchat"
         onMouseDown={(e) => e.stopPropagation()}
         className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[0_40px_120px_-30px_color-mix(in_oklab,var(--color-space-indigo-900)_55%,transparent)]"
       >

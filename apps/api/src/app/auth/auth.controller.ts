@@ -10,7 +10,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import { Public } from '../common/auth/public.decorator';
-import { AuthenticatedUser } from '@trchat/shared-types';
+import { AuthenticatedUser } from '@graphchat/shared-types';
 import { ApiKeysService } from './api-keys.service';
 import { AuthService } from './auth.service';
 import {

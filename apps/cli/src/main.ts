@@ -19,7 +19,7 @@ const program = new Command();
 program
   .name('gph')
   .description(
-    chalk.bold('TRCHAT') +
+    chalk.bold('GRAPHCHAT') +
       ' — Repository context graph for AI agents (beta)',
   )
   .version('0.1.0-beta.0')
@@ -27,7 +27,7 @@ program
     'after',
     `
 ${chalk.dim('Examples:')}
-  ${chalk.cyan('gph login --key sk-trchat-...')}
+  ${chalk.cyan('gph login --key sk-graphchat-...')}
   ${chalk.cyan('gph repos')}
   ${chalk.cyan('gph index ./src --repo my-api-id')}
   ${chalk.cyan('gph search "authentication middleware" --budget 1500')}

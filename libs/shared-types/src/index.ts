@@ -399,7 +399,7 @@ export interface RuntimeProviderConfig {
   defaultAgent?: AgentType;
 }
 
-// ── CLI auth (sk-trchat-... API keys + JWT exchange) ──────────────────────────
+// ── CLI auth (sk-graphchat-... API keys + JWT exchange) ──────────────────────────
 export interface ApiKey {
   id: string;
   keyId: string; // public prefix (24 hex chars)

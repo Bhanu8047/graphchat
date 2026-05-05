@@ -1,7 +1,7 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, RedisClientType } from 'redis';
-import { Community, CommunityMeta, ContextNode } from '@trchat/shared-types';
+import { Community, CommunityMeta, ContextNode } from '@graphchat/shared-types';
 
 const CACHE_TTL_SECONDS = 60 * 60 * 24; // 24 hours — rebuilt on re-index
 

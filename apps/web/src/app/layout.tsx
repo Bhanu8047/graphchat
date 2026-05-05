@@ -6,7 +6,7 @@ import { ThemeProvider } from '../features/theme/providers/ThemeProvider';
 import { themeInitScript } from '../features/theme/themeInitScript';
 
 export const metadata = {
-  title: 'trchat',
+  title: 'graphchat',
   description: 'Repository context graph for AI agents',
 };
 

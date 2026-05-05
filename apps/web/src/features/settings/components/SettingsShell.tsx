@@ -29,9 +29,9 @@ const ITEMS: Item[] = [
     match: (p) => p.startsWith('/settings/api-keys'),
   },
   {
-    href: '/settings/trchat-keys',
-    label: 'trchat API Keys',
-    match: (p) => p.startsWith('/settings/trchat-keys'),
+    href: '/settings/graphchat-keys',
+    label: 'graphchat API Keys',
+    match: (p) => p.startsWith('/settings/graphchat-keys'),
   },
 ];
 

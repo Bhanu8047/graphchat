@@ -6,7 +6,7 @@ import {
   AgentType,
   GithubBranchListResponse,
   RuntimeProviderConfig,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 import { Button, buttonStyles } from '../../../components/atoms/Button';
 import { Input } from '../../../components/atoms/Input';
 import { Select } from '../../../components/atoms/Select';
@@ -342,8 +342,8 @@ export function RepositoriesPage() {
             server and is forwarded server-side during import.
           </p>
           <p>
-            When you create a graph for a new branch, trchat seeds it from the
-            closest existing graph for the same repository and only re-reads
+            When you create a graph for a new branch, graphchat seeds it from
+            the closest existing graph for the same repository and only re-reads
             files whose GitHub blob hashes changed.
           </p>
           {githubBranches ? (

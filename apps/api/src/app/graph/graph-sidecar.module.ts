@@ -7,7 +7,7 @@ import { SearchModule } from '../search/search.module';
 
 /**
  * Holds services that bridge to the Python `graph-service` sidecar
- * (Tree-sitter + Leiden) and the `.trchatignore` filter helper.
+ * (Tree-sitter + Leiden) and the `.graphchatignore` filter helper.
  *
  * Kept separate from the existing structural `GraphModule` to avoid
  * a circular dependency with `ReposModule`.

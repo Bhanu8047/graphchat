@@ -6,7 +6,7 @@ import {
   ModelService,
   RateLimit,
   UsageRecord,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 import { Badge } from '../../../components/atoms/Badge';
 import { Button } from '../../../components/atoms/Button';
 import { Input } from '../../../components/atoms/Input';

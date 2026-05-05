@@ -31,7 +31,7 @@ export interface ExtractRepoOptions {
 
 /**
  * Walk `repoPath`, parse every supported file with Tree-sitter, and return
- * the combined nodes/edges. Honors `.gitignore` and `.trchatignore`, plus
+ * the combined nodes/edges. Honors `.gitignore` and `.graphchatignore`, plus
  * the hardcoded DEFAULT_IGNORE_DIRS.
  */
 export async function extractRepo(
@@ -40,7 +40,7 @@ export async function extractRepo(
   const { repoPath, repoId, onFile } = opts;
 
   const ig = ignore();
-  for (const name of ['.gitignore', '.trchatignore']) {
+  for (const name of ['.gitignore', '.graphchatignore']) {
     try {
       const content = await readFile(join(repoPath, name), 'utf8');
       ig.add(content);

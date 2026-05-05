@@ -76,7 +76,7 @@ export function SignInForm() {
         <Surface tone="hero" padding="xl">
           <BrandLogo className="w-fit" priority />
           <Badge tone="accent" className="mt-5">
-            trchat
+            graphchat
           </Badge>
           <h1 className="mt-4 font-display text-4xl leading-[1.02] text-foreground sm:text-5xl">
             Persistent repository graphs for humans and AI agents

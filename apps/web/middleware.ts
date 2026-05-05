@@ -9,8 +9,8 @@ const publicPaths = ['/', '/auth/sign-in', '/auth/sign-up'];
 // Hosts that may legitimately serve this app. Anything else is treated as a
 // spoof / cloned deployment and either redirected to the canonical host or
 // blocked outright. Configure via env at deploy time:
-//   APP_TRUSTED_HOSTS=trchat.co,www.trchat.co
-//   APP_CANONICAL_HOST=trchat.co
+//   APP_TRUSTED_HOSTS=graphchat.co,www.graphchat.co
+//   APP_CANONICAL_HOST=graphchat.co
 function getTrustedHosts(): string[] {
   const raw = process.env.APP_TRUSTED_HOSTS ?? '';
   const explicit = raw

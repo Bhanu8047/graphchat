@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Collection } from 'mongodb';
-import { RefreshTokenRecord } from '@trchat/shared-types';
+import { RefreshTokenRecord } from '@graphchat/shared-types';
 import { MongoDatabaseService } from '../common/database/mongo-database.service';
 
 @Injectable()

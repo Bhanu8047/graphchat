@@ -9,18 +9,18 @@ import {
   ApiKeySummary,
   ApiTokenResponse,
   RefreshTokenRecord,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 import { v4 as uuid } from 'uuid';
 import { ApiAccessTokenService } from './api-access-token.service';
 import { ApiKeysRepository } from './api-keys.repository';
 import { RefreshTokensRepository } from './refresh-tokens.repository';
 
-const KEY_PREFIX = 'sk-trchat-';
+const KEY_PREFIX = 'sk-graphchat-';
 const KEY_ID_BYTES = 12; // 24 hex chars
 const KEY_SECRET_BYTES = 24; // 48 hex chars
 const REFRESH_BYTES = 32; // opaque token, 64 hex chars
-const KEY_REGEX = /^sk-trchat-([a-f0-9]{24})\.([a-f0-9]{48})$/;
+const KEY_REGEX = /^sk-graphchat-([a-f0-9]{24})\.([a-f0-9]{48})$/;
 // Generic message used for every auth failure so callers cannot distinguish
 // between a malformed key, an unknown keyId, or a wrong secret.
 const INVALID_KEY_MESSAGE = 'Invalid API key.';
@@ -93,7 +93,7 @@ export class ApiKeysService {
   }
 
   /**
-   * Exchange a raw `sk-trchat-...` API key for an access + refresh token pair.
+   * Exchange a raw `sk-graphchat-...` API key for an access + refresh token pair.
    *
    * Uses a single generic error message for every failure mode (bad format,
    * unknown keyId, wrong secret) and always performs a hash verification so

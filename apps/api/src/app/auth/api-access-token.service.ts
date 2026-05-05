@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiAccessTokenPayload } from '@trchat/shared-types';
+import { ApiAccessTokenPayload } from '@graphchat/shared-types';
 import jwt from 'jsonwebtoken';
 
 /**

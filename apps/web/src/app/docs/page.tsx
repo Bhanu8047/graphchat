@@ -17,9 +17,9 @@ import {
 import { cn } from '../../lib/ui';
 
 export const metadata = {
-  title: 'Docs — trchat',
+  title: 'Docs — graphchat',
   description:
-    'Full documentation for the trchat CLI tool (gph), REST API, authentication, and deployment.',
+    'Full documentation for the graphchat CLI tool (gph), REST API, authentication, and deployment.',
 };
 
 function CodeBlock({ children }: { children: string }) {
@@ -97,7 +97,7 @@ const apiSections = [
         path: '/api/auth/keys',
         auth: true,
         description:
-          'Mint a new API key for the current user. The plaintext (sk-trchat-…) is returned once and never stored.',
+          'Mint a new API key for the current user. The plaintext (sk-graphchat-…) is returned once and never stored.',
         body: '{ "label": "my-ci-key", "scopes": ["search", "export"] }',
       },
       {
@@ -122,7 +122,7 @@ const apiSections = [
         auth: false,
         description:
           'Trade an API key for a fresh JWT access + refresh token pair. This is what gph login calls internally.',
-        body: '{ "api_key": "sk-trchat-..." }',
+        body: '{ "api_key": "sk-graphchat-..." }',
       },
       {
         method: 'POST',
@@ -493,13 +493,13 @@ export default function DocsPage() {
               </p>
               <CodeBlock>
                 {
-                  '# Global install (beta)\nnpm install -g @trchat/gph@beta\n\n# Or run without installing\nnpx -p @trchat/gph@beta gph login --key sk-trchat-...'
+                  '# Global install (beta)\nnpm install -g @graphchat/gph@beta\n\n# Or run without installing\nnpx -p @graphchat/gph@beta gph login --key sk-graphchat-...'
                 }
               </CodeBlock>
               <p className="mt-4 text-sm leading-7 text-[var(--muted-foreground)]">
                 Requires Node.js 18 or later. The CLI stores credentials in{' '}
-                <Pill>~/.trchat/credentials.json</Pill> and configuration in{' '}
-                <Pill>~/.trchat/config.json</Pill>.
+                <Pill>~/.graphchat/credentials.json</Pill> and configuration in{' '}
+                <Pill>~/.graphchat/config.json</Pill>.
               </p>
             </section>
 
@@ -513,7 +513,7 @@ export default function DocsPage() {
                 </h2>
               </div>
               <p className="mt-3 text-sm leading-7 text-[var(--muted-foreground)]">
-                trchat uses two separate auth flows:
+                graphchat uses two separate auth flows:
               </p>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <Surface padding="lg">
@@ -531,11 +531,11 @@ export default function DocsPage() {
                     CLI / API key
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-[var(--muted-foreground)]">
-                    Generate an API key (<Pill>sk-trchat-…</Pill>) in the
+                    Generate an API key (<Pill>sk-graphchat-…</Pill>) in the
                     dashboard under Settings → API Keys. Run{' '}
-                    <Pill>gph login --key sk-trchat-…</Pill>. The CLI exchanges
-                    the key for a short-lived JWT access token and a refresh
-                    token that auto-renews it.
+                    <Pill>gph login --key sk-graphchat-…</Pill>. The CLI
+                    exchanges the key for a short-lived JWT access token and a
+                    refresh token that auto-renews it.
                   </p>
                 </Surface>
               </div>
@@ -544,7 +544,7 @@ export default function DocsPage() {
               </h3>
               <CodeBlock>
                 {
-                  '# 1. Mint a key in the dashboard, then:\ngph login --key sk-trchat-abc123\n\n# Internally this calls:\n# POST /api/auth/exchange { "api_key": "sk-trchat-abc123" }\n# → { access_token, refresh_token, expires_in }\n\n# All subsequent gph commands attach:\n# Authorization: Bearer <access_token>'
+                  '# 1. Mint a key in the dashboard, then:\ngph login --key sk-graphchat-abc123\n\n# Internally this calls:\n# POST /api/auth/exchange { "api_key": "sk-graphchat-abc123" }\n# → { access_token, refresh_token, expires_in }\n\n# All subsequent gph commands attach:\n# Authorization: Bearer <access_token>'
                 }
               </CodeBlock>
               <p className="mt-3 text-sm leading-7 text-[var(--muted-foreground)]">
@@ -687,9 +687,10 @@ export default function DocsPage() {
                 </h2>
               </div>
               <p className="mt-3 text-sm leading-7 text-[var(--muted-foreground)]">
-                trchat is an Nx monorepo with three deployable apps: the Next.js
-                web frontend, the NestJS API, and the Python graph service. Run
-                them together via Docker Compose or deploy each independently.
+                graphchat is an Nx monorepo with three deployable apps: the
+                Next.js web frontend, the NestJS API, and the Python graph
+                service. Run them together via Docker Compose or deploy each
+                independently.
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--muted-foreground)]">
                 <span className="font-semibold text-[var(--foreground)]">
@@ -717,8 +718,8 @@ export default function DocsPage() {
                   },
                   {
                     title: 'Point the CLI at your server',
-                    body: 'By default the CLI targets the hosted trchat server. To use a self-hosted instance, pass --server on login or set serverUrl in ~/.trchat/config.json.',
-                    code: 'gph login --key sk-trchat-... --server https://your.host.com',
+                    body: 'By default the CLI targets the hosted graphchat server. To use a self-hosted instance, pass --server on login or set serverUrl in ~/.graphchat/config.json.',
+                    code: 'gph login --key sk-graphchat-... --server https://your.host.com',
                   },
                 ].map(({ title, body, code }) => (
                   <Surface key={title} padding="lg">

@@ -17,9 +17,9 @@ export const cliCommands: readonly CliCommandDoc[] = [
     cmd: 'gph login',
     flags: ['--key <api_key>', '--server <url>'],
     description:
-      'Authenticate the CLI with your trchat server using an API key (prefix sk-trchat-). Exchanges the key for a JWT access + refresh token pair stored locally. The token is auto-refreshed before expiry.',
+      'Authenticate the CLI with your graphchat server using an API key (prefix sk-graphchat-). Exchanges the key for a JWT access + refresh token pair stored locally. The token is auto-refreshed before expiry.',
     example:
-      'gph login --key sk-trchat-abc123\ngph login --key sk-trchat-abc123 --server https://your.trchat.host',
+      'gph login --key sk-graphchat-abc123\ngph login --key sk-graphchat-abc123 --server https://your.graphchat.host',
   },
   {
     cmd: 'gph logout',

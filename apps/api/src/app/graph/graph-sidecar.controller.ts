@@ -11,7 +11,7 @@ import {
   AuthenticatedUser,
   GraphQueryDto,
   IngestGraphDto,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 import { CommunityCacheService } from './community-cache.service';
 import { GraphBridgeService } from './graph-bridge.service';
 import { SearchService } from '../search/search.service';

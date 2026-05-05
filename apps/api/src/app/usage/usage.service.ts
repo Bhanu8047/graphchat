@@ -3,7 +3,7 @@ import {
   CredentialKind,
   ModelService,
   UsageRecord,
-} from '@trchat/shared-types';
+} from '@graphchat/shared-types';
 import { UsageRepository } from './usage.repository';
 
 const todayUTC = () => new Date().toISOString().slice(0, 10);
