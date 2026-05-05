@@ -1,3 +1,13 @@
+## 0.1.0-beta.4 (2026-05-05)
+
+### 🩹 Fixes
+
+- **cli:** remove project ref from config to allow the standalone build ([38892e4](https://github.com/Bhanu8047/vector-graph/commit/38892e4))
+
+### ❤️ Thank You
+
+- Bhanu Pratap @Bhanu8047
+
 ## 0.1.0-beta.3 (2026-05-05)
 
 ### 🚀 Features

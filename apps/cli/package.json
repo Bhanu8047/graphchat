@@ -1,6 +1,6 @@
 {
   "name": "@trchat/gph",
-  "version": "0.1.0-beta.3",
+  "version": "0.1.0-beta.4",
   "description": "trchat CLI (gph) — Repository context graph for AI agents (beta)",
   "bin": {
     "gph": "dist/main.js"
