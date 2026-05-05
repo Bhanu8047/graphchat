@@ -1,3 +1,7 @@
+## 0.1.0-beta.5 (2026-05-05)
+
+This was a version bump only for cli to align it with other projects, there were no code changes.
+
 ## 0.1.0-beta.4 (2026-05-05)
 
 ### 🩹 Fixes
