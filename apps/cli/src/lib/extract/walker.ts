@@ -96,7 +96,7 @@ export async function extractRepo(
       const lang = EXT_TO_LANG[ext];
       if (!lang) continue;
 
-      let size = 0;
+      let size: number;
       try {
         const st = await stat(abs);
         size = st.size;
