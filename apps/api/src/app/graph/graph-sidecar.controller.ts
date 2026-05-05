@@ -1,7 +1,21 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { IngestGraphDto } from '@trchat/shared-types';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
+import {
+  AuthenticatedUser,
+  GraphQueryDto,
+  IngestGraphDto,
+} from '@trchat/shared-types';
 import { CommunityCacheService } from './community-cache.service';
 import { GraphBridgeService } from './graph-bridge.service';
+import { SearchService } from '../search/search.service';
+import { CurrentUser } from '../common/auth/current-user.decorator';
 
 /**
  * REST surface for the Python graph sidecar.
@@ -13,7 +27,32 @@ export class GraphSidecarController {
   constructor(
     private readonly bridge: GraphBridgeService,
     private readonly cache: CommunityCacheService,
+    private readonly search: SearchService,
   ) {}
+
+  /**
+   * Graph-expanded query. Embeds the question, runs vector KNN to pick
+   * seed nodes, then asks the sidecar to expand from those seeds. Returns
+   * the sidecar's payload directly.
+   */
+  @Post('query')
+  async query(
+    @Body() dto: GraphQueryDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    if (!dto?.repoId || !dto?.query?.trim()) {
+      throw new HttpException('repoId and query are required.', 400);
+    }
+    const seeds = await this.search.search(
+      { q: dto.query, repoId: dto.repoId, k: 5 },
+      user.id,
+    );
+    const seedNodeIds = seeds.map((s) => s.node.id);
+    if (!seedNodeIds.length) {
+      return { nodes: [], total_chars: 0, truncated: false };
+    }
+    return this.bridge.query({ ...dto, seedNodeIds });
+  }
 
   /** Trigger AST + Leiden analysis for a repo (server-side path-based). */
   @Post('analyze')

@@ -47,7 +47,7 @@
         "cache": true,
         "options": {
           "commands": [
-            "tsc -p tsconfig.app.json",
+            "tsc -b tsconfig.app.json",
             "node ./scripts/copy-wasm.js"
           ],
           "parallel": false,
@@ -62,6 +62,7 @@
   "dependencies": {
     "axios": "^1.13.5",
     "chalk": "^5.6.2",
+    "chokidar": "^4.0.3",
     "commander": "^14.0.2",
     "conf": "^15.1.0",
     "ignore": "^7.0.5",

@@ -180,10 +180,10 @@ export default function MarketingHomePage() {
               Get started
             </Link>
             <Link
-              href="#how-it-works"
+              href="/capabilities"
               className={buttonStyles({ tone: 'secondary', size: 'lg' })}
             >
-              Our philosophy
+              Our capabilities
             </Link>
           </div>
         </div>

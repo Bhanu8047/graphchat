@@ -11,11 +11,15 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { GraphIcon, RepoIcon, SearchIcon } from '../atoms/Icon';
+import { GraphIcon, RepoIcon, SearchIcon, SparkleIcon } from '../atoms/Icon';
 import {
   staticSearchTargets,
   type StaticSearchTarget,
 } from '../../features/navigation/config/static-search-targets';
+import {
+  cliCommandAnchor,
+  cliCommands,
+} from '../../features/docs/config/cli-commands';
 import { useAuth } from '../../features/auth/providers/AuthProvider';
 import { api } from '../../lib/api';
 import { cn } from '../../lib/ui';
@@ -61,7 +65,7 @@ function score(item: ResultItem, query: string): number {
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, authenticated } = useAuth();
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const [repos, setRepos] = useState<RepoSummary[]>([]);
@@ -82,9 +86,11 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   }, [open]);
 
   // Lazily load repositories the first time the palette opens for this session.
+  // Only attempt the fetch when the user is authenticated — calling /api/repos
+  // anonymously triggers a 401 and a noisy unhandled rejection.
   const reposLoaded = useRef(false);
   useEffect(() => {
-    if (!open || reposLoaded.current) return;
+    if (!open || !authenticated || reposLoaded.current) return;
     reposLoaded.current = true;
     api.repos
       .list()
@@ -102,7 +108,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       .catch(() => {
         /* silent — repos are optional in results */
       });
-  }, [open]);
+  }, [open, authenticated]);
 
   // Lock body scroll while open.
   useEffect(() => {
@@ -118,8 +124,14 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const allItems = useMemo<ResultItem[]>(() => {
     const isAdmin = user?.role === 'admin';
 
+    // Pages, Settings and per-repo entries all link into authenticated routes.
+    // Surface only public groups (Documentation + CLI command references) when
+    // the user is signed out so the palette doesn't hint at gated screens.
     const staticItems: ResultItem[] = staticSearchTargets
       .filter((t: StaticSearchTarget) => !t.adminOnly || isAdmin)
+      .filter(
+        (t: StaticSearchTarget) => authenticated || t.group === 'Documentation',
+      )
       .map((t) => ({
         id: t.id,
         label: t.label,
@@ -130,29 +142,49 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         keywords: t.keywords,
       }));
 
-    const repoItems: ResultItem[] = repos.flatMap((repo) => [
-      {
-        id: `repo-${repo.id}`,
-        label: repo.name,
-        description: repo.description ?? 'Open repository',
-        group: 'Repositories',
-        href: `/repos/${repo.id}`,
-        icon: RepoIcon,
-        keywords: ['repo', 'repository', repo.name],
-      },
-      {
-        id: `graph-${repo.id}`,
-        label: `${repo.name} · graph`,
-        description: 'Open the generated graph',
-        group: 'Graphs',
-        href: `/graphs/${repo.id}`,
-        icon: GraphIcon,
-        keywords: ['graph', 'visualize', repo.name],
-      },
-    ]);
+    // One palette entry per `gph` CLI command, sourced from the same constant
+    // the docs page renders so the two stay in sync automatically.
+    const cliItems: ResultItem[] = cliCommands.map((cmd) => {
+      const name = cmd.cmd.split(/\s+/)[1] ?? cmd.cmd;
+      const flagKeywords = cmd.flags.map((f) =>
+        f.replace(/<[^>]+>/g, '').trim(),
+      );
+      return {
+        id: `cli-cmd-${name}`,
+        label: `gph ${name}`,
+        description: cmd.description.split('. ')[0] + '.',
+        group: 'CLI commands',
+        href: `/docs#${cliCommandAnchor(cmd)}`,
+        icon: SparkleIcon,
+        keywords: ['cli', 'gph', name, ...flagKeywords],
+      };
+    });
 
-    return [...staticItems, ...repoItems];
-  }, [repos, user?.role]);
+    const repoItems: ResultItem[] = authenticated
+      ? repos.flatMap((repo) => [
+          {
+            id: `repo-${repo.id}`,
+            label: repo.name,
+            description: repo.description ?? 'Open repository',
+            group: 'Repositories',
+            href: `/repos/${repo.id}`,
+            icon: RepoIcon,
+            keywords: ['repo', 'repository', repo.name],
+          },
+          {
+            id: `graph-${repo.id}`,
+            label: `${repo.name} · graph`,
+            description: 'Open the generated graph',
+            group: 'Graphs',
+            href: `/graphs/${repo.id}`,
+            icon: GraphIcon,
+            keywords: ['graph', 'visualize', repo.name],
+          },
+        ])
+      : [];
+
+    return [...staticItems, ...cliItems, ...repoItems];
+  }, [authenticated, repos, user?.role]);
 
   const results = useMemo(() => {
     const trimmed = query.trim();

@@ -10,6 +10,10 @@ import {
   ZapIcon,
 } from '../../components/atoms/Icon';
 import { MarketingShell } from '../../components/templates/MarketingShell';
+import {
+  cliCommandAnchor,
+  cliCommands,
+} from '../../features/docs/config/cli-commands';
 import { cn } from '../../lib/ui';
 
 export const metadata = {
@@ -37,84 +41,6 @@ function Pill({ children }: { children: string }) {
 function SectionAnchor({ id }: { id: string }) {
   return <span id={id} className="-mt-24 block pt-24" />;
 }
-
-const cliCommands = [
-  {
-    cmd: 'gph login',
-    flags: ['--key <api_key>', '--server <url>'],
-    description:
-      'Authenticate the CLI with your trchat server using an API key (prefix sk-trchat-). Exchanges the key for a JWT access + refresh token pair stored locally. The token is auto-refreshed before expiry.',
-    example:
-      'gph login --key sk-trchat-abc123\ngph login --key sk-trchat-abc123 --server https://your.trchat.host',
-  },
-  {
-    cmd: 'gph logout',
-    flags: [],
-    description:
-      'Revokes the stored refresh token on the server and removes local credentials. After logout, any cached access token is also invalidated.',
-    example: 'gph logout',
-  },
-  {
-    cmd: 'gph status',
-    flags: ['--json'],
-    description:
-      'Shows the currently authenticated user, server URL, and token expiry. Use --json for machine-readable output.',
-    example: 'gph status\ngph status --json',
-  },
-  {
-    cmd: 'gph repos',
-    flags: ['--json'],
-    description:
-      'Lists all repositories accessible to the current user. Returns repo ID, name, branch, last sync time, and node count.',
-    example: 'gph repos\ngph repos --json',
-  },
-  {
-    cmd: 'gph index <path>',
-    flags: ['--repo <id>', '--branch <name>'],
-    description:
-      'Indexes a local repository path and pushes it to the graph service. The path is resolved to an absolute path; only files within it are included. Reuses prior state so only changed files are re-processed.',
-    example:
-      'gph index ./src --repo my-api-id\ngph index . --repo backend --branch main',
-  },
-  {
-    cmd: 'gph search <query>',
-    flags: [
-      '--repo <id>',
-      '--budget <tokens>',
-      '--confidence <level>',
-      '--json',
-      '--agent',
-    ],
-    description:
-      'Vector + graph search across indexed repos. The --budget flag caps the token count of returned results, dropping lower-confidence nodes first. --agent emits a compact format ready to paste into an AI chat prompt. --confidence accepts EXTRACTED | INFERRED | SPECULATIVE.',
-    example:
-      'gph search "authentication middleware" --budget 1500\ngph search "JWT guard" --repo backend --confidence EXTRACTED --agent',
-  },
-  {
-    cmd: 'gph path <source> <target>',
-    flags: ['--repo <id>'],
-    description:
-      'Finds the shortest path between two named symbols in the graph and prints every hop. Useful for understanding how middleware or dependency chains connect.',
-    example:
-      'gph path AuthService JwtGuard --repo my-api-id\ngph path ResponseInterceptor DatabaseService --repo backend',
-  },
-  {
-    cmd: 'gph report',
-    flags: ['--repo <id>', '--out <file>'],
-    description:
-      'Generates a GRAPH_REPORT.md audit report summarising god nodes, top communities, surprise edges, and file coverage stats. Ready to paste into a PR description or agent prompt.',
-    example:
-      'gph report --repo my-api-id --out GRAPH_REPORT.md\ngph report --repo backend --out ./reports/backend.md',
-  },
-  {
-    cmd: 'gph export',
-    flags: ['--repo <id>', '--out <file>'],
-    description:
-      'Exports a full agent context payload for a named repo as a structured JSON bundle. The bundle includes graph metadata, communities, nodes, and edges — ready to feed into any LLM session.',
-    example:
-      'gph export --repo my-api-id --out context.json\ngph export --repo backend --out ./context/backend.json',
-  },
-] as const;
 
 const apiSections = [
   {
@@ -320,6 +246,38 @@ const apiSections = [
           'Run graph analysis (community detection, god-node scoring) on an already-ingested repo.',
         body: '{ "repoId": "..." }',
       },
+      {
+        method: 'POST',
+        path: '/api/graph/ingest',
+        auth: true,
+        description:
+          'Receives a client-extracted graph payload (the CLI runs Tree-sitter locally and ships only nodes + edges). Source code never reaches the API. This is the endpoint behind gph index and gph watch.',
+        body: '{ "repoId": "...", "nodes": [...], "edges": [...] }',
+      },
+      {
+        method: 'POST',
+        path: '/api/graph/query',
+        auth: true,
+        description:
+          'Graph-expanded retrieval. Embeds the question, runs vector KNN to pick seed nodes, then asks the sidecar to expand from those seeds. Backs gph query.',
+        body: '{ "repoId": "...", "query": "how does login work?", "mode": "knn", "hops": 2, "budget": 2000 }',
+      },
+      {
+        method: 'POST',
+        path: '/api/ai/explain',
+        auth: true,
+        description:
+          'Generates a natural-language explanation of a node, grounded in its graph neighbours. Backs gph explain.',
+        body: '{ "repoId": "...", "label": "AuthService" }',
+      },
+      {
+        method: 'POST',
+        path: '/api/ai/suggest',
+        auth: true,
+        description:
+          'Returns a structured ContextNode draft (type / label / content / tags) for free-text input. Used by the dashboard UI when adding manual notes.',
+        body: '{ "repoId": "...", "input": "JWT auth middleware" }',
+      },
     ],
   },
   {
@@ -434,12 +392,14 @@ export default function DocsPage() {
                   id: 'cli',
                   children: [
                     { label: 'gph login', id: 'cli-login' },
+                    { label: 'gph index', id: 'cli-index' },
                     { label: 'gph search', id: 'cli-search' },
                     { label: 'gph query', id: 'cli-query' },
-                    { label: 'gph path', id: 'cli-path' },
                     { label: 'gph explain', id: 'cli-explain' },
+                    { label: 'gph path', id: 'cli-path' },
+                    { label: 'gph watch', id: 'cli-watch' },
+                    { label: 'gph report', id: 'cli-report' },
                     { label: 'gph export', id: 'cli-export' },
-                    { label: 'All commands', id: 'cli-all' },
                   ],
                 },
                 { label: 'API reference', id: 'api' },
@@ -616,7 +576,7 @@ export default function DocsPage() {
                 {cliCommands.map((cmd) => (
                   <div
                     key={cmd.cmd}
-                    id={`cli-${cmd.cmd.split(' ')[1]}`}
+                    id={cliCommandAnchor(cmd)}
                     className="rounded-2xl border border-[var(--border)] p-5"
                   >
                     <div className="flex flex-wrap items-start gap-2">

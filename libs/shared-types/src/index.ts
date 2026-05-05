@@ -378,6 +378,18 @@ export interface SuggestDto {
   input: string;
 }
 
+export interface ExplainDto {
+  repoId: string;
+  label: string;
+}
+
+export interface ExplainResponse {
+  label: string;
+  type: string;
+  explanation: string;
+  related: Array<{ label: string; type: string }>;
+}
+
 export interface RuntimeProviderConfig {
   llmProviders: LLMProvider[];
   defaultLlmProvider?: LLMProvider;
