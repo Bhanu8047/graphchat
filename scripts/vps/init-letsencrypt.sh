@@ -3,7 +3,7 @@ set -euo pipefail
 
 APP_DIR="${APP_DIR:-/opt/graphchat}"
 CERT_NAME="${CERT_NAME:-graphchat.co}"
-DOMAINS="${DOMAINS:-graphchat.co api.graphchat.co}"
+DOMAINS="${DOMAINS:-graphchat.co www.graphchat.co api.graphchat.co}"
 
 : "${EMAIL:?Set EMAIL to the Lets Encrypt registration email address.}"
 
