@@ -171,6 +171,11 @@ if has_deploy_service nginx; then
     fi
     sleep 5
   done
+
+  # nginx.conf is bind-mounted, so `compose up -d` does not recreate the
+  # container when only the file's contents change. Reload the running
+  # process so it picks up the new config.
+  compose exec -T nginx nginx -s reload
 fi
 
 if [ -f "$current_env" ]; then
