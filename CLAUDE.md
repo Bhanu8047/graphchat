@@ -95,3 +95,53 @@
 - How a new CLI command is registered: export `fooCommand(): Command` from `apps/cli/src/commands/foo.ts`, then `program.addCommand(fooCommand())` in `apps/cli/src/main.ts`
 - How CLI calls the API: `const client = createClient(); const { data } = await client.post('/api/some/endpoint', body);`
 - How DB is accessed in services: inject repository (`constructor(private readonly usersRepo: UsersRepository)`), call `this.usersRepo.findById(id)`
+
+## Model Quota & Cost Tracking
+
+- Types: `ModelQuota`, `ModelUsageRecord`, `ModelUsageSummary`, `CallType` ('inference' | 'embedding') in [libs/shared-types/src/index.ts](libs/shared-types/src/index.ts)
+- Module: [apps/api/src/app/model-quotas/](apps/api/src/app/model-quotas/) — repository seeds 8 rows in `onModuleInit` (claude/openai/gemini inference + voyage/openai/gemini embeddings). Provider 'voyage' is used (not 'voyageai') to match the `EmbeddingProvider` enum.
+- Quota check + cost tracking lives on the existing [UsageService](apps/api/src/app/usage/usage.service.ts) (extended, not a new service): `checkAndRecord({ userId, provider, modelId, inputTokens, outputTokens, callType?, estimateOutput? })`, `updateActuals(recordId, ...)`, `getModelUsageSummary(userId)`, `aggregateModelUsage({ userId?, provider?, month? })`.
+- Mongo collection: `model_usage` (separate from legacy `usage_records`). Indexes: unique on `id`, compound `{ userId, provider, modelId, createdAt }`.
+- `provider === 'ollama'` bypasses quota entirely (treated as local/free). 429 thrown with format: `"Monthly limit reached for <modelId>. Resets on <YYYY-MM-DD>."`
+- Calendar month bounds are UTC. `estimateOutput: true` applies `max(reportedOutput, ceil(input * 1.5))` for the pre-call estimate.
+- Endpoints: `GET /api/admin/models`, `PATCH /api/admin/models/:id` (admin); `GET /api/admin/usage` now also accepts `?userId=&provider=&month=YYYY-MM` for cost aggregation; `GET /api/usage/me` returns `ModelUsageSummary[]` (per-model used/limit/remaining), `GET /api/usage/me/daily` keeps the legacy daily record list.
+- **`libs/ai` return shape**: `suggestContextNode` and `explainContextNode` return `LLMResponse<T> = { result, usage: { inputTokens, outputTokens }, model }`. Embedding has both `getEmbeddings` (vectors only — back-compat) and `getEmbeddingsWithUsage` which returns `{ vectors, usage, provider, model }`. `provider` may be `'lexical'` for the deterministic fallback — callers must skip quota recording in that case.
+- **Wiring**: [ai.service.ts](apps/api/src/app/ai/ai.service.ts) wraps both `suggest` and `explain` with `checkAndRecord` (pre-call estimate, `estimateOutput: true`) → call → `updateActuals(recordId, ...)`. Embedding consumers ([nodes.service.ts](apps/api/src/app/nodes/nodes.service.ts), [repos.service.ts](apps/api/src/app/repos/repos.service.ts), [search.service.ts](apps/api/src/app/search/search.service.ts)) call `recordModelUsage` post-call (single insert, no pre-gate, per spec). All four call-site modules import `UsageModule`.
+- **Token estimation for inference pre-check**: `estimateTokens(text) = max(1, ceil(text.length / 4))` on the user input (suggest) or node content (explain).
+
+## LLM Call Sites
+
+Provider implementations (libs/ai/src/providers/):
+
+- `libs/ai/src/providers/claude.llm.ts` — Anthropic Claude (default `claude-sonnet-4-5-20250929`, override via `cfg.claudeModel`)
+- `libs/ai/src/providers/openai.llm.ts` — OpenAI (default `gpt-4o-mini`, override via `cfg.openaiModel`)
+- `libs/ai/src/providers/gemini.llm.ts` — Google Gemini (default `gemini-2.0-flash`, override via `cfg.geminiModel`)
+- `libs/ai/src/providers/ollama.llm.ts` — Ollama / OpenRouter (model from `cfg.ollamaModel` or `cfg.openrouterModel`)
+- `libs/ai/src/providers/openai.embed.ts` — OpenAI embeddings (default `text-embedding-3-small`)
+- `libs/ai/src/providers/gemini.embed.ts` — Gemini embeddings (default `text-embedding-004`)
+- `libs/ai/src/providers/voyage.embed.ts` — Voyage AI embeddings (default `voyage-code-3`, base `https://api.voyageai.com/v1`)
+- `libs/ai/src/providers/ollama.embed.ts` — Ollama embeddings (default `nomic-embed-text`)
+
+Dispatchers (libs/ai/src/):
+
+- `libs/ai/src/llm.service.ts` — `suggestContextNode()` switches on `cfg.provider`: claude | openai | gemini | ollama | openrouter
+- `libs/ai/src/embedding.service.ts` — embedding dispatcher (getEmbedding / getEmbeddings)
+- `libs/ai/src/explain.service.ts` — `explainContextNode()` calls Claude (`claude-sonnet-4-5-20250929`), OpenAI (`gpt-4o-mini`), OpenRouter (`openai/gpt-4o-mini`), or Ollama (`llama3.1`)
+
+API consumers:
+
+- `apps/api/src/app/ai/ai.service.ts:45` — calls `suggestContextNode()` (and `explainContextNode`)
+- `apps/api/src/app/nodes/nodes.service.ts` — calls `getEmbedding()`
+- `apps/api/src/app/repos/repos.service.ts` — calls `getEmbeddings()`
+- `apps/api/src/app/search/search.service.ts` — calls `getEmbedding()`
+- `apps/api/src/app/ai-resolver/ai-resolver.service.ts` — resolves `LLMConfig` / `EmbeddingConfig` (provider + model selection per user/repo)
+
+## Model Catalog
+
+- Types: `ModelCatalog`, `AvailableModel` in `libs/shared-types/src/index.ts`
+- Module: `apps/api/src/app/model-catalog/` — repository seeds 9 rows in `onModuleInit` with `isVisibleToUsers: false` by default. Provider names match `LLMProvider` enum ('claude', 'openai', 'gemini').
+- Mongo collection: `model_catalog`. Unique index on `{ provider, modelId }`.
+- `DEFAULT_QUOTA` map in `model-catalog.repository.ts` — used when admin enables a model that has no quota row yet (auto-creates via `ModelQuotasRepository.ensureExists`).
+- Admin endpoints (all under `AdminGuard`): `GET /api/admin/models/catalog`, `PATCH /api/admin/models/catalog/:id` (toggle `isVisibleToUsers`), `PATCH /api/admin/models/catalog/bulk` (body: `{ ids, isVisibleToUsers }`).
+- User endpoint: `GET /api/models/available` (JWT auth) — returns only visible models joined with current-month usage from `UsageService.getModelUsageSummary`. Shape: `AvailableModel[]`.
+- Frontend: `apps/web/src/features/settings/components/ModelsPage.tsx` — fetches `/api/models/available` and renders a grouped-by-provider budget bar below the provider config forms. Models with `remainingUsd <= 0` show a "Limit reached" badge.

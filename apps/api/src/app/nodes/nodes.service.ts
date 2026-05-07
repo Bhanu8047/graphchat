@@ -4,15 +4,17 @@ import {
   MongoVectorService,
   RedisVectorService,
 } from '@graphchat/vector-client';
-import { getEmbedding, EmbeddingConfig } from '@graphchat/ai';
+import { getEmbeddingsWithUsage, EmbeddingConfig } from '@graphchat/ai';
 import {
   ContextNode,
   CreateNodeDto,
+  CredentialKind,
   EmbeddingProvider,
 } from '@graphchat/shared-types';
 import { v4 as uuid } from 'uuid';
 import { RuntimeConfigService } from '../runtime/runtime-config.service';
 import { SearchService } from '../search/search.service';
+import { UsageService } from '../usage/usage.service';
 
 @Injectable()
 export class NodesService implements OnModuleInit {
@@ -24,6 +26,7 @@ export class NodesService implements OnModuleInit {
     cfg: ConfigService,
     private runtimeConfig: RuntimeConfigService,
     private searchService: SearchService,
+    private readonly usage: UsageService,
   ) {
     const defaultProvider =
       this.runtimeConfig.getDefaultEmbeddingProvider() ??
@@ -61,7 +64,20 @@ export class NodesService implements OnModuleInit {
       ...dto,
     };
     const text = `${node.label} ${node.content} ${node.tags.join(' ')}`;
-    const embedding = await getEmbedding(text, this.embedCfg);
+    const { vectors, usage, provider, model } = await getEmbeddingsWithUsage(
+      [text],
+      this.embedCfg,
+    );
+    const [embedding] = vectors;
+    if (provider !== 'lexical') {
+      await this.usage.recordModelUsage({
+        userId: ownerId,
+        provider: provider as CredentialKind,
+        modelId: model,
+        inputTokens: usage.inputTokens,
+        callType: 'embedding',
+      });
+    }
     await Promise.all([
       this.mongo.saveNode(node, embedding),
       this.redis.storeNode(node, embedding),

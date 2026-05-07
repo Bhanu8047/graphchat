@@ -40,6 +40,12 @@ gph search "authentication middleware" --budget 1500
 
 | Command | Description |
 | --- | --- |
+| `gph github login` | Connect your GitHub account via the GitHub device-code flow. |
+| `gph github repos` | Browse and import GitHub repos you have access to. |
+| `gph github import [url]` | Import a GitHub repo by URL or `owner/repo` and set it as active. |
+| `gph github sync` | Trigger an incremental re-sync of a GitHub-connected repo. |
+| `gph github status` | Check whether a GitHub account is connected. |
+| `gph github logout` | Disconnect your GitHub account and revoke the stored token. |
 | `gph login` | Exchange an API key for a JWT token pair stored locally. |
 | `gph logout` | Revoke the refresh token and remove local credentials. |
 | `gph status` | Print the current user, server, and token expiry. |
@@ -51,6 +57,57 @@ gph search "authentication middleware" --budget 1500
 | `gph export` | Export the full agent-context bundle as JSON. |
 
 Run `gph <command> --help` for full flag documentation.
+
+## GitHub integration
+
+The `gph github` command group lets you connect your GitHub account and import
+repositories without leaving the terminal.
+
+### Connect your account
+
+```bash
+gph github login
+# Prints a one-time code and opens github.com/login/device.
+# Paste the code, click Authorize, and the CLI stores your GitHub token.
+```
+
+### Browse and import repos
+
+```bash
+# Interactive picker — browse repos, pick one, choose a branch
+gph github repos
+
+# Filter by name or org
+gph github repos --search my-project
+gph github repos --org my-org
+
+# Import directly by URL (also sets as active repo)
+gph github import https://github.com/org/repo
+gph github import org/repo
+```
+
+After `gph github import` completes you can index immediately:
+
+```bash
+gph index ./my-repo
+```
+
+### Keep a repo in sync
+
+```bash
+# Re-sync the active repo
+gph github sync
+
+# Re-sync a specific repo by ID
+gph github sync --repo cebd9df0-b5d7-4090-ac3d-353ee2be3f86
+```
+
+### Check or remove the connection
+
+```bash
+gph github status   # prints connected GitHub login, or prompts to connect
+gph github logout   # revokes the stored GitHub token
+```
 
 ## How `gph index` works
 

@@ -1,4 +1,4 @@
-name: Vector Database Stack
+name: graphchat
 services:
   redis:
     image: redis/redis-stack:latest

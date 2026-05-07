@@ -7,9 +7,10 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisVectorService } from '@graphchat/vector-client';
-import { getEmbedding } from '@graphchat/ai';
-import { VectorSearchResult } from '@graphchat/shared-types';
+import { getEmbeddingsWithUsage } from '@graphchat/ai';
+import { CredentialKind, VectorSearchResult } from '@graphchat/shared-types';
 import { AiResolverService } from '../ai-resolver/ai-resolver.service';
+import { UsageService } from '../usage/usage.service';
 import { SearchQueryDto } from './dto/search-query.dto';
 import {
   SEARCH_CACHE,
@@ -25,6 +26,7 @@ export class SearchService implements OnModuleInit {
   constructor(
     _cfg: ConfigService,
     private readonly resolver: AiResolverService,
+    private readonly usage: UsageService,
   ) {
     this.redis = new RedisVectorService();
   }
@@ -68,7 +70,23 @@ export class SearchService implements OnModuleInit {
     // 2. Embedding
     let embedding: number[];
     try {
-      embedding = await getEmbedding(dto.q, embedCfg);
+      const out = await getEmbeddingsWithUsage([dto.q], embedCfg);
+      embedding = out.vectors[0];
+      if (out.provider !== 'lexical') {
+        await this.usage
+          .recordModelUsage({
+            userId: ownerId,
+            provider: out.provider as CredentialKind,
+            modelId: out.model,
+            inputTokens: out.usage.inputTokens,
+            callType: 'embedding',
+          })
+          .catch((err) =>
+            this.logger.warn(
+              `recordModelUsage failed: ${(err as Error).message}`,
+            ),
+          );
+      }
     } catch (err) {
       this.logger.error(
         `Embedding failed for query "${dto.q.slice(0, 80)}"`,

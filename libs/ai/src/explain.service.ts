@@ -1,74 +1,105 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
-import { LLMConfig } from './types';
+import { LLMConfig, LLMResponse } from './types';
 
 /**
  * Generate a free-form natural-language explanation of a node, given its
  * label, content, and the labels of the most-related neighboring nodes.
  *
- * Returns a plain string (no JSON envelope) so the caller can stream or
- * print it directly.
+ * Returns the explanation alongside SDK-reported token usage and the resolved
+ * model id so callers can record cost.
  */
 export async function explainContextNode(
   repoName: string,
   node: { label: string; type: string; content: string },
   related: Array<{ label: string; type: string }>,
   cfg: LLMConfig,
-): Promise<string> {
+): Promise<LLMResponse<string>> {
   const prompt = buildExplainPrompt(repoName, node, related);
 
   switch (cfg.provider) {
     case 'claude': {
       const client = new Anthropic({ apiKey: cfg.anthropicApiKey });
+      const model = cfg.claudeModel ?? 'claude-sonnet-4-5-20250929';
       const msg = await client.messages.create({
-        model: cfg.claudeModel ?? 'claude-sonnet-4-5-20250929',
+        model,
         max_tokens: 600,
         messages: [{ role: 'user', content: prompt }],
       });
-      return msg.content
+      const text = msg.content
         .map((c) => (c.type === 'text' ? c.text : ''))
         .join('')
         .trim();
+      return {
+        result: text,
+        usage: {
+          inputTokens: msg.usage?.input_tokens ?? 0,
+          outputTokens: msg.usage?.output_tokens ?? 0,
+        },
+        model,
+      };
     }
     case 'openai': {
       const client = new OpenAI({ apiKey: cfg.openaiApiKey });
+      const model = cfg.openaiModel ?? 'gpt-4o-mini';
       const res = await client.chat.completions.create({
-        model: cfg.openaiModel ?? 'gpt-4o-mini',
+        model,
         messages: [{ role: 'user', content: prompt }],
       });
-      return (res.choices[0].message.content ?? '').trim();
+      return {
+        result: (res.choices[0].message.content ?? '').trim(),
+        usage: {
+          inputTokens: res.usage?.prompt_tokens ?? 0,
+          outputTokens: res.usage?.completion_tokens ?? 0,
+        },
+        model,
+      };
     }
     case 'openrouter': {
       const client = new OpenAI({
         apiKey: cfg.openrouterApiKey,
         baseURL: 'https://openrouter.ai/api/v1',
       });
+      const model = cfg.openrouterModel ?? 'openai/gpt-4o-mini';
       const res = await client.chat.completions.create({
-        model: cfg.openrouterModel ?? 'openai/gpt-4o-mini',
+        model,
         messages: [{ role: 'user', content: prompt }],
       });
-      return (res.choices[0].message.content ?? '').trim();
+      return {
+        result: (res.choices[0].message.content ?? '').trim(),
+        usage: {
+          inputTokens: res.usage?.prompt_tokens ?? 0,
+          outputTokens: res.usage?.completion_tokens ?? 0,
+        },
+        model,
+      };
     }
     case 'gemini': {
-      // Use a thin REST call via OpenAI-compatible endpoint if available; fall
-      // back to a minimal description if no Gemini SDK is wired.
       throw new Error(
         'Gemini explain not yet wired — set provider=claude or openai in Settings.',
       );
     }
     case 'ollama': {
       const base = cfg.ollamaBaseUrl ?? 'http://localhost:11434';
+      const model = cfg.ollamaModel ?? 'llama3.1';
       const res = await fetch(`${base}/api/generate`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          model: cfg.ollamaModel ?? 'llama3.1',
-          prompt,
-          stream: false,
-        }),
+        body: JSON.stringify({ model, prompt, stream: false }),
       });
-      const data = (await res.json()) as { response?: string };
-      return (data.response ?? '').trim();
+      const data = (await res.json()) as {
+        response?: string;
+        prompt_eval_count?: number;
+        eval_count?: number;
+      };
+      return {
+        result: (data.response ?? '').trim(),
+        usage: {
+          inputTokens: data.prompt_eval_count ?? 0,
+          outputTokens: data.eval_count ?? 0,
+        },
+        model,
+      };
     }
     default:
       throw new Error(`Unknown LLM provider: ${cfg.provider}`);

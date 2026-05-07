@@ -23,6 +23,8 @@ import { HealthModule } from './health/health.module';
 import { CredentialsModule } from './credentials/credentials.module';
 import { ModelSettingsModule } from './model-settings/model-settings.module';
 import { UsageModule } from './usage/usage.module';
+import { ModelQuotasModule } from './model-quotas/model-quotas.module';
+import { ModelCatalogModule } from './model-catalog/model-catalog.module';
 import { RateLimitsModule } from './rate-limits/rate-limits.module';
 import { AiResolverModule } from './ai-resolver/ai-resolver.module';
 import { AdminModule } from './admin/admin.module';
@@ -54,6 +56,8 @@ import { AdminModule } from './admin/admin.module';
     CredentialsModule,
     ModelSettingsModule,
     UsageModule,
+    ModelQuotasModule,
+    ModelCatalogModule,
     RateLimitsModule,
     AiResolverModule,
     AdminModule,

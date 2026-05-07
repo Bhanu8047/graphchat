@@ -89,6 +89,44 @@ const apiSections = [
     ],
   },
   {
+    title: 'GitHub Integration',
+    badge: 'POST / GET / DELETE',
+    routes: [
+      {
+        method: 'POST',
+        path: '/api/auth/github/cli/start',
+        auth: false,
+        description:
+          'Start the GitHub device-code flow. Returns device_code, user_code, verification_uri, and expires_in. The CLI opens the verification URL so the user can authorise access on github.com/login/device.',
+        body: null,
+      },
+      {
+        method: 'POST',
+        path: '/api/auth/github/cli/poll',
+        auth: true,
+        description:
+          'Poll for device-code authorisation. Returns { status: "pending" } while waiting; on success stores the GitHub access token on the authenticated user and returns { status: "authorized" }.',
+        body: '{ "device_code": "..." }',
+      },
+      {
+        method: 'GET',
+        path: '/api/auth/github/repos',
+        auth: true,
+        description:
+          'List GitHub repositories accessible via the stored GitHub token. Accepts ?search=, ?org=, and ?page= query params. Returns 401 if GitHub is not yet connected — run gph github login first.',
+        body: '?search=graphchat&org=my-org&page=1',
+      },
+      {
+        method: 'DELETE',
+        path: '/api/auth/github/token',
+        auth: true,
+        description:
+          'Revoke and remove the stored GitHub access token for the current user. Returns 204 on success.',
+        body: null,
+      },
+    ],
+  },
+  {
     title: 'API Keys (CLI auth)',
     badge: 'POST / GET / DELETE',
     routes: [
@@ -391,6 +429,12 @@ export default function DocsPage() {
                   label: 'CLI reference',
                   id: 'cli',
                   children: [
+                    { label: 'gph github login', id: 'cli-github' },
+                    { label: 'gph github repos', id: 'cli-github' },
+                    { label: 'gph github import', id: 'cli-github' },
+                    { label: 'gph github sync', id: 'cli-github' },
+                    { label: 'gph github status', id: 'cli-github' },
+                    { label: 'gph github logout', id: 'cli-github' },
                     { label: 'gph login', id: 'cli-login' },
                     { label: 'gph repos', id: 'cli-repos' },
                     { label: 'gph use', id: 'cli-use' },
@@ -417,7 +461,7 @@ export default function DocsPage() {
                   {'children' in item && item.children ? (
                     <ul className="mt-1.5 space-y-1 border-l border-[var(--border)] pl-3">
                       {item.children.map((child) => (
-                        <li key={child.id}>
+                        <li key={child.label}>
                           <a
                             href={`#${child.id}`}
                             className="block text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)]"

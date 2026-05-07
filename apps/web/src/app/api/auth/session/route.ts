@@ -14,11 +14,18 @@ export async function GET() {
     return NextResponse.json({ authenticated: false });
   }
 
-  const response = await fetch(`${getServerApiBaseUrl()}/auth/session`, {
-    headers: {
-      Cookie: `${appSessionCookie}=${sessionToken}`,
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${getServerApiBaseUrl()}/auth/session`, {
+      headers: {
+        Cookie: `${appSessionCookie}=${sessionToken}`,
+      },
+    });
+  } catch {
+    // API is unreachable — return a degraded but non-crashing response so the
+    // web app doesn't enter an infinite reload loop.
+    return NextResponse.json({ authenticated: false, apiUnavailable: true });
+  }
 
   if (!response.ok) {
     cookieStore.set(appSessionCookie, '', expiredAppSessionCookieOptions());
