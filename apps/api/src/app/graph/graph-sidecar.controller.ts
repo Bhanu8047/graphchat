@@ -67,10 +67,18 @@ export class GraphSidecarController {
    * Ingest a client-extracted graph payload. The CLI runs Tree-sitter
    * locally and posts the resulting nodes/edges; source code never reaches
    * the API. This is the preferred path for SaaS deployments.
+   *
+   * ownerId is stamped here (the Python sidecar has no auth context) so that
+   * getNodesForOwner / getContextNeighbors queries find the stored docs.
    */
   @Post('ingest')
-  ingest(@Body() body: IngestGraphDto) {
-    return this.bridge.ingestGraph(body);
+  ingest(@Body() body: IngestGraphDto, @CurrentUser() user: AuthenticatedUser) {
+    const stamped: IngestGraphDto = {
+      ...body,
+      nodes: body.nodes.map((n) => ({ ...n, ownerId: user.id })),
+      edges: body.edges.map((e) => ({ ...e, ownerId: user.id })),
+    };
+    return this.bridge.ingestGraph(stamped);
   }
 
   /** Re-cluster after the UI added new nodes. */
