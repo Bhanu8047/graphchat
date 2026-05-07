@@ -23,8 +23,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       const response = await fetch('/api/auth/session', { cache: 'no-store' });
-      const payload = await response.json();
-      setSession(payload);
+      const payload = await response.json().catch(() => null);
+      setSession(payload ?? { authenticated: false });
+    } catch {
+      setSession({ authenticated: false });
     } finally {
       setLoading(false);
     }
@@ -39,10 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    refresh().catch(() => {
-      setSession({ authenticated: false });
-      setLoading(false);
-    });
+    refresh();
   }, []);
 
   const value = useMemo(

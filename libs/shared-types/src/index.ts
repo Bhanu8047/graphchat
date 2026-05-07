@@ -510,6 +510,68 @@ export interface UsageSummary {
   tokens: number;
 }
 
+// ── Model quota & usage (cost-based) ─────────────────────────────────────────
+export type CallType = 'inference' | 'embedding';
+
+export interface ModelQuota {
+  id: string;
+  provider: CredentialKind;
+  modelId: string;
+  costPer1kTokens: number;
+  defaultMonthlyUsdLimit: number;
+  adminMonthlyUsdLimit: number | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ModelUsageRecord {
+  id: string;
+  userId: string;
+  provider: CredentialKind;
+  modelId: string;
+  callType: CallType;
+  inputTokens: number;
+  outputTokens: number;
+  estimatedUsdCost: number;
+  createdAt: string;
+}
+
+export interface ModelUsageSummary {
+  provider: CredentialKind;
+  modelId: string;
+  callType: CallType;
+  usedUsd: number;
+  limitUsd: number;
+  remainingUsd: number;
+  inputTokens: number;
+  outputTokens: number;
+  callCount: number;
+  monthStart: string;
+  monthEnd: string;
+}
+
+// ── Model catalog ────────────────────────────────────────────────────────────
+export interface ModelCatalog {
+  id: string;
+  provider: string;
+  modelId: string;
+  displayName: string;
+  contextWindow: number;
+  isVisibleToUsers: boolean;
+  createdAt: string;
+}
+
+export interface AvailableModel {
+  provider: string;
+  modelId: string;
+  displayName: string;
+  contextWindow: number;
+  usedUsd: number;
+  remainingUsd: number;
+  limitUsd: number;
+}
+
 // ── Admin-managed rate limits ────────────────────────────────────────────────
 export interface RateLimit {
   id: string;

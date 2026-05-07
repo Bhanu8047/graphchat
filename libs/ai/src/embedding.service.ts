@@ -1,14 +1,21 @@
 import { VECTOR_DIMENSION } from '@graphchat/shared-types';
-import { EmbeddingConfig, EmbeddingProvider } from './types';
+import {
+  EmbeddingConfig,
+  EmbeddingProvider,
+  EmbeddingResponse,
+  Usage,
+} from './types';
 import { voyageEmbed } from './providers/voyage.embed';
 import { openaiEmbed } from './providers/openai.embed';
 import { geminiEmbed } from './providers/gemini.embed';
 import { ollamaEmbed } from './providers/ollama.embed';
 
-const providerEmbedders: Record<
-  EmbeddingProvider,
-  (texts: string[], cfg: EmbeddingConfig) => Promise<number[][]>
-> = {
+type ProviderEmbedder = (
+  texts: string[],
+  cfg: EmbeddingConfig,
+) => Promise<{ vectors: number[][]; usage: Usage; model: string }>;
+
+const providerEmbedders: Record<EmbeddingProvider, ProviderEmbedder> = {
   voyage: voyageEmbed,
   openai: openaiEmbed,
   gemini: geminiEmbed,
@@ -26,23 +33,41 @@ export async function getEmbedding(
   text: string,
   cfg: EmbeddingConfig,
 ): Promise<number[]> {
-  const [v] = await getEmbeddings([text], cfg);
-  return v;
+  const { vectors } = await getEmbeddingsWithUsage([text], cfg);
+  return vectors[0];
 }
 
 export async function getEmbeddings(
   texts: string[],
   cfg: EmbeddingConfig,
 ): Promise<number[][]> {
+  const { vectors } = await getEmbeddingsWithUsage(texts, cfg);
+  return vectors;
+}
+
+/**
+ * Variant that exposes which provider/model actually fulfilled the request,
+ * along with token usage. Lexical fallback returns provider='lexical' so
+ * callers know to skip quota recording.
+ */
+export async function getEmbeddingsWithUsage(
+  texts: string[],
+  cfg: EmbeddingConfig,
+): Promise<EmbeddingResponse> {
   const errors: string[] = [];
 
   for (const provider of getProviderFallbackOrder(cfg)) {
     try {
-      const embeddings = await providerEmbedders[provider](texts, {
+      const out = await providerEmbedders[provider](texts, {
         ...cfg,
         provider,
       });
-      return embeddings.map(normalizeEmbedding);
+      return {
+        vectors: out.vectors.map(normalizeEmbedding),
+        usage: out.usage,
+        provider,
+        model: out.model,
+      };
     } catch (error) {
       errors.push(`${provider}: ${formatError(error)}`);
     }
@@ -51,7 +76,12 @@ export async function getEmbeddings(
   console.warn(
     `Falling back to local lexical embeddings. Providers failed: ${errors.join(' | ')}`,
   );
-  return texts.map(buildLexicalFallbackEmbedding);
+  return {
+    vectors: texts.map(buildLexicalFallbackEmbedding),
+    usage: { inputTokens: 0, outputTokens: 0 },
+    provider: 'lexical',
+    model: 'lexical',
+  };
 }
 
 function getProviderFallbackOrder(cfg: EmbeddingConfig): EmbeddingProvider[] {

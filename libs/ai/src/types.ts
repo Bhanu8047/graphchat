@@ -37,4 +37,27 @@ export interface LLMConfig {
   openrouterModel?: string;
 }
 
+export interface Usage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+export interface LLMResponse<T> {
+  result: T;
+  usage: Usage;
+  model: string;
+}
+
+/**
+ * `provider` is 'lexical' when the embedding service falls back to the
+ * deterministic in-process embedder (no remote call) — callers should skip
+ * quota recording in that case.
+ */
+export interface EmbeddingResponse {
+  vectors: number[][];
+  usage: Usage;
+  provider: EmbeddingProvider | 'lexical';
+  model: string;
+}
+
 export type { EmbeddingProvider, LLMProvider, SuggestResult };

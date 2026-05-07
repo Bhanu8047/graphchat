@@ -21,7 +21,10 @@ import {
   RefreshTokenDto,
 } from './dto/api-key.dto';
 import { CliApproveDto, CliPollDto } from './dto/cli-auth.dto';
-import { GithubCliPollDto } from './dto/github-device-flow.dto';
+import {
+  GithubCliPollDto,
+  GithubReposQueryDto,
+} from './dto/github-device-flow.dto';
 import { GithubAuthDto } from './dto/github-auth.dto';
 import { GithubDeviceFlowService } from './github-device-flow.service';
 import { LoginDto } from './dto/login.dto';
@@ -29,6 +32,10 @@ import { RegisterDto } from './dto/register.dto';
 
 // Strict per-IP throttle for credential-bearing endpoints.
 const AUTH_THROTTLE = { auth: { limit: 10, ttl: 60_000 } };
+// GitHub device flow polling needs a roomier bucket than login/register.
+const GITHUB_CLI_POLL_THROTTLE = {
+  githubCliPoll: { limit: 60, ttl: 60_000 },
+};
 
 @Controller('auth')
 export class AuthController {
@@ -179,7 +186,7 @@ export class AuthController {
   }
 
   /** Authed: poll GitHub for token; saves access token to user on success. */
-  @Throttle(AUTH_THROTTLE)
+  @Throttle(GITHUB_CLI_POLL_THROTTLE)
   @Post('github/cli/poll')
   githubCliPoll(
     @CurrentUser() user: AuthenticatedUser,
@@ -192,14 +199,12 @@ export class AuthController {
   @Get('github/repos')
   async githubRepos(
     @CurrentUser() user: AuthenticatedUser,
-    @Query('search') search?: string,
-    @Query('org') org?: string,
-    @Query('page') page = 1,
+    @Query() query: GithubReposQueryDto,
   ) {
     return this.githubDeviceFlow.listRepos(user.id, {
-      search,
-      org,
-      page: Number(page),
+      search: query.search,
+      org: query.org,
+      page: query.page ?? 1,
     });
   }
 }

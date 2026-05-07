@@ -283,7 +283,9 @@ jobs:
             remote_prefix="${remote_env[*]} "
           fi
 
-          ssh -i ~/.ssh/graphchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
+          ssh -i ~/.ssh/graphchat_deploy_key -p "${VPS_PORT:-22}" \
+            -o ConnectTimeout=10 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 \
+            "$VPS_USER@$VPS_HOST" \
             "cd '${DEPLOY_DIR}' && echo '${{ github.token }}' | docker login '${REGISTRY}' -u '${{ github.actor }}' --password-stdin && ${remote_prefix}./scripts/vps/deploy.sh"
 
       - name: Verify public endpoints
