@@ -37,6 +37,8 @@ import { AdminModule } from './admin/admin.module';
       { name: 'default', ttl: 60_000, limit: 120 },
       // Tighter bucket explicitly applied to auth endpoints via @Throttle.
       { name: 'auth', ttl: 60_000, limit: 10 },
+      // Device-flow polling is frequent by design, so give it its own bucket.
+      { name: 'githubCliPoll', ttl: 60_000, limit: 60 },
     ]),
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,

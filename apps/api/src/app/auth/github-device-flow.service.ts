@@ -26,6 +26,18 @@ type GithubUserResponse = {
   avatar_url: string;
 };
 
+type GithubRepo = {
+  full_name: string;
+  description: string | null;
+  private: boolean;
+  default_branch: string;
+  updated_at: string;
+};
+
+type GithubSearchRepositoriesResponse = {
+  items: GithubRepo[];
+};
+
 export type GithubDeviceFlowStartResult = {
   device_code: string;
   user_code: string;
@@ -36,6 +48,7 @@ export type GithubDeviceFlowStartResult = {
 
 export type GithubDeviceFlowPollResult =
   | { pending: true }
+  | { pending: true; slowDown: true }
   | { connected: true; github_username: string; avatar_url: string };
 
 @Injectable()
@@ -111,7 +124,7 @@ export class GithubDeviceFlowService {
         case 'authorization_pending':
           return { pending: true };
         case 'slow_down':
-          return { pending: true };
+          return { pending: true, slowDown: true };
         case 'expired_token':
           throw new GoneException(
             'Device flow session expired. Please start again.',
@@ -151,6 +164,23 @@ export class GithubDeviceFlowService {
       );
     }
 
+    const repos = opts.search
+      ? await this.searchRepos(user.githubAccessToken, user.githubLogin, opts)
+      : await this.fetchReposPage(user.githubAccessToken, opts);
+
+    return repos.map((r) => ({
+      full_name: r.full_name,
+      description: r.description,
+      private: r.private,
+      default_branch: r.default_branch,
+      updated_at: r.updated_at,
+    }));
+  }
+
+  private async fetchReposPage(
+    accessToken: string,
+    opts: { org?: string; page: number },
+  ): Promise<GithubRepo[]> {
     const url = new URL(
       opts.org
         ? `https://api.github.com/orgs/${encodeURIComponent(opts.org)}/repos`
@@ -166,10 +196,35 @@ export class GithubDeviceFlowService {
       );
     }
 
+    const response = await this.fetchGithubReposUrl(accessToken, url);
+    return (await response.json()) as GithubRepo[];
+  }
+
+  private async searchRepos(
+    accessToken: string,
+    githubLogin: string | undefined,
+    opts: { search?: string; org?: string; page: number },
+  ): Promise<GithubRepo[]> {
+    const qualifier = opts.org
+      ? `org:${opts.org}`
+      : `user:${githubLogin ?? (await this.fetchGithubUser(accessToken)).login}`;
+    const url = new URL('https://api.github.com/search/repositories');
+    url.searchParams.set('q', `${opts.search} ${qualifier}`);
+    url.searchParams.set('sort', 'updated');
+    url.searchParams.set('order', 'desc');
+    url.searchParams.set('per_page', '30');
+    url.searchParams.set('page', String(opts.page));
+
+    const response = await this.fetchGithubReposUrl(accessToken, url);
+    const data = (await response.json()) as GithubSearchRepositoriesResponse;
+    return data.items;
+  }
+
+  private async fetchGithubReposUrl(accessToken: string, url: URL) {
     const response = await fetch(url.toString(), {
       headers: {
         Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${user.githubAccessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 
@@ -187,30 +242,7 @@ export class GithubDeviceFlowService {
       throw new InternalServerErrorException('Failed to fetch GitHub repos.');
     }
 
-    type GithubRepo = {
-      full_name: string;
-      description: string | null;
-      private: boolean;
-      default_branch: string;
-      updated_at: string;
-    };
-
-    const repos = (await response.json()) as GithubRepo[];
-
-    const { search } = opts;
-    const filtered = search
-      ? repos.filter((r) =>
-          r.full_name.toLowerCase().includes(search.toLowerCase()),
-        )
-      : repos;
-
-    return filtered.map((r) => ({
-      full_name: r.full_name,
-      description: r.description,
-      private: r.private,
-      default_branch: r.default_branch,
-      updated_at: r.updated_at,
-    }));
+    return response;
   }
 
   private async fetchGithubUser(

@@ -15,6 +15,7 @@ interface GithubCliStartResponse {
 
 type GithubCliPollResponse =
   | { pending: true }
+  | { pending: true; slowDown: true }
   | { connected: true; github_username: string; avatar_url: string };
 
 export function githubLoginCommand(): Command {
@@ -27,7 +28,7 @@ export function githubLoginCommand(): Command {
       let session: GithubCliStartResponse;
       try {
         const { data } = await client.post<GithubCliStartResponse>(
-          '/api/auth/github/cli/start',
+          '/auth/github/cli/start',
         );
         session = data;
         startSpinner.stop();
@@ -65,15 +66,20 @@ export function githubLoginCommand(): Command {
       // Ensure the spinner is stopped even if the axios interceptor calls process.exit.
       process.once('exit', () => pollSpinner.stop());
       const deadline = Date.now() + session.expires_in * 1000;
-      const intervalMs = Math.max(1, session.interval) * 1000;
+      const baseIntervalMs = Math.max(1, session.interval) * 1000;
+      let intervalMs = baseIntervalMs;
 
       while (Date.now() < deadline) {
         await new Promise((r) => setTimeout(r, intervalMs));
         try {
           const { data } = await client.post<GithubCliPollResponse>(
-            '/api/auth/github/cli/poll',
+            '/auth/github/cli/poll',
             { device_code: session.device_code },
           );
+          if ('slowDown' in data && data.slowDown) {
+            intervalMs += baseIntervalMs;
+            continue;
+          }
           if ('pending' in data && data.pending) continue;
           if ('connected' in data && data.connected) {
             pollSpinner.stop();
