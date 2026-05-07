@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
+import ora from 'ora';
 import { createClient } from '../../lib/api-client.js';
 import { printSuccess } from '../../lib/output.js';
 import {
@@ -17,13 +18,16 @@ export function githubReposCommand(): Command {
     .option('--search <query>', 'Filter repos by name')
     .option('--org <org>', 'List repos for a GitHub organisation')
     .option('--json', 'Print raw JSON and exit')
-    .action(
-      async (opts: { search?: string; org?: string; json?: boolean }) => {
+    .action(async (opts: { search?: string; org?: string; json?: boolean }) => {
+      try {
         const client = createClient();
+        let spinner;
+        spinner = ora('Fetching repositories…').start();
         const repos = await fetchGithubRepos(client, {
           search: opts.search,
           org: opts.org,
         });
+        spinner.stop();
 
         if (opts.json) {
           console.log(JSON.stringify(repos, null, 2));
@@ -53,13 +57,19 @@ export function githubReposCommand(): Command {
         if (!doImport) return;
 
         const githubUrl = `https://github.com/${repo.full_name}`;
+        spinner = ora('Fetching branches…').start();
         const branchList = await fetchBranches(client, githubUrl);
+        spinner.stop();
         const branch = await pickBranch(branchList);
+        spinner = ora('Importing repository…').start();
         const imported = await importGithubRepo(client, githubUrl, branch);
-
+        spinner.stop();
         printSuccess(
           `Imported ${chalk.cyan(imported.name)} (${chalk.dim(branch)}) — run: ${chalk.cyan('gph use')} to select it`,
         );
-      },
-    );
+      } catch {
+        console.error(chalk.red('Failed to complete operation.'));
+        process.exit(1);
+      }
+    });
 }

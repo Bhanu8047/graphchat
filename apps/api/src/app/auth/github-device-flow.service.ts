@@ -179,6 +179,11 @@ export class GithubDeviceFlowService {
           'GitHub token is invalid or expired. Run: gph github login',
         );
       }
+      if (response.status === 403) {
+        throw new UnauthorizedException(
+          'GitHub access denied. Token may lack required scopes. Run: gph github login',
+        );
+      }
       throw new InternalServerErrorException('Failed to fetch GitHub repos.');
     }
 

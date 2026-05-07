@@ -15,7 +15,14 @@ export function githubSyncCommand(): Command {
     .description('Sync the active repo from GitHub')
     .option('-r, --repo <id>', 'Repo ID (defaults to selected repo)')
     .action(async (opts: { repo?: string }) => {
-      const repoId = resolveRepoId(opts.repo);
+      let repoId: string;
+      try {
+        repoId = resolveRepoId(opts.repo);
+      } catch {
+        console.error(chalk.red('Error: No repository selected or specified.')); // User-friendly error message
+        process.exit(1); // Exit with a non-zero status
+      }
+
       const client = createClient();
 
       const spinner = ora('Syncing from GitHub…').start();

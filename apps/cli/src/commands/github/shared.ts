@@ -71,7 +71,10 @@ export async function pickGithubRepo(repos: GithubRepo[]): Promise<GithubRepo> {
     pageSize: 15,
   });
   const repo = repos.find((r) => r.full_name === picked);
-  if (!repo) throw new Error(`Repo not found: ${picked}`);
+  if (!repo) {
+    printError('Repo not found', picked);
+    process.exit(1);
+  }
   return repo;
 }
 
@@ -103,14 +106,19 @@ export async function fetchBranches(
         'If this is a private repo, connect GitHub first: gph github login',
       );
     } else {
-      printError('Failed to fetch branches', err.response?.data?.message ?? err.message);
+      printError(
+        'Failed to fetch branches',
+        err.response?.data?.message ?? err.message,
+      );
     }
     process.exit(1);
   }
 }
 
 /** Interactive branch picker — returns the chosen branch name. */
-export async function pickBranch(branchList: BranchListResponse): Promise<string> {
+export async function pickBranch(
+  branchList: BranchListResponse,
+): Promise<string> {
   return select({
     message: 'Select a branch to import:',
     default: branchList.defaultBranch,

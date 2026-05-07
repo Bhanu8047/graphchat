@@ -47,7 +47,9 @@ export function githubImportCommand(): Command {
 
       setSelectedRepoId(imported.id);
 
-      const dirname = githubUrl.split('/').pop() ?? imported.name;
+      const sanitizedGithubUrl = githubUrl.replace(/\/+$/, ''); // Remove trailing slashes
+      const dirname =
+        sanitizedGithubUrl.split('/').filter(Boolean).pop() ?? imported.name;
       printSuccess(
         `Imported and selected ${chalk.cyan(imported.name)} (${chalk.dim(branch)}).` +
           ` Run: ${chalk.cyan(`gph index ./${dirname}`)} to build the graph.`,
