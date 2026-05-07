@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { CliAuthService } from './cli-auth.service';
 import { CliSessionsRepository } from './cli-sessions.repository';
+import { GithubDeviceFlowService } from './github-device-flow.service';
 import { RefreshTokensRepository } from './refresh-tokens.repository';
 import { UsersModule } from '../users/users.module';
 import { SessionTokenService } from '../common/auth/session-token.service';
@@ -21,6 +22,7 @@ import { SessionTokenService } from '../common/auth/session-token.service';
     ApiKeysService,
     CliAuthService,
     CliSessionsRepository,
+    GithubDeviceFlowService,
     RefreshTokensRepository,
   ],
   controllers: [AuthController],
