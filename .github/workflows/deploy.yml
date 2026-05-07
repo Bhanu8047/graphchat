@@ -283,11 +283,46 @@ jobs:
             remote_prefix="${remote_env[*]} "
           fi
 
-          ssh -i ~/.ssh/graphchat_deploy_key -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
+          ssh -i ~/.ssh/graphchat_deploy_key -p "${VPS_PORT:-22}" \
+            -o ConnectTimeout=10 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 \
+            "$VPS_USER@$VPS_HOST" \
             "cd '${DEPLOY_DIR}' && echo '${{ github.token }}' | docker login '${REGISTRY}' -u '${{ github.actor }}' --password-stdin && ${remote_prefix}./scripts/vps/deploy.sh"
 
       - name: Verify public endpoints
         if: steps.changes.outputs.should_deploy == 'true'
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
-          curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors https://graphchat.co >/dev/null
-          curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors https://api.graphchat.co/api/health
+          set -uo pipefail
+
+          # Follow redirects (middleware may 308 on host mismatch), bound each
+          # attempt at 30s, and retry for ~3 min total to absorb Next.js cold
+          # starts after container recreation.
+          verify() {
+            local url="$1"
+            curl --fail --location --silent --show-error \
+                 --retry 36 --retry-delay 5 --retry-all-errors \
+                 --max-time 30 \
+                 -o /dev/null -w 'HTTP %{http_code} in %{time_total}s\n' \
+                 "$url"
+          }
+
+          fail=0
+          for url in https://graphchat.co https://api.graphchat.co/api/health; do
+            echo "Verifying ${url}…"
+            if ! verify "$url"; then
+              fail=1
+              echo "::error::${url} did not return 2xx after retries"
+              # Diagnostic dump: response headers + remote container logs.
+              curl --location --silent --show-error --max-time 15 \
+                   -D - -o /dev/null "$url" || true
+              ssh -i ~/.ssh/graphchat_deploy_key -p "${VPS_PORT:-22}" \
+                  "$VPS_USER@$VPS_HOST" \
+                  "cd '${DEPLOY_DIR}' && docker compose --env-file .env.prod --env-file .deploy/current.env -f docker-compose.prod.yml ps && docker compose --env-file .env.prod --env-file .deploy/current.env -f docker-compose.prod.yml logs --tail=80 nginx api web" \
+                  || true
+            fi
+          done
+
+          exit "$fail"

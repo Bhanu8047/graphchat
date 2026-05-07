@@ -143,6 +143,9 @@ export const api = {
   usage: {
     me: () => apiFetch(`${BASE}/usage/me`).then(json),
   },
+  models: {
+    available: () => apiFetch(`${BASE}/models/available`).then(json),
+  },
   rateLimits: {
     list: () => apiFetch(`${BASE}/rate-limits`).then(json),
   },

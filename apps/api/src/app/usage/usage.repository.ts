@@ -1,11 +1,16 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Collection } from 'mongodb';
-import { UsageRecord } from '@graphchat/shared-types';
+import {
+  CredentialKind,
+  ModelUsageRecord,
+  UsageRecord,
+} from '@graphchat/shared-types';
 import { MongoDatabaseService } from '../common/database/mongo-database.service';
 
 @Injectable()
 export class UsageRepository implements OnModuleInit {
   private collection!: Collection<UsageRecord>;
+  private modelUsage!: Collection<ModelUsageRecord>;
 
   constructor(private readonly database: MongoDatabaseService) {}
 
@@ -16,6 +21,134 @@ export class UsageRepository implements OnModuleInit {
       { unique: true },
     );
     await this.collection.createIndex({ day: 1 });
+
+    this.modelUsage = this.database.collection<ModelUsageRecord>('model_usage');
+    await this.modelUsage.createIndex({ id: 1 }, { unique: true });
+    await this.modelUsage.createIndex({
+      userId: 1,
+      provider: 1,
+      modelId: 1,
+      createdAt: 1,
+    });
+  }
+
+  // ── Cost-based model usage ────────────────────────────────────────────────
+  insertModelUsage(record: ModelUsageRecord) {
+    return this.modelUsage.insertOne({ ...record });
+  }
+
+  updateModelUsage(
+    id: string,
+    patch: Partial<
+      Pick<
+        ModelUsageRecord,
+        'inputTokens' | 'outputTokens' | 'estimatedUsdCost'
+      >
+    >,
+  ) {
+    return this.modelUsage.updateOne({ id }, { $set: patch });
+  }
+
+  async sumMonthlyCost(
+    userId: string,
+    provider: CredentialKind,
+    modelId: string,
+    monthStartIso: string,
+    monthEndIso: string,
+  ): Promise<number> {
+    const doc = await this.modelUsage
+      .aggregate<{ total: number }>([
+        {
+          $match: {
+            userId,
+            provider,
+            modelId,
+            createdAt: { $gte: monthStartIso, $lt: monthEndIso },
+          },
+        },
+        { $group: { _id: null, total: { $sum: '$estimatedUsdCost' } } },
+        { $project: { _id: 0, total: 1 } },
+      ])
+      .next();
+    return doc?.total ?? 0;
+  }
+
+  modelUsageBreakdown(
+    userId: string,
+    monthStartIso: string,
+    monthEndIso: string,
+  ) {
+    return this.modelUsage
+      .aggregate<{
+        _id: { provider: CredentialKind; modelId: string };
+        usedUsd: number;
+        inputTokens: number;
+        outputTokens: number;
+        callCount: number;
+      }>([
+        {
+          $match: {
+            userId,
+            createdAt: { $gte: monthStartIso, $lt: monthEndIso },
+          },
+        },
+        {
+          $group: {
+            _id: { provider: '$provider', modelId: '$modelId' },
+            usedUsd: { $sum: '$estimatedUsdCost' },
+            inputTokens: { $sum: '$inputTokens' },
+            outputTokens: { $sum: '$outputTokens' },
+            callCount: { $sum: 1 },
+          },
+        },
+      ])
+      .toArray();
+  }
+
+  modelUsageAggregate(filter: {
+    userId?: string;
+    provider?: CredentialKind;
+    monthStartIso?: string;
+    monthEndIso?: string;
+  }) {
+    const match: Record<string, unknown> = {};
+    if (filter.userId) match.userId = filter.userId;
+    if (filter.provider) match.provider = filter.provider;
+    if (filter.monthStartIso || filter.monthEndIso) {
+      const range: Record<string, string> = {};
+      if (filter.monthStartIso) range.$gte = filter.monthStartIso;
+      if (filter.monthEndIso) range.$lt = filter.monthEndIso;
+      match.createdAt = range;
+    }
+    return this.modelUsage
+      .aggregate<{
+        _id: {
+          userId: string;
+          provider: CredentialKind;
+          modelId: string;
+        };
+        usedUsd: number;
+        inputTokens: number;
+        outputTokens: number;
+        callCount: number;
+      }>([
+        { $match: match },
+        {
+          $group: {
+            _id: {
+              userId: '$userId',
+              provider: '$provider',
+              modelId: '$modelId',
+            },
+            usedUsd: { $sum: '$estimatedUsdCost' },
+            inputTokens: { $sum: '$inputTokens' },
+            outputTokens: { $sum: '$outputTokens' },
+            callCount: { $sum: 1 },
+          },
+        },
+        { $sort: { '_id.userId': 1, '_id.provider': 1, '_id.modelId': 1 } },
+      ])
+      .toArray();
   }
 
   increment(

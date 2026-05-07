@@ -23,6 +23,8 @@ import { HealthModule } from './health/health.module';
 import { CredentialsModule } from './credentials/credentials.module';
 import { ModelSettingsModule } from './model-settings/model-settings.module';
 import { UsageModule } from './usage/usage.module';
+import { ModelQuotasModule } from './model-quotas/model-quotas.module';
+import { ModelCatalogModule } from './model-catalog/model-catalog.module';
 import { RateLimitsModule } from './rate-limits/rate-limits.module';
 import { AiResolverModule } from './ai-resolver/ai-resolver.module';
 import { AdminModule } from './admin/admin.module';
@@ -35,6 +37,8 @@ import { AdminModule } from './admin/admin.module';
       { name: 'default', ttl: 60_000, limit: 120 },
       // Tighter bucket explicitly applied to auth endpoints via @Throttle.
       { name: 'auth', ttl: 60_000, limit: 10 },
+      // Device-flow polling is frequent by design, so give it its own bucket.
+      { name: 'githubCliPoll', ttl: 60_000, limit: 60 },
     ]),
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
@@ -54,6 +58,8 @@ import { AdminModule } from './admin/admin.module';
     CredentialsModule,
     ModelSettingsModule,
     UsageModule,
+    ModelQuotasModule,
+    ModelCatalogModule,
     RateLimitsModule,
     AiResolverModule,
     AdminModule,

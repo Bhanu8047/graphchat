@@ -9,6 +9,11 @@ export class UsageController {
 
   @Get('me')
   mine(@CurrentUser() user: AuthenticatedUser) {
+    return this.usage.getModelUsageSummary(user.id);
+  }
+
+  @Get('me/daily')
+  daily(@CurrentUser() user: AuthenticatedUser) {
     return this.usage.listForUser(user.id);
   }
 }

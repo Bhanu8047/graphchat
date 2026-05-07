@@ -8,12 +8,16 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { explainContextNode, suggestContextNode } from '@graphchat/ai';
 import {
+  CredentialKind,
   ExplainDto,
   ExplainResponse,
   SuggestDto,
 } from '@graphchat/shared-types';
 import { MongoVectorService } from '@graphchat/vector-client';
 import { AiResolverService } from '../ai-resolver/ai-resolver.service';
+import { UsageService } from '../usage/usage.service';
+
+const ESTIMATE_TOKENS_PER_CHAR = 1 / 4;
 
 @Injectable()
 export class AiService {
@@ -23,6 +27,7 @@ export class AiService {
   constructor(
     cfg: ConfigService,
     private readonly resolver: AiResolverService,
+    private readonly usage: UsageService,
   ) {
     this.mongo = new MongoVectorService(cfg.get('MONGODB_URI'));
   }
@@ -41,8 +46,41 @@ export class AiService {
       throw new NotFoundException(`Repo ${dto.repoId} not found`);
     }
     const cfg = await this.resolver.resolveLlmConfig(ownerId);
+
+    const provider = cfg.provider as CredentialKind;
+    const modelId = cfg.model;
+    const checked = await this.usage.checkAndRecord({
+      userId: ownerId,
+      provider,
+      modelId,
+      inputTokens: estimateTokens(dto.input),
+      outputTokens: 0,
+      callType: 'inference',
+      estimateOutput: true,
+    });
+    const recordId = 'recordId' in checked ? checked.recordId : null;
+
     try {
-      const result = await suggestContextNode(repo.name, dto.input, cfg);
+      const { result, usage } = await suggestContextNode(
+        repo.name,
+        dto.input,
+        cfg,
+      );
+      if (recordId) {
+        await this.usage
+          .updateActuals(
+            recordId,
+            provider,
+            modelId,
+            usage.inputTokens,
+            usage.outputTokens,
+          )
+          .catch((err) =>
+            this.logger.warn(
+              `updateActuals failed for ${recordId}: ${(err as Error).message}`,
+            ),
+          );
+      }
       void this.resolver.recordUsage(
         ownerId,
         'ai-assist',
@@ -56,8 +94,7 @@ export class AiService {
         `AI suggest failed (provider=${cfg.provider}, model=${cfg.model}): ${e.message}`,
         e.stack,
       );
-      // Re-throw HttpException as-is, otherwise wrap with a useful message
-      // so the client sees the underlying cause instead of a bare 500.
+      // 429 from quota and other HttpException are surfaced as-is.
       if (err instanceof HttpException) throw err;
       throw new InternalServerErrorException(
         `AI provider error (${cfg.provider}): ${e.message}`,
@@ -96,13 +133,41 @@ export class AiService {
     const related = neighbors.map((n) => ({ label: n.label, type: n.type }));
 
     const cfg = await this.resolver.resolveLlmConfig(ownerId);
+    const provider = cfg.provider as CredentialKind;
+    const modelId = cfg.model;
+    const checked = await this.usage.checkAndRecord({
+      userId: ownerId,
+      provider,
+      modelId,
+      inputTokens: estimateTokens(node.content),
+      outputTokens: 0,
+      callType: 'inference',
+      estimateOutput: true,
+    });
+    const recordId = 'recordId' in checked ? checked.recordId : null;
+
     try {
-      const explanation = await explainContextNode(
+      const { result: explanation, usage } = await explainContextNode(
         repo.name,
         { label: node.label, type: node.type, content: node.content },
         related,
         cfg,
       );
+      if (recordId) {
+        await this.usage
+          .updateActuals(
+            recordId,
+            provider,
+            modelId,
+            usage.inputTokens,
+            usage.outputTokens,
+          )
+          .catch((err) =>
+            this.logger.warn(
+              `updateActuals failed for ${recordId}: ${(err as Error).message}`,
+            ),
+          );
+      }
       void this.resolver.recordUsage(
         ownerId,
         'ai-assist',
@@ -122,4 +187,8 @@ export class AiService {
       );
     }
   }
+}
+
+function estimateTokens(text: string): number {
+  return Math.max(1, Math.ceil(text.length * ESTIMATE_TOKENS_PER_CHAR));
 }

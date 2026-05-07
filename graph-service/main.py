@@ -97,6 +97,37 @@ def health() -> dict:
     return {"status": "ok", "service": "graph-service"}
 
 
+def _resolve_ingest_edges(nodes: list[dict], edges: list[dict]) -> list[dict]:
+    """Resolve ingest edge target labels up front and fail on unknown labels."""
+    label_to_id_map = {node["label"]: node["id"] for node in nodes}
+    resolved_edges: list[dict] = []
+    unresolved_targets: list[str] = []
+
+    for edge in edges:
+        if "targetId" in edge:
+            resolved_edges.append(edge)
+            continue
+
+        target_label = edge.get("targetLabel")
+        target_id = label_to_id_map.get(target_label)
+        if not target_id:
+            unresolved_targets.append(target_label or "<missing targetLabel>")
+            continue
+
+        resolved_edges.append({**edge, "targetId": target_id})
+
+    if unresolved_targets:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "ingest payload contains unresolved targetLabel values",
+                "unresolvedTargetLabels": sorted(set(unresolved_targets)),
+            },
+        )
+
+    return resolved_edges
+
+
 def _build_and_persist(
     repo_id: str, nodes: list[dict], edges: list[dict], start: float
 ) -> AnalyzeResponse:
@@ -111,6 +142,19 @@ def _build_and_persist(
     communities = cluster(g, repo_id, trials=10)
     get_surprising_edges(g, communities)  # diagnostic only
 
+    old_community_ids = [
+        doc["id"]
+        for doc in communities_col.find({"repoId": repo_id}, {"id": 1, "_id": 0})
+        if "id" in doc
+    ]
+    if old_community_ids:
+        pipe = r.pipeline()
+        for community_id in old_community_ids:
+            pipe.delete(f"community:{community_id}:prompt")
+            pipe.delete(f"community:{community_id}:meta")
+        pipe.execute()
+        communities_col.delete_many({"repoId": repo_id})
+
     if nodes:
         ops = [
             UpdateOne({"id": n["id"]}, {"$set": n}, upsert=True) for n in nodes
@@ -118,7 +162,18 @@ def _build_and_persist(
         nodes_col.bulk_write(ops)
 
     if edges:
-        resolved_edges = [e for e in edges if "targetId" in e]
+        # CLI sends ExtractedEdge with targetLabel; analyze path sends targetId.
+        # Resolve targetLabel → targetId using the node label map so both paths
+        # end up with a stored targetId in context_edges.
+        label_to_id_map = {n["label"]: n["id"] for n in nodes}
+        resolved_edges = []
+        for e in edges:
+            if "targetId" in e:
+                resolved_edges.append(e)
+            else:
+                tid = label_to_id_map.get(e.get("targetLabel", ""))
+                if tid:
+                    resolved_edges.append({**e, "targetId": tid})
         if resolved_edges:
             ops = [
                 UpdateOne({"id": e["id"]}, {"$set": e}, upsert=True)
@@ -127,6 +182,21 @@ def _build_and_persist(
             edges_col.bulk_write(ops)
 
     if communities:
+        # Delete stale community keys before writing new ones. Leiden generates
+        # fresh UUIDs every run, so old keys would accumulate in Redis and
+        # MongoDB indefinitely without this cleanup.
+        old_community_ids = [
+            c["id"]
+            for c in communities_col.find({"repoId": repo_id}, {"id": 1, "_id": 0})
+        ]
+        if old_community_ids:
+            pipe = r.pipeline()
+            for cid in old_community_ids:
+                pipe.delete(f"community:{cid}:prompt")
+                pipe.delete(f"community:{cid}:meta")
+            pipe.execute()
+            communities_col.delete_many({"repoId": repo_id})
+
         ops = [
             UpdateOne({"id": c["id"]}, {"$set": c}, upsert=True)
             for c in communities
@@ -199,7 +269,8 @@ def ingest(req: IngestRequest) -> AnalyzeResponse:
         raise HTTPException(
             status_code=400, detail="ingest payload contained no nodes or edges"
         )
-    return _build_and_persist(req.repo_id, req.nodes, req.edges, start)
+    resolved_edges = _resolve_ingest_edges(req.nodes, req.edges)
+    return _build_and_persist(req.repo_id, req.nodes, resolved_edges, start)
 
 
 # ── POST /cluster ─────────────────────────────────────────────────────────────

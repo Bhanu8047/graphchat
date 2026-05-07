@@ -22,6 +22,51 @@ export const cliCommands: readonly CliCommandDoc[] = [
       'gph login\ngph login --key sk-graphchat-abc123\ngph login --server https://your.graphchat.host',
   },
   {
+    cmd: 'gph github login',
+    flags: [],
+    description:
+      'Connect your GitHub account to graphchat using the GitHub device-code flow. The CLI prints a short code and opens github.com/login/device in your browser — paste the code, authorize, and the CLI stores your GitHub token automatically. Required before `gph github repos`, `gph github import`, and `gph github sync` on private repos.',
+    example: 'gph github login',
+  },
+  {
+    cmd: 'gph github repos',
+    flags: ['--search <query>', '--org <org>', '--json'],
+    description:
+      'Browse and import GitHub repositories your account has access to. Displays an interactive list; selecting a repo prompts for a branch and triggers graph ingestion. `--search` filters by name, `--org` scopes to an organization, `--json` emits machine-readable output.',
+    example:
+      'gph github repos\ngph github repos --search graphchat\ngph github repos --org my-org --json',
+  },
+  {
+    cmd: 'gph github import [url]',
+    flags: [],
+    description:
+      'Import a GitHub repository directly by URL or `owner/repo` shorthand and set it as the active repo — no need to run `gph use` afterwards. If `url` is omitted, falls back to the same interactive picker as `gph github repos`. After import, the CLI prints a `gph index` hint.',
+    example:
+      'gph github import https://github.com/org/repo\ngph github import org/repo\ngph github import',
+  },
+  {
+    cmd: 'gph github sync',
+    flags: ['--repo <id>'],
+    description:
+      'Trigger an incremental re-sync of a GitHub-connected repo on the server — only files changed since the last sync are re-processed. Defaults to the currently selected repo; pass `--repo` to target a specific one.',
+    example:
+      'gph github sync\ngph github sync --repo cebd9df0-b5d7-4090-ac3d-353ee2be3f86',
+  },
+  {
+    cmd: 'gph github status',
+    flags: [],
+    description:
+      'Check whether a GitHub account is connected to your graphchat session. Prints the connected GitHub login name, or a message prompting you to run `gph github login`.',
+    example: 'gph github status',
+  },
+  {
+    cmd: 'gph github logout',
+    flags: [],
+    description:
+      'Disconnect your GitHub account from graphchat. Revokes the stored GitHub access token on the server. If the token was already revoked or the endpoint is unavailable, prints manual-revocation instructions.',
+    example: 'gph github logout',
+  },
+  {
     cmd: 'gph logout',
     flags: [],
     description:

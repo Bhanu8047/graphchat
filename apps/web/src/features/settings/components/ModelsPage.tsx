@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
+  AvailableModel,
   EmbeddingProvider,
   LLMProvider,
   ModelService,
@@ -89,27 +90,48 @@ const blank = (service: ModelService): ModelSetting => ({
   updatedAt: new Date().toISOString(),
 });
 
+function groupByProvider(
+  models: AvailableModel[],
+): Record<string, AvailableModel[]> {
+  return models.reduce<Record<string, AvailableModel[]>>((acc, m) => {
+    (acc[m.provider] ??= []).push(m);
+    return acc;
+  }, {});
+}
+
 export function ModelsPage() {
   const [runtime, setRuntime] = useState<RuntimeProviderConfig | null>(null);
   const [form, setForm] = useState<FormState>({
     'ai-assist': blank('ai-assist'),
     embedding: blank('embedding'),
   });
+  const [availableModels, setAvailableModels] = useState<AvailableModel[]>([]);
   const [savingId, setSavingId] = useState<ModelService | ''>('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    Promise.all([api.runtime.config(), api.modelSettings.list()])
-      .then(([rt, list]: [RuntimeProviderConfig, ModelSetting[]]) => {
-        setRuntime(rt);
-        const next: FormState = {
-          'ai-assist': blank('ai-assist'),
-          embedding: blank('embedding'),
-        };
-        for (const item of list ?? []) next[item.service] = item;
-        setForm(next);
-      })
+    Promise.all([
+      api.runtime.config(),
+      api.modelSettings.list(),
+      api.models.available(),
+    ])
+      .then(
+        ([rt, list, models]: [
+          RuntimeProviderConfig,
+          ModelSetting[],
+          AvailableModel[],
+        ]) => {
+          setRuntime(rt);
+          const next: FormState = {
+            'ai-assist': blank('ai-assist'),
+            embedding: blank('embedding'),
+          };
+          for (const item of list ?? []) next[item.service] = item;
+          setForm(next);
+          setAvailableModels(models ?? []);
+        },
+      )
       .catch(() => setError('Failed to load model settings.'));
   }, []);
 
@@ -161,6 +183,72 @@ export function ModelsPage() {
 
       {message ? <Notice tone="success">{message}</Notice> : null}
       {error ? <Notice tone="error">{error}</Notice> : null}
+
+      {availableModels.length > 0 && (
+        <Surface tone="default" padding="lg">
+          <h3 className="font-display text-xl text-foreground">
+            Available models
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Models enabled by your admin, with your current monthly usage.
+          </p>
+          <div className="mt-4 space-y-6">
+            {Object.entries(groupByProvider(availableModels)).map(
+              ([provider, models]) => (
+                <div key={provider}>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {provider}
+                  </p>
+                  <div className="space-y-2">
+                    {models.map((m) => {
+                      const pct =
+                        m.limitUsd > 0
+                          ? Math.min(100, (m.usedUsd / m.limitUsd) * 100)
+                          : 0;
+                      const limitReached =
+                        m.remainingUsd <= 0 && m.limitUsd > 0;
+                      return (
+                        <div
+                          key={m.modelId}
+                          className="flex items-center justify-between rounded border border-border bg-background px-4 py-3"
+                        >
+                          <div>
+                            <span className="text-sm font-medium text-foreground">
+                              {m.displayName}
+                            </span>
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              {m.modelId}
+                            </span>
+                            {limitReached && (
+                              <span className="ml-2 rounded bg-destructive/10 px-1.5 py-0.5 text-xs text-destructive">
+                                Limit reached
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="w-32">
+                              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                <div
+                                  className="h-full rounded-full bg-primary transition-all"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                              <p className="mt-0.5 text-right text-xs text-muted-foreground">
+                                ${m.usedUsd.toFixed(3)} / $
+                                {m.limitUsd.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ),
+            )}
+          </div>
+        </Surface>
+      )}
 
       {SERVICES.map((svc) => {
         const value = form[svc.id];

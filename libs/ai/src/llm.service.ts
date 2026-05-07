@@ -1,4 +1,4 @@
-import { LLMConfig, SuggestResult } from './types';
+import { LLMConfig, LLMResponse, SuggestResult } from './types';
 import { claudeSuggest } from './providers/claude.llm';
 import { openaiSuggest } from './providers/openai.llm';
 import { geminiSuggest } from './providers/gemini.llm';
@@ -8,7 +8,7 @@ export async function suggestContextNode(
   repoName: string,
   input: string,
   cfg: LLMConfig,
-): Promise<SuggestResult> {
+): Promise<LLMResponse<SuggestResult>> {
   switch (cfg.provider) {
     case 'claude':
       return claudeSuggest(repoName, input, cfg);

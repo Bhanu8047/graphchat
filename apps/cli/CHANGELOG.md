@@ -1,3 +1,19 @@
+## 0.1.0-beta.7 (2026-05-07)
+
+### 🚀 Features
+
+- **api/web:** add models based api limits and usage ([569dcb5](https://github.com/Bhanu8047/vector-graph/commit/569dcb5))
+- **cli:** fix error flows & spinners for async requests ([4f0b3ae](https://github.com/Bhanu8047/vector-graph/commit/4f0b3ae))
+- **cli:** add github cli operations to gph cmd ([9e5788a](https://github.com/Bhanu8047/vector-graph/commit/9e5788a))
+
+### 🩹 Fixes
+
+- **bugs:** fix minor bugs & optimisations ([f90c1a7](https://github.com/Bhanu8047/vector-graph/commit/f90c1a7))
+
+### ❤️ Thank You
+
+- Bhanu Pratap @Bhanu8047
+
 ## 0.1.0-beta.6 (2026-05-05)
 
 ### 🩹 Fixes

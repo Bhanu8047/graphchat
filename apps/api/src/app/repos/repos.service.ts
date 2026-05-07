@@ -8,7 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { getEmbeddings, EmbeddingConfig } from '@graphchat/ai';
+import { getEmbeddingsWithUsage, EmbeddingConfig } from '@graphchat/ai';
 import {
   MongoVectorService,
   RedisVectorService,
@@ -16,6 +16,7 @@ import {
 import {
   ContextNode,
   CreateRepoDto,
+  CredentialKind,
   EmbeddingProvider,
   GithubBranchListResponse,
   GithubRepoSource,
@@ -31,6 +32,7 @@ import { v4 as uuid } from 'uuid';
 import { RuntimeConfigService } from '../runtime/runtime-config.service';
 import { GraphBridgeService } from '../graph/graph-bridge.service';
 import { SearchService } from '../search/search.service';
+import { UsageService } from '../usage/usage.service';
 
 type GithubApiRepo = {
   full_name: string;
@@ -173,6 +175,7 @@ export class ReposService implements OnModuleInit {
     private runtimeConfig: RuntimeConfigService,
     private graphBridge: GraphBridgeService,
     private searchService: SearchService,
+    private readonly usage: UsageService,
   ) {
     const defaultProvider =
       this.runtimeConfig.getDefaultEmbeddingProvider() ??
@@ -466,10 +469,24 @@ export class ReposService implements OnModuleInit {
     }
 
     if (changedCandidates.length) {
-      const embeddings = await getEmbeddings(
+      const {
+        vectors: embeddings,
+        usage: embedUsage,
+        provider: embedProvider,
+        model: embedModel,
+      } = await getEmbeddingsWithUsage(
         changedCandidates.map((candidate) => candidate.content),
         this.embedCfg,
       );
+      if (embedProvider !== 'lexical') {
+        await this.usage.recordModelUsage({
+          userId: ownerId,
+          provider: embedProvider as CredentialKind,
+          modelId: embedModel,
+          inputTokens: embedUsage.inputTokens,
+          callType: 'embedding',
+        });
+      }
       await Promise.all(
         changedCandidates.map((candidate, index) => {
           const node: ContextNode = {
