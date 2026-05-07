@@ -288,41 +288,69 @@ jobs:
             "$VPS_USER@$VPS_HOST" \
             "cd '${DEPLOY_DIR}' && echo '${{ github.token }}' | docker login '${REGISTRY}' -u '${{ github.actor }}' --password-stdin && ${remote_prefix}./scripts/vps/deploy.sh"
 
-      - name: Verify public endpoints
+      - name: Verify deployed services
         if: steps.changes.outputs.should_deploy == 'true'
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
-          set -uo pipefail
+          # Run all checks ON the VPS over SSH rather than from the GH runner.
+          # The runner's cloud IP range is frequently blocked on port 443 by VPS
+          # firewalls, causing curl to fail even when the stack is healthy.
+          #
+          # Three layers are verified in sequence:
+          #   1. Internal API health      (api container, no nginx in path)
+          #   2. Internal web health      (web container, no nginx in path)
+          #   3. nginx routing            (curl inside nginx container with
+          #                               --resolve to bypass public DNS)
+          ssh -i ~/.ssh/graphchat_deploy_key \
+              -p "${VPS_PORT:-22}" \
+              -o StrictHostKeyChecking=no \
+              "$VPS_USER@$VPS_HOST" \
+              "bash -eo pipefail -s '${DEPLOY_DIR}'" <<'REMOTE'
+          set -eo pipefail
+          DEPLOY_DIR="$1"
+          cd "$DEPLOY_DIR"
 
-          # Follow redirects (middleware may 308 on host mismatch), bound each
-          # attempt at 30s, and retry for ~3 min total to absorb Next.js cold
-          # starts after container recreation.
-          verify() {
-            local url="$1"
-            curl --fail --location --silent --show-error \
-                 --retry 36 --retry-delay 5 --retry-all-errors \
-                 --max-time 30 \
-                 -o /dev/null -w 'HTTP %{http_code} in %{time_total}s\n' \
-                 "$url"
+          compose() {
+            docker compose --env-file .env.prod --env-file .deploy/current.env \
+              -f docker-compose.prod.yml "$@"
           }
 
-          fail=0
-          for url in https://graphchat.co https://api.graphchat.co/api/health; do
-            echo "Verifying ${url}…"
-            if ! verify "$url"; then
-              fail=1
-              echo "::error::${url} did not return 2xx after retries"
-              # Diagnostic dump: response headers + remote container logs.
-              curl --location --silent --show-error --max-time 15 \
-                   -D - -o /dev/null "$url" || true
-              ssh -i ~/.ssh/graphchat_deploy_key -p "${VPS_PORT:-22}" \
-                  "$VPS_USER@$VPS_HOST" \
-                  "cd '${DEPLOY_DIR}' && docker compose --env-file .env.prod --env-file .deploy/current.env -f docker-compose.prod.yml ps && docker compose --env-file .env.prod --env-file .deploy/current.env -f docker-compose.prod.yml logs --tail=80 nginx api web" \
-                  || true
-            fi
-          done
+          wait_http() {
+            local label="$1" cmd="$2"
+            for attempt in $(seq 1 24); do
+              if eval "$cmd" >/dev/null 2>&1; then
+                echo "  ✓ $label"
+                return 0
+              fi
+              echo "  … $label not ready yet (attempt $attempt/24)"
+              sleep 5
+            done
+            echo "  ✗ $label failed after 120s" >&2
+            return 1
+          }
 
-          exit "$fail"
+          echo "=== internal api health ==="
+          wait_http "api /api/health" \
+            "compose exec -T api node -e \"fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""
+
+          echo "=== internal web health ==="
+          wait_http "web /api/health" \
+            "compose exec -T web node -e \"fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""
+
+          echo "=== nginx routing (graphchat.co) ==="
+          wait_http "nginx → web (https)" \
+            "compose exec -T nginx curl --silent --fail --max-time 10 \
+              --resolve 'graphchat.co:443:127.0.0.1' \
+              https://graphchat.co/ -o /dev/null -w 'HTTP %{http_code}'"
+
+          echo "=== nginx routing (api.graphchat.co) ==="
+          wait_http "nginx → api (https)" \
+            "compose exec -T nginx curl --silent --fail --max-time 10 \
+              --resolve 'api.graphchat.co:443:127.0.0.1' \
+              https://api.graphchat.co/api/health -o /dev/null -w 'HTTP %{http_code}'"
+
+          echo "All checks passed."
+          REMOTE
