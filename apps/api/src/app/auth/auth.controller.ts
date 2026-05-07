@@ -6,6 +6,7 @@ import {
   HttpCode,
   Param,
   Post,
+  Query,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../common/auth/current-user.decorator';
@@ -20,7 +21,9 @@ import {
   RefreshTokenDto,
 } from './dto/api-key.dto';
 import { CliApproveDto, CliPollDto } from './dto/cli-auth.dto';
+import { GithubCliPollDto } from './dto/github-device-flow.dto';
 import { GithubAuthDto } from './dto/github-auth.dto';
+import { GithubDeviceFlowService } from './github-device-flow.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -33,6 +36,7 @@ export class AuthController {
     private readonly auth: AuthService,
     private readonly apiKeys: ApiKeysService,
     private readonly cliAuth: CliAuthService,
+    private readonly githubDeviceFlow: GithubDeviceFlowService,
   ) {}
 
   @Public()
@@ -162,5 +166,40 @@ export class AuthController {
   @HttpCode(204)
   async logout(@Body() dto: RefreshTokenDto) {
     await this.apiKeys.revokeRefreshToken(dto.refresh_token);
+  }
+
+  // ── GitHub CLI device flow ───────────────────────────────────────────────────
+
+  /** Public: start GitHub device flow, returns codes for user to visit github.com. */
+  @Public()
+  @Throttle(AUTH_THROTTLE)
+  @Post('github/cli/start')
+  githubCliStart() {
+    return this.githubDeviceFlow.startDeviceFlow();
+  }
+
+  /** Authed: poll GitHub for token; saves access token to user on success. */
+  @Throttle(AUTH_THROTTLE)
+  @Post('github/cli/poll')
+  githubCliPoll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: GithubCliPollDto,
+  ) {
+    return this.githubDeviceFlow.pollDeviceFlow(dto.device_code, user.id);
+  }
+
+  /** Authed: list the current user's GitHub repos using stored token. */
+  @Get('github/repos')
+  async githubRepos(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('search') search?: string,
+    @Query('org') org?: string,
+    @Query('page') page = 1,
+  ) {
+    return this.githubDeviceFlow.listRepos(user.id, {
+      search,
+      org,
+      page: Number(page),
+    });
   }
 }

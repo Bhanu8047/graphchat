@@ -79,6 +79,7 @@ export interface AppUser {
   role: UserRole;
   githubLogin?: string;
   githubId?: string;
+  githubAccessToken?: string;
   avatarUrl?: string;
   createdAt: string;
   updatedAt: string;

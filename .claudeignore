@@ -1,0 +1,10 @@
+# .claudeignore
+node_modules/
+dist/
+.next/
+coverage/
+*.log
+*.lock
+pnpm-lock.yaml
+package-lock.json
+.nx/cache/

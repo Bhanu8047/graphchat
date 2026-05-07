@@ -169,7 +169,7 @@ export function DashboardPage() {
                 <EmptyState message="No activity yet. Import a repository to get started." />
               ) : (
                 <ul className="space-y-2">
-                  {recentRepositories.slice(0, 8).map((repo) => (
+                  {(recentRepositories?.slice(0, 8) || []).map((repo) => (
                     <li
                       key={repo.id}
                       className="flex items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 transition hover:border-[var(--border-strong)]"
@@ -269,7 +269,7 @@ export function DashboardPage() {
               className="mt-4 -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2"
               style={{ scrollbarWidth: 'thin' }}
             >
-              {recentRepositories.slice(0, 8).map((repo) => (
+              {(recentRepositories?.slice(0, 8) || []).map((repo) => (
                 <article
                   key={repo.id}
                   className="flex w-64 shrink-0 snap-start flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 transition hover:border-[var(--border-strong)]"
@@ -288,7 +288,7 @@ export function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {repo.techStack.slice(0, 3).map((tag) => (
+                    {(repo.techStack?.slice(0, 3) || []).map((tag) => (
                       <span
                         key={tag}
                         className="rounded-full border border-[var(--border)] px-2 py-0.5 text-[0.65rem] text-[var(--muted-foreground)]"
