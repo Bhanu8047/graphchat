@@ -118,7 +118,18 @@ def _build_and_persist(
         nodes_col.bulk_write(ops)
 
     if edges:
-        resolved_edges = [e for e in edges if "targetId" in e]
+        # CLI sends ExtractedEdge with targetLabel; analyze path sends targetId.
+        # Resolve targetLabel → targetId using the node label map so both paths
+        # end up with a stored targetId in context_edges.
+        label_to_id_map = {n["label"]: n["id"] for n in nodes}
+        resolved_edges = []
+        for e in edges:
+            if "targetId" in e:
+                resolved_edges.append(e)
+            else:
+                tid = label_to_id_map.get(e.get("targetLabel", ""))
+                if tid:
+                    resolved_edges.append({**e, "targetId": tid})
         if resolved_edges:
             ops = [
                 UpdateOne({"id": e["id"]}, {"$set": e}, upsert=True)
@@ -127,6 +138,21 @@ def _build_and_persist(
             edges_col.bulk_write(ops)
 
     if communities:
+        # Delete stale community keys before writing new ones. Leiden generates
+        # fresh UUIDs every run, so old keys would accumulate in Redis and
+        # MongoDB indefinitely without this cleanup.
+        old_community_ids = [
+            c["id"]
+            for c in communities_col.find({"repoId": repo_id}, {"id": 1, "_id": 0})
+        ]
+        if old_community_ids:
+            pipe = r.pipeline()
+            for cid in old_community_ids:
+                pipe.delete(f"community:{cid}:prompt")
+                pipe.delete(f"community:{cid}:meta")
+            pipe.execute()
+            communities_col.delete_many({"repoId": repo_id})
+
         ops = [
             UpdateOne({"id": c["id"]}, {"$set": c}, upsert=True)
             for c in communities
